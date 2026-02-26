@@ -11,7 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <!-- Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-<style>
+
+  <style>
     :root{
       --bg:#0b1224;
       --card:#101c36;
@@ -300,18 +301,13 @@
             <h2>🧾 Ler NFC-e (SP)</h2>
             <span class="pill">opcional</span>
           </div>
-          <div class="muted">Cole o link da NFC-e ou leia o QR com a câmera.</div>
-          <div class="row">
-            <button class="secondary" type="button" id="btnAbrirQr">📷 Ler QR</button>
-            <button class="secondary" type="button" id="btnPararQr" style="display:none">⏹️ Parar</button>
-          </div>
-          <video id="qrVideo" playsinline style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:#000;min-height:320px"></video>
+          <div class="muted">Cole o link da NFC-e (consulta) e eu preencho litros/valor/tipo/data.</div>
           <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
           <div class="row">
-            <button class="secondary" type="button" id="btnUsarLink">Usar link no lançamento</button>
-            <button type="button" id="btnLerNfce">Ler NFC-e</button>
+            <button class="secondary" type="button" onclick="colocarLinkNoForm()">Usar link no lançamento</button>
+            <button type="button" onclick="lerNfce()">Ler NFC-e</button>
           </div>
-          <div class="status" id="nfceStatus">Cole o link e toque em "Ler NFC-e".</div>
+          <div class="status" id="nfceStatus">—</div>
         </div>
 
         <div class="section" style="margin-top:12px">
@@ -467,16 +463,6 @@
 /* ==========================
    Storage + helpers
 ========================== */
-const $ = (id)=>document.getElementById(id);
-function toast(msg){
-  const t = $("toast");
-  if(!t) return;
-  t.textContent = msg;
-  t.style.display = "block";
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2600);
-}
-
 const LS_KEY = "combustivel_abastecimentos_v2";
 const CFG_KEY = "combustivel_config_v2";
 
@@ -521,8 +507,7 @@ function ir(view){
 /* ==========================
    NFC-e read (via /api/nfce)
 ========================== */
-window.lerNfce = async function lerNfce(){
-  toast('Lendo NFC-e...');
+async function lerNfce(){
   const url = document.getElementById("nfceUrl").value.trim();
   const st = document.getElementById("nfceStatus");
   if(!url){
@@ -554,7 +539,7 @@ window.lerNfce = async function lerNfce(){
     st.textContent = "Erro ao ler: " + String(e?.message || e);
   }
 }
-window.colocarLinkNoForm = function colocarLinkNoForm(){
+function colocarLinkNoForm(){
   const u = document.getElementById("nfceUrl").value.trim();
   if(u) document.getElementById("nfceLink").value = u;
   document.getElementById("nfceStatus").textContent = u ? "Link copiado para o lançamento." : "Cole o link primeiro.";
@@ -860,119 +845,8 @@ function renderAll(){
   }
 }
 
-
-let qrStream = null;
-let qrRunning = false;
-
-async function startQr(){
-  const video = document.getElementById("qrVideo");
-  const bStart = document.getElementById("btnAbrirQr");
-  const bStop  = document.getElementById("btnPararQr");
-  const st = document.getElementById("nfceStatus");
-
-  if(!video || !bStart || !bStop) return;
-
-  if(!("BarcodeDetector" in window)){
-    toast("Seu navegador não suporta QR nativo.");
-    if(st) st.textContent = "Seu navegador não suporta leitura nativa de QR. Use 'colar link' por enquanto.";
-    return;
-  }
-
-  try{
-    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    video.srcObject = qrStream;
-    await video.play();
-
-    video.style.display = "block";
-    bStart.style.display = "none";
-    bStop.style.display = "block";
-    qrRunning = true;
-
-    toast("Aponte para o QR…");
-    if(st) st.textContent = "Aponte para o QR da NFC-e…";
-
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-    const loop = async () => {
-      if(!qrRunning) return;
-      try{
-        const codes = await detector.detect(video);
-        if(codes && codes.length){
-          const v = (codes[0].rawValue || "").trim();
-          document.getElementById("nfceUrl").value = v;
-          document.getElementById("nfceLink").value = v;
-          toast("QR lido ✅");
-          if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
-          await stopQr();
-          await lerNfce();
-          return;
-        }
-      }catch(e){}
-      requestAnimationFrame(loop);
-    };
-
-    loop();
-  }catch(e){
-    const msg = String(e?.message || e);
-    toast("Não abriu a câmera.");
-    if(st) st.textContent = "Não consegui abrir a câmera. Erro: " + msg;
-    await stopQr();
-  }
-}
-
-async function stopQr(){
-  const video = document.getElementById("qrVideo");
-  const bStart = document.getElementById("btnAbrirQr");
-  const bStop  = document.getElementById("btnPararQr");
-
-  qrRunning = false;
-
-  try{
-    if(qrStream){
-      qrStream.getTracks().forEach(t=>t.stop());
-    }
-  }catch(e){}
-
-  qrStream = null;
-
-  if(video){
-    video.pause();
-    video.srcObject = null;
-    video.style.display = "none";
-  }
-  if(bStart) bStart.style.display = "block";
-  if(bStop) bStop.style.display = "none";
-}
-  if(bStart) bStart.style.display = "block";
-  if(bStop) bStop.style.display = "none";
-
-  try{
-    if(_qr){
-      await _qr.stop();
-      await _qr.clear();
-    }
-  }catch(e){}
-  _qr = null;
-}
-
-document.addEventListener("DOMContentLoaded", ()=>{
-  const b1 = document.getElementById("btnUsarLink");
-  const b2 = document.getElementById("btnLerNfce");
-  if(b1) b1.addEventListener("click", (e)=>{ e.preventDefault(); colocarLinkNoForm(); toast("Link copiado para o lançamento."); });
-  if(b2) b2.addEventListener("click", (e)=>{ e.preventDefault(); lerNfce(); });
-  const qb = document.getElementById("btnAbrirQr");
-  const qs = document.getElementById("btnPararQr");
-  if(qb) qb.addEventListener("click", (e)=>{ e.preventDefault(); startQr(); });
-  if(qs) qs.addEventListener("click", (e)=>{ e.preventDefault(); stopQr(); });
-});
-
 renderAll();
 carregarConfig();
 </script>
-
-  <div id="toast" style="position:fixed;left:50%;bottom:86px;transform:translateX(-50%);
-    background:rgba(0,0,0,.75);color:#fff;padding:10px 12px;border-radius:14px;
-    border:1px solid rgba(255,255,255,.14);font-weight:800;font-size:12px;display:none;z-index:9999;max-width:92vw;text-align:center;"></div>
-
 </body>
 </html>
