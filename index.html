@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Combustível </title>
+  <title>Combustível</title>
 
   <!-- Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -304,10 +304,10 @@
           <div class="muted">Cole o link da NFC-e (consulta) e eu preencho litros/valor/tipo/data.</div>
           <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
           <div class="row">
-            <button class="secondary" type="button" onclick="colocarLinkNoForm()">Usar link no lançamento</button>
-            <button type="button" onclick="lerNfce()">Ler NFC-e</button>
+            <button class="secondary" type="button" id="btnUsarLink">Usar link no lançamento</button>
+            <button type="button" id="btnLerNfce">Ler NFC-e</button>
           </div>
-          <div class="status" id="nfceStatus">—</div>
+          <div class="status" id="nfceStatus">Cole o link e toque em "Ler NFC-e".</div>
         </div>
 
         <div class="section" style="margin-top:12px">
@@ -463,6 +463,16 @@
 /* ==========================
    Storage + helpers
 ========================== */
+const $ = (id)=>document.getElementById(id);
+function toast(msg){
+  const t = $("toast");
+  if(!t) return;
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2600);
+}
+
 const LS_KEY = "combustivel_abastecimentos_v2";
 const CFG_KEY = "combustivel_config_v2";
 
@@ -507,7 +517,8 @@ function ir(view){
 /* ==========================
    NFC-e read (via /api/nfce)
 ========================== */
-async function lerNfce(){
+window.lerNfce = async function lerNfce(){
+  toast('Lendo NFC-e...');
   const url = document.getElementById("nfceUrl").value.trim();
   const st = document.getElementById("nfceStatus");
   if(!url){
@@ -539,7 +550,7 @@ async function lerNfce(){
     st.textContent = "Erro ao ler: " + String(e?.message || e);
   }
 }
-function colocarLinkNoForm(){
+window.colocarLinkNoForm = function colocarLinkNoForm(){
   const u = document.getElementById("nfceUrl").value.trim();
   if(u) document.getElementById("nfceLink").value = u;
   document.getElementById("nfceStatus").textContent = u ? "Link copiado para o lançamento." : "Cole o link primeiro.";
@@ -845,8 +856,20 @@ function renderAll(){
   }
 }
 
+document.addEventListener("DOMContentLoaded", ()=>{
+  const b1 = document.getElementById("btnUsarLink");
+  const b2 = document.getElementById("btnLerNfce");
+  if(b1) b1.addEventListener("click", (e)=>{ e.preventDefault(); colocarLinkNoForm(); toast("Link copiado para o lançamento."); });
+  if(b2) b2.addEventListener("click", (e)=>{ e.preventDefault(); lerNfce(); });
+});
+
 renderAll();
 carregarConfig();
 </script>
+
+  <div id="toast" style="position:fixed;left:50%;bottom:86px;transform:translateX(-50%);
+    background:rgba(0,0,0,.75);color:#fff;padding:10px 12px;border-radius:14px;
+    border:1px solid rgba(255,255,255,.14);font-weight:800;font-size:12px;display:none;z-index:9999;max-width:92vw;text-align:center;"></div>
+
 </body>
 </html>
