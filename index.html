@@ -1,115 +1,98 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Controle Combustível</title>
 
-  <!-- Libs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">
-/* =========================
-   Tema (claro/escuro/sistema)
-========================= */
-const THEME_KEY = "combustivel_theme_v1";
-
-function applyTheme(mode){
-  const body = document.body;
-  if(mode === "light"){
-    body.classList.add("light");
-  } else if(mode === "dark"){
-    body.classList.remove("light");
-  } else {
-    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-    body.classList.toggle("light", !!prefersLight);
-  }
-  localStorage.setItem(THEME_KEY, mode);
-}
-
-function loadTheme(){
-  const saved = localStorage.getItem(THEME_KEY) || "system";
-  const sel = $("themeSelect");
-  if(sel) sel.value = saved;
-  applyTheme(saved);
-
-  // Se estiver em "system", reage às mudanças do sistema
-  if(window.matchMedia){
-    const mq = window.matchMedia("(prefers-color-scheme: light)");
-    mq.onchange = () => {
-      if((localStorage.getItem(THEME_KEY) || "system") === "system") applyTheme("system");
-    };
-  }
-}
-
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-
-  <style>
-    :root{
-      --bg:#071225;
-      --panel:#0b1b33;
-      --card:#0f2446;
-      --card2:#0d1f3c;
-      --text:#eaf1ff;
-      --muted:rgba(234,241,255,.72);
-      --stroke:rgba(255,255,255,.10);
-      --accent:#2b6dff;
-      --accent2:#1f55cc;
-      --danger:#ff476f;
-      --ok:#29d17c;
-      --shadow:0 12px 30px rgba(0,0,0,.28);
-      --radius:18px;
-    
-    /* Light mode overrides */
-    body.light{
-      --bg:#f4f7fb;
-      --panel:#ffffff;
-      --card:#ffffff;
-      --card2:#f0f3f9;
-      --text:#1b1f28;
-      --muted:rgba(0,0,0,.55);
-      --stroke:rgba(0,0,0,.08);
-      --shadow:0 8px 20px rgba(0,0,0,.08);
-    }
-}
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background: var(--bg);
-      background:linear-gradient(180deg, var(--bg) 0%, rgba(6,16,31,1) 70%, rgba(5,12,23,1) 100%);
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    }
-
-    .app{
-      max-width:1100px;
-      margin:0 auto;
-      padding:18px 14px 92px;
-    }
-
-    header{
-      display:flex; gap:12px; align-items:center; justify-content:space-between;
-      margin-bottom:14px;
-    }
-    .title{
-      display:flex; align-items:flex-start; gap:10px;
-    }
-    .title .emoji{font-size:26px; line-height:1; margin-top:4px}
-    .title h1{margin:0; font-size:22px; line-height:1.1}
-    .title p{margin:6px 0 0; color:var(--muted); font-weight:700; font-size:12px}
-
-    .pill{
-      background:rgba(255,255,255,.06);
-      border:1px solid var(--stroke);
-      padding:8px 10px;
-      border-radius:999px;
-      color:var(--muted);
-      font-weight:800;
-      font-size:12px;
-      display:flex; gap:8px; align-items:center;
-    }
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--ok); box-shadow:0 0 0 3px rgba(41,209,124,.18)}
+1	 
+2	<!DOCTYPE html> 
+3	<html lang="pt-BR"> 
+4	<head> 
+5	  <meta charset="UTF-8" /> 
+6	  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+7	  <title>CB Combustível</title> 
+8	 
+9	  <link rel="manifest" href="manifest.json"> 
+10	  <meta name="theme-color" content="#0b1b33"> 
+11	 
+12	  <style> 
+13	    body{ 
+14	      margin:0; 
+15	      font-family: Arial, sans-serif; 
+16	      background:#0b1b33; 
+17	      color:#fff; 
+18	      padding:20px; 
+19	    } 
+20	    h1{margin-top:0} 
+21	    .card{ 
+22	      background:#142a4f; 
+23	      padding:16px; 
+24	      border-radius:16px; 
+25	      margin-bottom:12px; 
+26	    } 
+27	    button{ 
+28	      padding:10px 14px; 
+29	      border:none; 
+30	      border-radius:12px; 
+31	      background:#2b6dff; 
+32	      color:#fff; 
+33	      font-weight:bold; 
+34	      cursor:pointer; 
+35	    } 
+36	    select{ 
+37	      padding:8px; 
+38	      border-radius:10px; 
+39	    } 
+40	  </style> 
+41	</head> 
+42	<body> 
+43	 
+44	<h1>🚗 Painel Combustível</h1> 
+45	 
+46	<div class="card"> 
+47	  <h3>Tema</h3> 
+48	  <select id="themeSelect"> 
+49	    <option value="system">Sistema</option> 
+50	    <option value="light">Claro</option> 
+51	    <option value="dark">Escuro</option> 
+52	  </select> 
+53	</div> 
+54	 
+55	<div class="card"> 
+56	  <h3>Status</h3> 
+57	  <p id="status">Pronto</p> 
+58	</div> 
+59	 
+60	<script> 
+61	function loadTheme(){ 
+62	  const saved = localStorage.getItem("cb_theme") || "system"; 
+63	  document.getElementById("themeSelect").value = saved; 
+64	  applyTheme(saved); 
+65	} 
+66	 
+67	function applyTheme(mode){ 
+68	  if(mode === "light"){ 
+69	    document.body.style.background = "#f2f2f2"; 
+70	    document.body.style.color = "#000"; 
+71	  }else{ 
+72	    document.body.style.background = "#0b1b33"; 
+73	    document.body.style.color = "#fff"; 
+74	  } 
+75	} 
+76	 
+77	document.getElementById("themeSelect").addEventListener("change", function(){ 
+78	  const mode = this.value; 
+79	  localStorage.setItem("cb_theme", mode); 
+80	  applyTheme(mode); 
+81	}); 
+82	 
+83	loadTheme(); 
+84	 
+85	if ('serviceWorker' in navigator) { 
+86	  navigator.serviceWorker.register('sw.js') 
+87	    .then(() => console.log("SW registrado")) 
+88	    .catch(err => console.log("Erro SW:", err)); 
+89	} 
+90	</script> 
+91	 
+92	</body> 
+93	</html> 
+94	 
 
     .grid-cards{
       display:grid;
