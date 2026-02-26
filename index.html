@@ -1,167 +1,1071 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CB - Controle Combustível</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Controle Combustível - Ford Fiesta</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b1b33">
+  <!-- Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+  <style>
+    :root{
+      --bg:#071225;
+      --panel:#0b1b33;
+      --card:#0f2446;
+      --card2:#0d1f3c;
+      --text:#eaf1ff;
+      --muted:rgba(234,241,255,.72);
+      --stroke:rgba(255,255,255,.10);
+      --accent:#2b6dff;
+      --accent2:#1f55cc;
+      --danger:#ff476f;
+      --ok:#29d17c;
+      --shadow:0 12px 30px rgba(0,0,0,.28);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg, #071225 0%, #06101f 70%, #050c17 100%);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
 
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0b1b33;
-  color:#fff;
-}
-header{
-  padding:16px;
-  font-size:22px;
-  font-weight:bold;
-}
-.section{
-  background:#142a4f;
-  margin:14px;
-  padding:16px;
-  border-radius:16px;
-}
-h3{margin-top:0}
-input,select,button{
-  width:100%;
-  padding:10px;
-  margin-top:6px;
-  margin-bottom:10px;
-  border-radius:10px;
-  border:none;
-}
-button{
-  background:#2b6dff;
-  color:#fff;
-  font-weight:bold;
-}
-.divider{
-  height:1px;
-  background:rgba(255,255,255,0.1);
-  margin:20px 0;
-}
-canvas{
-  background:#fff;
-  border-radius:12px;
-}
-</style>
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 14px 92px;
+    }
+
+    header{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      margin-bottom:14px;
+    }
+    .title{
+      display:flex; align-items:flex-start; gap:10px;
+    }
+    .title .emoji{font-size:26px; line-height:1; margin-top:4px}
+    .title h1{margin:0; font-size:22px; line-height:1.1}
+    .title p{margin:6px 0 0; color:var(--muted); font-weight:700; font-size:12px}
+
+    .pill{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      padding:8px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-weight:800;
+      font-size:12px;
+      display:flex; gap:8px; align-items:center;
+    }
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--ok); box-shadow:0 0 0 3px rgba(41,209,124,.18)}
+
+    .grid-cards{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin:12px 0 14px;
+    }
+    @media (min-width: 860px){
+      .grid-cards{grid-template-columns:repeat(4,1fr)}
+      .app{padding-bottom:28px}
+      .bottom-nav{display:none}
+      .tabs-desktop{display:flex}
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 14px;
+      min-height:92px;
+    }
+    .card h3{margin:0; font-size:13px; color:var(--muted); font-weight:900}
+    .card .value{margin-top:10px; font-size:20px; font-weight:1000; letter-spacing:.2px}
+    .sub{margin-top:6px; font-size:12px; color:rgba(234,241,255,.62); font-weight:800}
+
+    .panel{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin:12px 0;
+    }
+    .panel h2{margin:0 0 10px; font-size:15px; font-weight:1000}
+    .muted{color:var(--muted); font-weight:800; font-size:12px; margin:0 0 10px}
+
+    label{display:block; font-size:12px; font-weight:900; color:rgba(234,241,255,.78); margin:10px 0 6px}
+    input,select,button,textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:12px 12px;
+      outline:none;
+      font-weight:900;
+      font-size:14px;
+    }
+    input::placeholder, textarea::placeholder{color:rgba(234,241,255,.45); font-weight:800}
+    input:focus,select:focus,textarea:focus{border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12)}
+
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media (max-width: 420px){ .row{grid-template-columns:1fr} }
+
+    .btn{
+      background:linear-gradient(180deg, var(--accent), var(--accent2));
+      border:1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      font-weight:1000;
+      padding:12px 12px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      color:var(--text);
+    }
+    .btn.danger{
+      background:rgba(255,71,111,.12);
+      border-color:rgba(255,71,111,.28);
+      color:#ffd7e0;
+    }
+
+    .status{
+      margin-top:10px;
+      font-size:12px;
+      font-weight:900;
+      color:rgba(234,241,255,.78);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.03);
+    }
+    th,td{
+      padding:10px 10px;
+      text-align:left;
+      font-size:12px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      vertical-align:top;
+    }
+    th{color:rgba(234,241,255,.75); font-weight:1000}
+    td{color:rgba(234,241,255,.9); font-weight:800}
+    tr:last-child td{border-bottom:none}
+    a{color:#bcd0ff; font-weight:1000}
+
+    /* Tabs / navigation */
+    .tabs-desktop{
+      display:none;
+      gap:10px;
+      align-items:center;
+    }
+    .tab-btn{
+      width:auto;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .tab-btn.active{
+      background:rgba(43,109,255,.16);
+      border-color:rgba(43,109,255,.35);
+      color:var(--text);
+    }
+
+    .bottom-nav{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(6,12,23,.82);
+      border-top:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(14px);
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      z-index:999;
+    }
+    .nav-btn{
+      width:34%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border-radius:16px;
+      padding:12px 10px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .nav-btn.active{
+      background:rgba(43,109,255,.18);
+      border-color:rgba(43,109,255,.35);
+      color:var(--text);
+    }
+
+    .hidden{display:none !important}
+
+    /* Toast */
+    #toast{
+      position:fixed;
+      left:50%;
+      bottom:86px;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.76);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      font-weight:900;
+      font-size:12px;
+      display:none;
+      z-index:2000;
+      max-width:92vw;
+      text-align:center;
+    }
+
+    /* Scanner Modal */
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:3000;
+      padding:16px;
+    }
+    .modal.open{display:flex}
+    .modal-card{
+      width:min(560px, 96vw);
+      background:linear-gradient(180deg, rgba(15,36,70,.98), rgba(10,26,50,.98));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:22px;
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+      padding:14px;
+    }
+    .modal-head{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:10px;
+    }
+    .modal-head h3{margin:0; font-size:14px; font-weight:1000}
+    .modal-close{
+      width:auto; padding:10px 12px; border-radius:14px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+      color:var(--text); cursor:pointer; font-weight:1000;
+    }
+    .scanner-box{
+      width:100%;
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);
+      min-height:320px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    #qrRegion{width:100%}
+    .modal-help{margin:10px 0 0; color:var(--muted); font-weight:900; font-size:12px; line-height:1.4}
+  </style>
 </head>
-
 <body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <div class="emoji">🚗</div>
+        <div>
+          <h1>Controle Combustível</h1>
+          <p>Ford Fiesta • focado no celular</p>
+        </div>
+      </div>
 
-<header>🚗 Painel Combustível</header>
+      <div class="tabs-desktop" aria-label="Menu desktop">
+        <button class="tab-btn active" data-tab="dash">Dashboard</button>
+        <button class="tab-btn" data-tab="rel">Relatórios</button>
+        <button class="tab-btn" data-tab="cfg">Config</button>
+      </div>
 
-<div class="section">
-<h3>🌗 Tema</h3>
-<select id="theme">
-<option value="dark">Escuro</option>
-<option value="light">Claro</option>
-</select>
-</div>
+      <div class="pill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
+    </header>
 
-<div class="section">
-<h3>🚗 Cadastro do Veículo</h3>
-<input id="veiculo" placeholder="Ex: Ford Fiesta 1.6">
-<input id="tanque" placeholder="Capacidade do tanque (L)">
-<button onclick="salvarVeiculo()">Salvar Veículo</button>
-</div>
+    <!-- DASHBOARD -->
+    <section id="tab-dash">
+      <div class="grid-cards">
+        <div class="card">
+          <h3>Km/L Gasolina</h3>
+          <div class="value" id="kmlGas">—</div>
+          <div class="sub">Média (últimos)</div>
+        </div>
+        <div class="card">
+          <h3>Km/L Etanol</h3>
+          <div class="value" id="kmlEta">—</div>
+          <div class="sub">Média (últimos)</div>
+        </div>
+        <div class="card">
+          <h3>Gasto no mês</h3>
+          <div class="value" id="gastoMes">R$ 0,00</div>
+          <div class="sub">Mês atual</div>
+        </div>
+        <div class="card">
+          <h3>Autonomia</h3>
+          <div class="value" id="autonomia">—</div>
+          <div class="sub">Tanque × média</div>
+        </div>
+      </div>
 
-<div class="divider"></div>
+      <div class="panel">
+        <h2>📄 Ler NFC-e (SP)</h2>
+        <p class="muted">Escolha: <b>Ler QR</b> (câmera) ou <b>Colar link</b>. Depois toque em “Ler NFC-e”.</p>
 
-<div class="section">
-<h3>⛽ Novo Abastecimento</h3>
-<input id="data" type="date">
-<input id="km" placeholder="Odômetro (km)">
-<input id="litros" placeholder="Litros">
-<input id="valor" placeholder="Valor R$">
-<input id="nf" placeholder="Link NFC-e (opcional)">
-<button onclick="salvar()">Salvar</button>
-</div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn secondary" id="btnAbrirQR" type="button">📷 Ler QR (beta)</button>
+          <button class="btn" id="btnLerNfce" type="button">✅ Ler NFC-e (do link)</button>
+        </div>
 
-<div class="section">
-<h3>📊 Relatório Mensal</h3>
-<canvas id="grafico" height="120"></canvas>
-<button onclick="exportarPDF()">Exportar PDF</button>
-<button onclick="exportarExcel()">Exportar Excel</button>
-</div>
+        <label for="nfceUrl">Link da NFC-e</label>
+        <input id="nfceUrl" placeholder="https://www.nfce.fazenda.sp.gov.br/...ConsultaQRCode.aspx?p=..." />
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn secondary" id="btnUsarLink" type="button">🔗 Usar link no lançamento</button>
+          <button class="btn secondary" id="btnAbrirLink" type="button">🌐 Abrir consulta (no navegador)</button>
+        </div>
+
+        <div class="status" id="nfceStatus">Use “Ler QR” ou cole o link e toque em “Ler NFC-e”.</div>
+      </div>
+
+      <div class="panel">
+        <h2>⛽ Novo abastecimento</h2>
+
+        <div class="row">
+          <div>
+            <label for="data">Data</label>
+            <input id="data" type="date" />
+          </div>
+          <div>
+            <label for="tipo">Combustível</label>
+            <select id="tipo">
+              <option value="Gasolina">Gasolina</option>
+              <option value="Etanol">Etanol</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="odometro">Odômetro (km)</label>
+            <input id="odometro" inputmode="numeric" placeholder="Ex: 84039" />
+          </div>
+          <div>
+            <label for="litros">Litros</label>
+            <input id="litros" inputmode="decimal" placeholder="Ex: 8,818" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="valor">Valor (R$)</label>
+            <input id="valor" inputmode="decimal" placeholder="Ex: 50,00" />
+          </div>
+          <div>
+            <label for="nfceLink">Link NFC-e (opcional)</label>
+            <input id="nfceLink" placeholder="Fica salvo no histórico" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="btnSalvar" type="button">Salvar</button>
+          <button class="btn danger" id="btnLimpar" type="button">Limpar histórico</button>
+        </div>
+
+        <div class="status" id="saveStatus">—</div>
+      </div>
+
+      <div class="panel">
+        <h2>🧾 Histórico</h2>
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Km</th>
+                <th>Litros</th>
+                <th>R$</th>
+                <th>Tipo</th>
+                <th>NFC-e</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIOS -->
+    <section id="tab-rel" class="hidden">
+      <div class="panel">
+        <h2>📊 Gráfico mensal (gasto)</h2>
+        <p class="muted">Somatório por mês (R$). Use Exportar para PDF/Excel.</p>
+        <canvas id="chartMes" height="180"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>📦 Exportar</h2>
+        <div class="row">
+          <button class="btn" id="btnPdf" type="button">📄 Exportar PDF</button>
+          <button class="btn secondary" id="btnExcel" type="button">📥 Exportar Excel</button>
+        </div>
+        <div class="status" id="exportStatus">—</div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section id="tab-cfg" class="hidden">
+      <div class="panel">
+        <h2>⚙️ Configurações</h2>
+        <p class="muted">Ajuste tanque e quantos lançamentos usar para calcular a média.</p>
+
+        <div class="row">
+          <div>
+            <label for="tank">Tanque (L)</label>
+            <input id="tank" inputmode="decimal" placeholder="Ex: 52" />
+          </div>
+          <div>
+            <label for="kmlWindow">Média por quantos lançamentos</label>
+            <input id="kmlWindow" inputmode="numeric" placeholder="Ex: 6" />
+          </div>
+        </div>
+
+        <button class="btn" id="btnSalvarCfg" type="button" style="margin-top:10px">Salvar config</button>
+        <div class="status" id="cfgStatus">—</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="bottom-nav" aria-label="Menu">
+    <button class="nav-btn active" data-tab="dash">🏠 Dashboard</button>
+    <button class="nav-btn" data-tab="rel">📊 Relatórios</button>
+    <button class="nav-btn" data-tab="cfg">⚙️ Config</button>
+  </div>
+
+  <!-- Scanner Modal -->
+  <div class="modal" id="qrModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>📷 Ler QR da NFC-e (beta)</h3>
+        <button class="modal-close" id="btnFecharQR" type="button">Fechar</button>
+      </div>
+      <div class="scanner-box">
+        <div id="qrRegion"></div>
+      </div>
+      <div class="modal-help" id="qrHelp">
+        Dica: se falhar no seu Xiaomi, use o Lens/Camera para abrir o link e cole no campo.
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
 
 <script>
-const STORAGE="cb_dados";
-let dados = JSON.parse(localStorage.getItem(STORAGE)||"[]");
+/* =========================
+   Helpers
+========================= */
+const STORE_KEY = "combustivel_abastecimentos_v1";
+const CFG_KEY   = "combustivel_cfg_v1";
 
-function salvar(){
-  const item={
-    data:document.getElementById("data").value,
-    km:document.getElementById("km").value,
-    litros:document.getElementById("litros").value,
-    valor:parseFloat(document.getElementById("valor").value||0),
-    nf:document.getElementById("nf").value
-  };
-  dados.push(item);
-  localStorage.setItem(STORAGE,JSON.stringify(dados));
-  atualizarGrafico();
-  alert("Salvo!");
+const $ = (id)=>document.getElementById(id);
+function toast(msg){
+  const t = $("toast");
+  if(!t) return;
+  t.textContent = msg;
+  t.style.display="block";
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
 }
-
-function salvarVeiculo(){
-  localStorage.setItem("cb_veiculo",document.getElementById("veiculo").value);
-  localStorage.setItem("cb_tanque",document.getElementById("tanque").value);
-  alert("Veículo salvo!");
+function parseBRNumber(s){
+  if(s === null || s === undefined) return null;
+  const v = String(s).trim();
+  if(!v) return null;
+  const norm = v.replace(/\./g,"").replace(",", ".");
+  const n = Number(norm);
+  return Number.isFinite(n) ? n : null;
 }
-
-function atualizarGrafico(){
-  const meses={};
-  dados.forEach(d=>{
-    if(!d.data) return;
-    const mes=d.data.slice(0,7);
-    meses[mes]=(meses[mes]||0)+Number(d.valor);
+function formatBRL(n){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "R$ 0,00";
+  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function formatNum(n, digits=2){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "—";
+  return v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits});
+}
+function ymFromDateISO(iso){
+  const [y,m] = String(iso||"").split("-");
+  if(!y || !m) return null;
+  return `${y}-${m}`;
+}
+function ymLabel(ym){
+  const [y,m] = ym.split("-");
+  return `${m}/${y}`;
+}
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const existing = document.querySelector(`script[data-src="${src}"]`);
+    if(existing){ existing.addEventListener("load", resolve, {once:true}); return resolve(); }
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    s.dataset.src = src;
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error("Falha ao carregar script"));
+    document.head.appendChild(s);
   });
-  const labels=Object.keys(meses);
-  const valores=Object.values(meses);
-  new Chart(document.getElementById("grafico"),{
-    type:"bar",
-    data:{labels:labels,datasets:[{label:"Gasto Mensal",data:valores}]}
-  });
 }
 
-function exportarExcel(){
-  const ws=XLSX.utils.json_to_sheet(dados);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Combustivel");
-  XLSX.writeFile(wb,"relatorio_combustivel.xlsx");
+/* =========================
+   Data
+========================= */
+function loadItems(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
+  catch(e){ return []; }
 }
-
-function exportarPDF(){
-  const doc=new jspdf.jsPDF();
-  doc.text("Relatório Combustível",10,10);
-  doc.save("relatorio_combustivel.pdf");
+function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+function loadCfg(){
+  try{ return JSON.parse(localStorage.getItem(CFG_KEY) || "{}"); }
+  catch(e){ return {}; }
 }
+function saveCfg(cfg){ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }
 
-document.getElementById("theme").addEventListener("change",e=>{
-  if(e.target.value==="light"){
-    document.body.style.background="#f2f2f2";
-    document.body.style.color="#000";
-  }else{
-    document.body.style.background="#0b1b33";
-    document.body.style.color="#fff";
+let items = loadItems();
+let cfg = loadCfg();
+
+/* =========================
+   NFC-e (link)
+========================= */
+async function lerNfce(){
+  const url = ($("nfceUrl").value || "").trim();
+  if(!url){
+    $("nfceStatus").textContent = "Cole o link da NFC-e primeiro.";
+    toast("Cole o link da NFC-e.");
+    return;
   }
-});
 
-atualizarGrafico();
+  $("nfceStatus").textContent = "Lendo NFC-e…";
+  toast("Lendo NFC-e…");
 
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js");
+  try{
+    const r = await fetch(`/api/nfce?url=${encodeURIComponent(url)}`);
+    const data = await r.json();
+
+    if(!data.ok){
+      $("nfceStatus").textContent = `Erro: ${data.error || "não foi possível ler"}`;
+      toast("Erro ao ler NFC-e");
+      return;
+    }
+
+    const n = data.normalized || {};
+    if(n.dataHora){
+      const d = n.dataHora.slice(0,10).split("/");
+      if(d.length === 3) $("data").value = `${d[2]}-${d[1]}-${d[0]}`;
+    }
+    if(n.tipo) $("tipo").value = n.tipo;
+    if(Number.isFinite(n.litros)) $("litros").value = String(n.litros).replace(".", ",");
+    if(Number.isFinite(n.valor)) $("valor").value = String(n.valor).replace(".", ",");
+
+    $("nfceLink").value = url;
+    $("nfceStatus").textContent = "OK ✅ Dados preenchidos. Agora só informe o odômetro e salve.";
+    toast("Dados preenchidos ✅");
+  }catch(e){
+    $("nfceStatus").textContent = "Falha ao chamar /api/nfce. Confira se a API está no ar.";
+    toast("Falha na API");
+  }
 }
-</script>
+function usarLinkNoLancamento(){
+  const url = ($("nfceUrl").value || "").trim();
+  if(!url){ toast("Cole o link da NFC-e primeiro."); return; }
+  $("nfceLink").value = url;
+  toast("Link colocado no lançamento.");
+}
+function abrirLink(){
+  const url = ($("nfceUrl").value || "").trim();
+  if(!url){ toast("Cole o link da NFC-e."); return; }
+  window.open(url, "_blank", "noopener");
+}
 
+/* =========================
+   QR Scanner (beta)
+   - Tenta BarcodeDetector (Chrome moderno)
+   - Se não existir, usa Html5Qrcode (CDN) como fallback
+========================= */
+let qrStream = null;
+let barcodeLoop = null;
+let html5Scanner = null;
+
+function openQRModal(){
+  const m = $("qrModal");
+  m.classList.add("open");
+  m.setAttribute("aria-hidden","false");
+}
+function closeQRModal(){
+  const m = $("qrModal");
+  m.classList.remove("open");
+  m.setAttribute("aria-hidden","true");
+}
+
+async function stopScanner(){
+  // stop BarcodeDetector loop
+  if(barcodeLoop){
+    cancelAnimationFrame(barcodeLoop);
+    barcodeLoop = null;
+  }
+  // stop stream
+  if(qrStream){
+    qrStream.getTracks().forEach(t=>t.stop());
+    qrStream = null;
+  }
+  // stop html5-qrcode
+  try{
+    if(html5Scanner){
+      await html5Scanner.stop();
+      await html5Scanner.clear();
+    }
+  }catch(_){}
+  html5Scanner = null;
+
+  // clear region
+  const region = $("qrRegion");
+  region.innerHTML = "";
+}
+
+async function onQrDecoded(text){
+  if(!text) return;
+  // geralmente vem o link da consulta
+  $("nfceUrl").value = text;
+  $("nfceStatus").textContent = "QR lido ✅ Agora toque em “Ler NFC-e (do link)”. (Ou eu posso ler automaticamente.)";
+  toast("QR lido ✅");
+
+  await stopScanner();
+  closeQRModal();
+
+  // opcional: ler automático
+  // lerNfce();
+}
+
+async function startWithBarcodeDetector(){
+  // cria video
+  const region = $("qrRegion");
+  region.innerHTML = `<video id="qrVideo" playsinline muted style="width:100%;height:auto;display:block"></video>`;
+  const video = $("qrVideo");
+
+  qrStream = await navigator.mediaDevices.getUserMedia({
+    video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1280 }, height:{ ideal:720 } },
+    audio:false
+  });
+  video.srcObject = qrStream;
+  await video.play();
+
+  const detector = new BarcodeDetector({ formats:["qr_code"] });
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently:true });
+
+  const tick = async ()=>{
+    if(!video || video.readyState < 2){
+      barcodeLoop = requestAnimationFrame(tick);
+      return;
+    }
+    const w = video.videoWidth || 0;
+    const h = video.videoHeight || 0;
+    if(w && h){
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(video, 0, 0, w, h);
+      try{
+        const barcodes = await detector.detect(canvas);
+        if(barcodes && barcodes.length){
+          const value = barcodes[0].rawValue || barcodes[0].data || "";
+          if(value){
+            await onQrDecoded(value);
+            return;
+          }
+        }
+      }catch(_){}
+    }
+    barcodeLoop = requestAnimationFrame(tick);
+  };
+  barcodeLoop = requestAnimationFrame(tick);
+}
+
+async function startWithHtml5Qrcode(){
+  // carrega a lib somente quando precisar
+  await loadScript("https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js");
+
+  const region = $("qrRegion");
+  region.innerHTML = `<div id="qrReader" style="width:100%"></div>`;
+
+  // Html5Qrcode é global
+  html5Scanner = new Html5Qrcode("qrReader");
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+  const cameras = await Html5Qrcode.getCameras();
+  const camId = cameras && cameras.length ? cameras[0].id : null;
+
+  if(!camId) throw new Error("Sem câmera disponível");
+
+  await html5Scanner.start(
+    { facingMode: "environment" },
+    config,
+    async (decodedText)=>{ await onQrDecoded(decodedText); },
+    ()=>{}
+  );
+}
+
+async function startScanner(){
+  $("qrHelp").textContent = "Abrindo câmera… aponte para o QR da NFC-e.";
+  openQRModal();
+
+  try{
+    await stopScanner();
+
+    // precisa de HTTPS (Vercel é OK). Em desktop, funciona também.
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      throw new Error("Navegador não suporta câmera.");
+    }
+
+    // Prioriza BarcodeDetector (mais leve). Fallback para Html5Qrcode.
+    if("BarcodeDetector" in window){
+      await startWithBarcodeDetector();
+      $("qrHelp").textContent = "Scanner ativo. Se não ler, aproxime o QR e aumente a luz.";
+      return;
+    }
+
+    await startWithHtml5Qrcode();
+    $("qrHelp").textContent = "Scanner ativo. Se não ler, aproxime o QR e aumente a luz.";
+  }catch(e){
+    $("qrHelp").textContent = "Não consegui abrir o scanner no seu aparelho. Use o Lens/Camera para abrir o link e cole no campo.";
+    toast("Scanner falhou — use colar link.");
+  }
+}
+
+/* =========================
+   Calcs / UI
+========================= */
+function calcStats(){
+  const tank = Number.isFinite(parseBRNumber(cfg.tank)) ? parseBRNumber(cfg.tank) : 52;
+  const win  = Number.isFinite(parseBRNumber(cfg.kmlWindow)) ? Math.max(2, Math.floor(parseBRNumber(cfg.kmlWindow))) : 6;
+
+  const sorted = [...items].sort((a,b)=>{
+    const da = a.data || ""; const db = b.data || "";
+    if(da !== db) return da.localeCompare(db);
+    return (a.odometro||0) - (b.odometro||0);
+  });
+
+  const byTipo = (tipo)=> sorted.filter(x=>x.tipo===tipo && Number.isFinite(x.odometro) && Number.isFinite(x.litros) && x.litros>0);
+  const calcKmlWindow = (tipo)=>{
+    const arr = byTipo(tipo);
+    if(arr.length < 2) return null;
+    const last = arr.slice(-win);
+    let sum = 0, count = 0;
+    for(let i=1;i<last.length;i++){
+      const km = last[i].odometro - last[i-1].odometro;
+      const l  = last[i].litros;
+      if(km>0 && l>0){ sum += (km/l); count++; }
+    }
+    return count ? (sum/count) : null;
+  };
+
+  const kmlG = calcKmlWindow("Gasolina");
+  const kmlE = calcKmlWindow("Etanol");
+
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  const gastoMes = sorted
+    .filter(x=>x.data && ymFromDateISO(x.data)===ym && Number.isFinite(x.valor))
+    .reduce((s,x)=>s + x.valor, 0);
+
+  let kmlRef = null;
+  if(sorted.length){
+    const lastTipo = sorted[sorted.length-1].tipo;
+    kmlRef = (lastTipo==="Gasolina") ? kmlG : (lastTipo==="Etanol" ? kmlE : null);
+  }
+  if(!Number.isFinite(kmlRef)) kmlRef = Number.isFinite(kmlG) ? kmlG : kmlE;
+  const autonomia = Number.isFinite(kmlRef) ? (kmlRef * tank) : null;
+
+  return {kmlG, kmlE, gastoMes, autonomia, tank, win, sorted};
+}
+
+function renderCards(){
+  const s = calcStats();
+  $("kmlGas").textContent = s.kmlG ? formatNum(s.kmlG,2) : "—";
+  $("kmlEta").textContent = s.kmlE ? formatNum(s.kmlE,2) : "—";
+  $("gastoMes").textContent = formatBRL(s.gastoMes || 0);
+  $("autonomia").textContent = s.autonomia ? `${formatNum(s.autonomia,0)} km` : "—";
+}
+
+function renderTable(){
+  const tbody = $("tbody");
+  tbody.innerHTML = "";
+  const sorted = calcStats().sorted.slice().reverse();
+  if(!sorted.length){
+    tbody.innerHTML = `<tr><td colspan="6" style="color:rgba(234,241,255,.65);font-weight:900">Sem lançamentos ainda.</td></tr>`;
+    return;
+  }
+  for(const it of sorted){
+    const nf = it.nfceLink ? `<a href="${it.nfceLink}" target="_blank" rel="noopener">🔗 Ver</a>` : "—";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${(it.data||"—")}</td>
+      <td>${Number.isFinite(it.odometro)? it.odometro.toLocaleString("pt-BR"):"—"}</td>
+      <td>${Number.isFinite(it.litros)? formatNum(it.litros,3):"—"}</td>
+      <td>${Number.isFinite(it.valor)? formatBRL(it.valor):"—"}</td>
+      <td>${it.tipo || "—"}</td>
+      <td>${nf}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+let chart = null;
+function renderChart(){
+  const ctx = $("chartMes");
+  if(!ctx) return;
+
+  const sorted = calcStats().sorted;
+  const byYM = new Map();
+  for(const it of sorted){
+    if(!it.data || !Number.isFinite(it.valor)) continue;
+    const ym = ymFromDateISO(it.data);
+    if(!ym) continue;
+    byYM.set(ym, (byYM.get(ym) || 0) + it.valor);
+  }
+  const keys = [...byYM.keys()].sort();
+  const labels = keys.map(ymLabel);
+  const data = keys.map(k=> byYM.get(k));
+
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type:"bar",
+    data:{ labels, datasets:[{ label:"Gasto (R$)", data }]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }},
+      scales:{ y:{ ticks:{ callback:(v)=> Number(v).toLocaleString("pt-BR") } } }
+    }
+  });
+}
+
+/* =========================
+   Actions
+========================= */
+function salvarLancamento(){
+  const data = ($("data").value || "").trim();
+  const odometro = parseBRNumber($("odometro").value);
+  const litros = parseBRNumber($("litros").value);
+  const valor = parseBRNumber($("valor").value);
+  const tipo = $("tipo").value;
+  const nfceLink = ($("nfceLink").value || "").trim();
+
+  if(!data){ toast("Informe a data."); $("saveStatus").textContent = "Informe a data."; return; }
+  if(!Number.isFinite(odometro) || odometro<=0){ toast("Informe o odômetro."); $("saveStatus").textContent="Informe o odômetro."; return; }
+  if(!Number.isFinite(litros) || litros<=0){ toast("Informe litros."); $("saveStatus").textContent="Informe litros."; return; }
+  if(!Number.isFinite(valor) || valor<=0){ toast("Informe valor."); $("saveStatus").textContent="Informe valor."; return; }
+
+  items.push({ id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()), data, odometro, litros, valor, tipo, nfceLink });
+  saveItems(items);
+
+  $("saveStatus").textContent = "Salvo ✅";
+  toast("Salvo ✅");
+  renderAll();
+
+  $("odometro").value = "";
+  $("litros").value = "";
+  $("valor").value = "";
+  $("nfceLink").value = "";
+}
+function limparHistorico(){
+  if(!confirm("Apagar todo o histórico?")) return;
+  items = [];
+  saveItems(items);
+  toast("Histórico limpo.");
+  renderAll();
+}
+
+function salvarCfg(){
+  const tank = parseBRNumber($("tank").value);
+  const kmlWindow = parseBRNumber($("kmlWindow").value);
+  cfg.tank = Number.isFinite(tank) ? tank : 52;
+  cfg.kmlWindow = Number.isFinite(kmlWindow) ? Math.max(2, Math.floor(kmlWindow)) : 6;
+  saveCfg(cfg);
+  $("cfgStatus").textContent = "Config salva ✅";
+  toast("Config salva ✅");
+  renderAll();
+}
+
+async function exportExcel(){
+  try{
+    const rows = calcStats().sorted.map(it => ({
+      Data: it.data,
+      Odometro: it.odometro,
+      Litros: it.litros,
+      Valor: it.valor,
+      Tipo: it.tipo,
+      NFCE: it.nfceLink || ""
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Abastecimentos");
+    const out = XLSX.write(wb, { bookType:"xlsx", type:"array" });
+    const blob = new Blob([out], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "abastecimentos.xlsx";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    $("exportStatus").textContent = "Excel exportado ✅";
+    toast("Excel exportado ✅");
+  }catch(e){
+    $("exportStatus").textContent = "Falha ao exportar Excel.";
+    toast("Falha no Excel");
+  }
+}
+
+async function exportPDF(){
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:"pt", format:"a4" });
+    const margin = 36;
+    let y = 44;
+
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(14);
+    doc.text("Controle de Combustível - Relatório", margin, y);
+    y += 18;
+
+    const s = calcStats();
+    doc.setFontSize(10);
+    doc.setFont("helvetica","normal");
+    doc.text(`Km/L Gasolina: ${s.kmlG ? formatNum(s.kmlG,2) : "—"}`, margin, y); y+=14;
+    doc.text(`Km/L Etanol: ${s.kmlE ? formatNum(s.kmlE,2) : "—"}`, margin, y); y+=14;
+    doc.text(`Gasto no mês: ${formatBRL(s.gastoMes||0)}`, margin, y); y+=14;
+    doc.text(`Autonomia estimada: ${s.autonomia ? (formatNum(s.autonomia,0)+" km") : "—"}`, margin, y); y+=18;
+
+    doc.setFont("helvetica","bold");
+    doc.text("Últimos lançamentos", margin, y); y+=12;
+    doc.setFont("helvetica","normal");
+
+    const cols = ["Data","Km","Litros","R$","Tipo"];
+    const rows = s.sorted.slice().reverse().slice(0,18).map(it => [
+      it.data || "",
+      (it.odometro||"").toString(),
+      (Number.isFinite(it.litros)? formatNum(it.litros,3):""),
+      (Number.isFinite(it.valor)? formatBRL(it.valor):""),
+      it.tipo || ""
+    ]);
+
+    const colW = [90, 70, 70, 90, 90];
+    let x = margin;
+    doc.setFont("helvetica","bold");
+    cols.forEach((c,i)=>{ doc.text(c, x, y); x += colW[i]; });
+    y += 10;
+    doc.setFont("helvetica","normal");
+
+    rows.forEach(r=>{
+      x = margin;
+      r.forEach((c,i)=>{ doc.text(String(c), x, y); x += colW[i]; });
+      y += 12;
+      if(y > 760){ doc.addPage(); y = 44; }
+    });
+
+    doc.save("relatorio-combustivel.pdf");
+    $("exportStatus").textContent = "PDF exportado ✅";
+    toast("PDF exportado ✅");
+  }catch(e){
+    $("exportStatus").textContent = "Falha ao exportar PDF.";
+    toast("Falha no PDF");
+  }
+}
+
+/* =========================
+   Tabs
+========================= */
+function showTab(tab){
+  ["dash","rel","cfg"].forEach(t=>{
+    const sec = document.getElementById("tab-"+t);
+    if(sec) sec.classList.toggle("hidden", t!==tab);
+  });
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+
+  if(tab==="rel") setTimeout(()=>renderChart(), 50);
+}
+
+/* =========================
+   Init / Render
+========================= */
+function carregarCfgUI(){
+  const tank = Number.isFinite(parseBRNumber(cfg.tank)) ? cfg.tank : 52;
+  const win  = Number.isFinite(parseBRNumber(cfg.kmlWindow)) ? cfg.kmlWindow : 6;
+  $("tank").value = String(tank).replace(".", ",");
+  $("kmlWindow").value = String(win);
+  $("cfgStatus").textContent = "—";
+}
+function renderAll(){
+  renderCards();
+  renderTable();
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  const now = new Date();
+  const iso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  $("data").value = iso;
+
+  $("btnLerNfce").addEventListener("click", (e)=>{ e.preventDefault(); lerNfce(); });
+  $("btnUsarLink").addEventListener("click", (e)=>{ e.preventDefault(); usarLinkNoLancamento(); });
+  $("btnAbrirLink").addEventListener("click", (e)=>{ e.preventDefault(); abrirLink(); });
+  $("btnSalvar").addEventListener("click", (e)=>{ e.preventDefault(); salvarLancamento(); });
+  $("btnLimpar").addEventListener("click", (e)=>{ e.preventDefault(); limparHistorico(); });
+  $("btnSalvarCfg").addEventListener("click", (e)=>{ e.preventDefault(); salvarCfg(); });
+  $("btnExcel").addEventListener("click", (e)=>{ e.preventDefault(); exportExcel(); });
+  $("btnPdf").addEventListener("click", (e)=>{ e.preventDefault(); exportPDF(); });
+
+  // QR
+  $("btnAbrirQR").addEventListener("click", async (e)=>{ e.preventDefault(); await startScanner(); });
+  $("btnFecharQR").addEventListener("click", async (e)=>{ e.preventDefault(); await stopScanner(); closeQRModal(); });
+
+  // fecha modal clicando fora
+  $("qrModal").addEventListener("click", async (e)=>{
+    if(e.target && e.target.id === "qrModal"){
+      await stopScanner();
+      closeQRModal();
+    }
+  });
+
+  // Nav
+  document.querySelectorAll("[data-tab]").forEach(btn=>{
+    btn.addEventListener("click",(e)=>{
+      const tab = btn.dataset.tab;
+      if(tab) showTab(tab);
+    });
+  });
+
+  carregarCfgUI();
+  renderAll();
+  showTab("dash");
+});
+</script>
 </body>
 </html>
