@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,227 +5,338 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Combustível - Ford Fiesta</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-
 <style>
-body{
-  margin:0;
-  padding:20px;
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-}
-.sidebar{
-  position:fixed;
-  top:0;
-  left:0;
-  width:220px;
-  height:100%;
-  background:#1e293b;
-  padding:20px 10px;
-}
-.sidebar button{
-  width:100%;
-  margin-bottom:10px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:#334155;
-  color:white;
-  cursor:pointer;
-}
-.sidebar button.active{
-  background:#2563eb;
-}
-.main{
-  margin-left:240px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:15px;
-}
-.card{
-  background:#1e293b;
-  padding:15px;
-  border-radius:12px;
-}
-.value{
-  font-size:22px;
-  font-weight:bold;
-}
-input,select,button{
-  width:100%;
-  padding:8px;
-  margin-top:6px;
-  border-radius:8px;
-  border:none;
-}
-button.primary{
-  background:#2563eb;
-  color:white;
-}
-table{
-  width:100%;
-  margin-top:10px;
-  border-collapse:collapse;
-}
-th,td{
-  padding:8px;
-  border-bottom:1px solid #334155;
-}
-a{
-  color:#60a5fa;
-  text-decoration:none;
-}
+  body{
+    font-family: Arial, sans-serif;
+    background:#0f172a;
+    color:white;
+    margin:0;
+    padding:20px;
+  }
+  h1{margin:0 0 16px 0; line-height:1.2}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+    margin-bottom:20px;
+  }
+  .card{
+    background:#1e293b;
+    padding:15px;
+    border-radius:14px;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .row > *{flex:1}
+  input,select,button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border-radius:10px;
+    border:none;
+    outline:none;
+    box-sizing:border-box;
+  }
+  input,select{background:#f8fafc;color:#0f172a}
+  button{
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button.secondary{background:#334155}
+  button.danger{background:#dc2626}
+  small{color:#94a3b8; display:block; margin-top:8px}
+  video{border-radius:12px}
+  .value{font-size:22px; font-weight:800; margin-top:6px}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-  <button class="active" onclick="show('dashboard')">Dashboard</button>
-  <button onclick="show('reports')">Gráficos</button>
-</div>
-
-<div class="main">
-
-<h1>Controle Combustível</h1>
-
-<div id="dashboard">
+<h1>🚗 Controle Combustível - Ford Fiesta</h1>
 
 <div class="grid">
   <div class="card">
-    <h3>Km/L</h3>
-    <div class="value" id="kml">-</div>
+    <h3>Km/L Gasolina</h3>
+    <div class="value" id="kmlGas">—</div>
+  </div>
+  <div class="card">
+    <h3>Km/L Etanol</h3>
+    <div class="value" id="kmlEta">—</div>
   </div>
   <div class="card">
     <h3>Gasto no mês</h3>
-    <div class="value" id="gasto">R$ 0,00</div>
+    <div class="value" id="gastoMes">R$ 0,00</div>
   </div>
   <div class="card">
-    <h3>Total histórico</h3>
-    <div class="value" id="total">R$ 0,00</div>
-  </div>
-  <div class="card">
-    <h3>Autonomia (tanque 52L)</h3>
-    <div class="value" id="autonomia">-</div>
+    <h3>Autonomia estimada</h3>
+    <div class="value" id="autonomia">—</div>
   </div>
 </div>
 
-<div class="card" style="margin-top:20px;">
+<div class="card">
+  <h3>Nota fiscal (NFC-e)</h3>
+
+  <button type="button" onclick="toggleScanner()">📷 Ler QR da NFC-e</button>
+  <video id="qrVideo" style="display:none;width:100%;margin-top:10px" playsinline></video>
+
+  <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
+  <button type="button" onclick="lerNfce()">✅ Ler NFC-e e preencher</button>
+
+  <small id="nfceStatus">—</small>
+</div>
+
+<div class="card">
   <h3>Novo abastecimento</h3>
+
   <input type="date" id="data">
-  <input type="number" id="km" placeholder="Odômetro">
+  <input type="number" id="odometro" placeholder="Odômetro (km)">
   <input type="number" id="litros" placeholder="Litros">
-  <input type="number" id="valor" placeholder="Valor">
-  <input type="url" id="nf" placeholder="Link NFC-e (opcional)">
-  <button class="primary" onclick="salvar()">Salvar</button>
-</div>
+  <input type="number" id="valor" placeholder="Valor (R$)">
+  <select id="tipo">
+    <option>Gasolina</option>
+    <option>Etanol</option>
+  </select>
 
-<div class="card" style="margin-top:20px;">
-  <h3>Histórico</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th><th>Km</th><th>Litros</th><th>Valor</th><th>NF</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
-</div>
-
-</div>
-
-<div id="reports" style="display:none;">
-  <div class="card">
-    <h3>Gráfico mensal</h3>
-    <canvas id="grafico"></canvas>
+  <div class="row">
+    <button type="button" onclick="salvar()">Salvar</button>
+    <button type="button" class="secondary" onclick="limparCampos()">Limpar</button>
   </div>
-</div>
 
+  <div class="row">
+    <button type="button" class="danger" onclick="resetar()">🧹 Apagar tudo</button>
+  </div>
+
+  <small id="status">—</small>
 </div>
 
 <script>
+  // ====== DADOS ======
+  let abastecimentos = JSON.parse(localStorage.getItem("abastecimentos") || "[]");
 
-let dados = JSON.parse(localStorage.getItem("dados") || "[]");
-
-function show(id){
-  document.getElementById("dashboard").style.display = id==="dashboard"?"block":"none";
-  document.getElementById("reports").style.display = id==="reports"?"block":"none";
-}
-
-function salvar(){
-  const item = {
-    data: document.getElementById("data").value,
-    km: Number(document.getElementById("km").value),
-    litros: Number(document.getElementById("litros").value),
-    valor: Number(document.getElementById("valor").value),
-    nf: document.getElementById("nf").value || null
+  // ====== HELPERS ======
+  const brMoney = (n) => {
+    const v = Number(n || 0);
+    return v.toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
   };
-  dados.push(item);
-  dados.sort((a,b)=>a.km-b.km);
-  localStorage.setItem("dados", JSON.stringify(dados));
-  atualizar();
-}
 
-function atualizar(){
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  dados.forEach(d=>{
-    tbody.innerHTML += `
-      <tr>
-        <td>${d.data}</td>
-        <td>${d.km}</td>
-        <td>${d.litros}</td>
-        <td>R$ ${d.valor.toFixed(2)}</td>
-        <td>${d.nf?'<a href="'+d.nf+'" target="_blank">Ver</a>':'-'}</td>
-      </tr>
-    `;
-  });
-
-  const total = dados.reduce((s,d)=>s+d.valor,0);
-  document.getElementById("total").innerText="R$ "+total.toFixed(2);
-
-  const mesAtual = new Date().getMonth();
-  const gastoMes = dados.filter(d=>new Date(d.data).getMonth()===mesAtual)
-                        .reduce((s,d)=>s+d.valor,0);
-  document.getElementById("gasto").innerText="R$ "+gastoMes.toFixed(2);
-
-  if(dados.length>=2){
-    let ult = dados[dados.length-1];
-    let ant = dados[dados.length-2];
-    let kml = (ult.km-ant.km)/ult.litros;
-    document.getElementById("kml").innerText=kml.toFixed(2);
-    document.getElementById("autonomia").innerText=(kml*52).toFixed(0)+" km";
+  function setStatus(msg){
+    document.getElementById("status").innerText = msg;
+  }
+  function setNfceStatus(msg){
+    document.getElementById("nfceStatus").innerText = msg;
   }
 
-  gerarGrafico();
-}
+  function limparCampos(){
+    document.getElementById("nfceUrl").value = "";
+    document.getElementById("data").value = "";
+    document.getElementById("odometro").value = "";
+    document.getElementById("litros").value = "";
+    document.getElementById("valor").value = "";
+    document.getElementById("tipo").value = "Gasolina";
+    setStatus("Campos limpos.");
+    setNfceStatus("—");
+  }
 
-let chart;
-function gerarGrafico(){
-  const ctx = document.getElementById("grafico").getContext("2d");
-  const meses = {};
-  dados.forEach(d=>{
-    const m = new Date(d.data).toLocaleString("pt-BR",{month:"short"});
-    meses[m]=(meses[m]||0)+d.valor;
-  });
-
-  if(chart) chart.destroy();
-  chart = new Chart(ctx,{
-    type:"bar",
-    data:{
-      labels:Object.keys(meses),
-      datasets:[{label:"R$ por mês", data:Object.values(meses)}]
+  function resetar(){
+    if(confirm("Apagar todos os abastecimentos salvos?")){
+      localStorage.removeItem("abastecimentos");
+      abastecimentos = [];
+      atualizar();
+      setStatus("Zerado! Nenhum lançamento salvo.");
     }
-  });
-}
+  }
 
-atualizar();
+  // ====== SALVAR ======
+  function salvar(){
+    const data = document.getElementById("data").value;
+    const odometro = Number(document.getElementById("odometro").value);
+    const litros = Number(document.getElementById("litros").value);
+    const valor = Number(document.getElementById("valor").value);
+    const tipo = document.getElementById("tipo").value;
+
+    if(!data || !odometro || !litros || !valor){
+      setStatus("Preencha data, odômetro, litros e valor.");
+      return;
+    }
+
+    const item = { data, odometro, litros, valor, tipo };
+
+    abastecimentos.push(item);
+
+    // manter em ordem por data/odômetro (evita bagunça)
+    abastecimentos.sort((a,b)=> (a.odometro - b.odometro));
+
+    localStorage.setItem("abastecimentos", JSON.stringify(abastecimentos));
+    atualizar();
+    setStatus("Salvo ✅");
+  }
+
+  // ====== DASHBOARD ======
+  function atualizar(){
+    // gasto do mês (sempre dá pra calcular)
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+
+    const gasto = abastecimentos
+      .filter(a => {
+        const d = new Date(a.data + "T00:00:00");
+        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+      })
+      .reduce((s,a)=> s + Number(a.valor || 0), 0);
+
+    document.getElementById("gastoMes").innerText = brMoney(gasto);
+
+    // Km/L e autonomia só com pelo menos 2 registros válidos
+    if(abastecimentos.length < 2){
+      document.getElementById("kmlGas").innerText = "—";
+      document.getElementById("kmlEta").innerText = "—";
+      document.getElementById("autonomia").innerText = "—";
+      return;
+    }
+
+    let gas = [];
+    let eta = [];
+
+    for(let i=1; i<abastecimentos.length; i++){
+      const atual = abastecimentos[i];
+      const anterior = abastecimentos[i-1];
+
+      const km = (atual.odometro - anterior.odometro);
+      if(km <= 0) continue;          // odômetro inválido
+      if(atual.litros <= 0) continue;
+
+      const consumo = km / atual.litros;  // km/l
+      if(atual.tipo === "Gasolina") gas.push(consumo);
+      else eta.push(consumo);
+    }
+
+    const media = (arr) => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+
+    const mg = media(gas);
+    const me = media(eta);
+
+    document.getElementById("kmlGas").innerText = (mg ? mg.toFixed(2) : "—");
+    document.getElementById("kmlEta").innerText = (me ? me.toFixed(2) : "—");
+
+    // autonomia estimada (tanque 52L como padrão)
+    const tanque = 52;
+    if(mg){
+      document.getElementById("autonomia").innerText = Math.round(mg * tanque) + " km";
+    }else if(me){
+      document.getElementById("autonomia").innerText = Math.round(me * tanque) + " km";
+    }else{
+      document.getElementById("autonomia").innerText = "—";
+    }
+  }
+
+  // ====== NFC-e (colar link + QR) ======
+  function preencherCampos(n){
+    // dataHora: "25/02/2026 18:15:50" -> "2026-02-25"
+    if(n.dataHora){
+      const d = n.dataHora.split(" ")[0];
+      const [dd,mm,aaaa] = d.split("/");
+      document.getElementById("data").value = `${aaaa}-${mm}-${dd}`;
+    }
+    if(n.litros != null) document.getElementById("litros").value = n.litros;
+    if(n.valor != null) document.getElementById("valor").value = n.valor;
+    if(n.tipo) document.getElementById("tipo").value = n.tipo;
+  }
+
+  async function lerNfce(){
+    const url = (document.getElementById("nfceUrl").value || "").trim();
+    if(!url){
+      setNfceStatus("Cole o link da NFC-e primeiro.");
+      return;
+    }
+
+    setNfceStatus("Lendo NFC-e…");
+
+    try{
+      const apiUrl = "/api/nfce?url=" + encodeURIComponent(url);
+      const r = await fetch(apiUrl);
+      const j = await r.json();
+
+      if(!j.ok){
+        setNfceStatus("Erro: " + (j.error || "não consegui ler a NFC-e"));
+        return;
+      }
+
+      preencherCampos(j.normalized || {});
+      setNfceStatus(`OK ✅ ${j.normalized?.tipo || "-"} • ${brMoney(j.normalized?.valor)} • ${j.normalized?.litros ?? "-"} L`);
+    }catch(e){
+      setNfceStatus("Falha ao chamar a API.");
+    }
+  }
+
+  // ====== QR Scanner (nativo) ======
+  let qrStream = null;
+
+  async function toggleScanner(){
+    const video = document.getElementById("qrVideo");
+
+    // se já estiver aberto, fecha
+    if(qrStream){
+      qrStream.getTracks().forEach(t=>t.stop());
+      qrStream = null;
+      video.style.display = "none";
+      setNfceStatus("Scanner fechado.");
+      return;
+    }
+
+    // abre câmera
+    try{
+      qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      video.srcObject = qrStream;
+      await video.play();
+      video.style.display = "block";
+      setNfceStatus("Aponte para o QR da NFC-e…");
+
+      if(!("BarcodeDetector" in window)){
+        setNfceStatus("Seu navegador não suporta leitura nativa de QR. Use 'colar link' por enquanto.");
+        return;
+      }
+
+      const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+      const scanLoop = async () => {
+        if(!qrStream) return;
+
+        try{
+          const codes = await detector.detect(video);
+          if(codes && codes.length){
+            const raw = (codes[0].rawValue || "").trim();
+
+            // fecha câmera
+            qrStream.getTracks().forEach(t=>t.stop());
+            qrStream = null;
+            video.style.display = "none";
+
+            document.getElementById("nfceUrl").value = raw;
+            setNfceStatus("QR lido! Buscando dados…");
+            await lerNfce();
+            return;
+          }
+        }catch(e){}
+
+        requestAnimationFrame(scanLoop);
+      };
+
+      scanLoop();
+    }catch(e){
+      setNfceStatus("Não consegui abrir a câmera (permissão negada ou sem câmera).");
+    }
+  }
+
+  // inicializa
+  atualizar();
+  setStatus(abastecimentos.length ? `Você tem ${abastecimentos.length} lançamento(s) salvo(s).` : "Nenhum lançamento salvo ainda.");
 
 </script>
 
