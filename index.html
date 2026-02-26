@@ -11,10 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <!-- Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-  <!-- QR Scanner (compatível) -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
-
-  <style>
+<style>
     :root{
       --bg:#0b1224;
       --card:#101c36;
@@ -308,7 +305,7 @@
             <button class="secondary" type="button" id="btnAbrirQr">📷 Ler QR</button>
             <button class="secondary" type="button" id="btnPararQr" style="display:none">⏹️ Parar</button>
           </div>
-          <div id="qrBox" style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:#000;min-height:320px"></div>
+          <video id="qrVideo" playsinline style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:#000;min-height:320px"></video>
           <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
           <div class="row">
             <button class="secondary" type="button" id="btnUsarLink">Usar link no lançamento</button>
@@ -864,83 +861,88 @@ function renderAll(){
 }
 
 
-let _qr = null;
+let qrStream = null;
+let qrRunning = false;
+
 async function startQr(){
-  const box = document.getElementById("qrBox");
+  const video = document.getElementById("qrVideo");
   const bStart = document.getElementById("btnAbrirQr");
   const bStop  = document.getElementById("btnPararQr");
   const st = document.getElementById("nfceStatus");
-  if(!box || !bStart || !bStop) return;
 
-  box.style.display = "block";
-  bStart.style.display = "none";
-  bStop.style.display = "block";
-  box.innerHTML = "";
+  if(!video || !bStart || !bStop) return;
+
+  if(!("BarcodeDetector" in window)){
+    toast("Seu navegador não suporta QR nativo.");
+    if(st) st.textContent = "Seu navegador não suporta leitura nativa de QR. Use 'colar link' por enquanto.";
+    return;
+  }
 
   try{
-    if(typeof Html5Qrcode === "undefined"){
-      toast("Scanner não carregou.");
-      if(st) st.textContent = "Scanner não carregou (html5-qrcode).";
-      stopQr();
-      return;
-    }
+    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = qrStream;
+    await video.play();
 
-    _qr = new Html5Qrcode("qrBox");
+    video.style.display = "block";
+    bStart.style.display = "none";
+    bStop.style.display = "block";
+    qrRunning = true;
 
-    // Preferir câmera traseira (facingMode)
-    toast("Abrindo câmera…");
-    if(st) st.textContent = "Abrindo câmera… (se pedir, permita o uso)";
+    toast("Aponte para o QR…");
+    if(st) st.textContent = "Aponte para o QR da NFC-e…";
 
-    await _qr.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => {
-        const v = decodedText.trim();
-        document.getElementById("nfceUrl").value = v;
-        document.getElementById("nfceLink").value = v;
-        toast("QR lido ✅");
-        if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
-        stopQr();
-        lerNfce();
-      },
-      (_) => {}
-    );
+    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+
+    const loop = async () => {
+      if(!qrRunning) return;
+      try{
+        const codes = await detector.detect(video);
+        if(codes && codes.length){
+          const v = (codes[0].rawValue || "").trim();
+          document.getElementById("nfceUrl").value = v;
+          document.getElementById("nfceLink").value = v;
+          toast("QR lido ✅");
+          if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
+          await stopQr();
+          await lerNfce();
+          return;
+        }
+      }catch(e){}
+      requestAnimationFrame(loop);
+    };
+
+    loop();
   }catch(e){
     const msg = String(e?.message || e);
     toast("Não abriu a câmera.");
     if(st) st.textContent = "Não consegui abrir a câmera. Erro: " + msg;
-    // fallback: tentar escolher a primeira câmera disponível
-    try{
-      const cams = await Html5Qrcode.getCameras();
-      if(cams && cams.length){
-        const camId = cams[cams.length-1].id; // costuma ser traseira em alguns Android
-        await _qr.start(
-          { deviceId: { exact: camId } },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText) => {
-            const v = decodedText.trim();
-            document.getElementById("nfceUrl").value = v;
-            document.getElementById("nfceLink").value = v;
-            toast("QR lido ✅");
-            if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
-            stopQr();
-            lerNfce();
-          },
-          (_) => {}
-        );
-      }else{
-        stopQr();
-      }
-    }catch(_){
-      stopQr();
-    }
+    await stopQr();
   }
 }
+
 async function stopQr(){
-  const box = document.getElementById("qrBox");
+  const video = document.getElementById("qrVideo");
   const bStart = document.getElementById("btnAbrirQr");
   const bStop  = document.getElementById("btnPararQr");
-  if(box){ box.style.display = "none"; box.innerHTML=""; }
+
+  qrRunning = false;
+
+  try{
+    if(qrStream){
+      qrStream.getTracks().forEach(t=>t.stop());
+    }
+  }catch(e){}
+
+  qrStream = null;
+
+  if(video){
+    video.pause();
+    video.srcObject = null;
+    video.style.display = "none";
+  }
+  if(bStart) bStart.style.display = "block";
+  if(bStop) bStop.style.display = "none";
+}
   if(bStart) bStart.style.display = "block";
   if(bStop) bStop.style.display = "none";
 
