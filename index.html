@@ -1,91 +1,165 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CB Combustível</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CB - Controle Combustível</title>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0b1b33">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1b33">
 
-  <style>
-    body{
-      margin:0;
-      font-family: Arial, sans-serif;
-      background:#0b1b33;
-      color:#fff;
-      padding:20px;
-    }
-    h1{margin-top:0}
-    .card{
-      background:#142a4f;
-      padding:16px;
-      border-radius:16px;
-      margin-bottom:12px;
-    }
-    button{
-      padding:10px 14px;
-      border:none;
-      border-radius:12px;
-      background:#2b6dff;
-      color:#fff;
-      font-weight:bold;
-      cursor:pointer;
-    }
-    select{
-      padding:8px;
-      border-radius:10px;
-    }
-  </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0b1b33;
+  color:#fff;
+}
+header{
+  padding:16px;
+  font-size:22px;
+  font-weight:bold;
+}
+.section{
+  background:#142a4f;
+  margin:14px;
+  padding:16px;
+  border-radius:16px;
+}
+h3{margin-top:0}
+input,select,button{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  margin-bottom:10px;
+  border-radius:10px;
+  border:none;
+}
+button{
+  background:#2b6dff;
+  color:#fff;
+  font-weight:bold;
+}
+.divider{
+  height:1px;
+  background:rgba(255,255,255,0.1);
+  margin:20px 0;
+}
+canvas{
+  background:#fff;
+  border-radius:12px;
+}
+</style>
 </head>
+
 <body>
 
-<h1>🚗 Painel Combustível</h1>
+<header>🚗 Painel Combustível</header>
 
-<div class="card">
-  <h3>Tema</h3>
-  <select id="themeSelect">
-    <option value="system">Sistema</option>
-    <option value="light">Claro</option>
-    <option value="dark">Escuro</option>
-  </select>
+<div class="section">
+<h3>🌗 Tema</h3>
+<select id="theme">
+<option value="dark">Escuro</option>
+<option value="light">Claro</option>
+</select>
 </div>
 
-<div class="card">
-  <h3>Status</h3>
-  <p id="status">Pronto</p>
+<div class="section">
+<h3>🚗 Cadastro do Veículo</h3>
+<input id="veiculo" placeholder="Ex: Ford Fiesta 1.6">
+<input id="tanque" placeholder="Capacidade do tanque (L)">
+<button onclick="salvarVeiculo()">Salvar Veículo</button>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+<h3>⛽ Novo Abastecimento</h3>
+<input id="data" type="date">
+<input id="km" placeholder="Odômetro (km)">
+<input id="litros" placeholder="Litros">
+<input id="valor" placeholder="Valor R$">
+<input id="nf" placeholder="Link NFC-e (opcional)">
+<button onclick="salvar()">Salvar</button>
+</div>
+
+<div class="section">
+<h3>📊 Relatório Mensal</h3>
+<canvas id="grafico" height="120"></canvas>
+<button onclick="exportarPDF()">Exportar PDF</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
 </div>
 
 <script>
-function loadTheme(){
-  const saved = localStorage.getItem("cb_theme") || "system";
-  document.getElementById("themeSelect").value = saved;
-  applyTheme(saved);
+const STORAGE="cb_dados";
+let dados = JSON.parse(localStorage.getItem(STORAGE)||"[]");
+
+function salvar(){
+  const item={
+    data:document.getElementById("data").value,
+    km:document.getElementById("km").value,
+    litros:document.getElementById("litros").value,
+    valor:parseFloat(document.getElementById("valor").value||0),
+    nf:document.getElementById("nf").value
+  };
+  dados.push(item);
+  localStorage.setItem(STORAGE,JSON.stringify(dados));
+  atualizarGrafico();
+  alert("Salvo!");
 }
 
-function applyTheme(mode){
-  if(mode === "light"){
-    document.body.style.background = "#f2f2f2";
-    document.body.style.color = "#000";
+function salvarVeiculo(){
+  localStorage.setItem("cb_veiculo",document.getElementById("veiculo").value);
+  localStorage.setItem("cb_tanque",document.getElementById("tanque").value);
+  alert("Veículo salvo!");
+}
+
+function atualizarGrafico(){
+  const meses={};
+  dados.forEach(d=>{
+    if(!d.data) return;
+    const mes=d.data.slice(0,7);
+    meses[mes]=(meses[mes]||0)+Number(d.valor);
+  });
+  const labels=Object.keys(meses);
+  const valores=Object.values(meses);
+  new Chart(document.getElementById("grafico"),{
+    type:"bar",
+    data:{labels:labels,datasets:[{label:"Gasto Mensal",data:valores}]}
+  });
+}
+
+function exportarExcel(){
+  const ws=XLSX.utils.json_to_sheet(dados);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Combustivel");
+  XLSX.writeFile(wb,"relatorio_combustivel.xlsx");
+}
+
+function exportarPDF(){
+  const doc=new jspdf.jsPDF();
+  doc.text("Relatório Combustível",10,10);
+  doc.save("relatorio_combustivel.pdf");
+}
+
+document.getElementById("theme").addEventListener("change",e=>{
+  if(e.target.value==="light"){
+    document.body.style.background="#f2f2f2";
+    document.body.style.color="#000";
   }else{
-    document.body.style.background = "#0b1b33";
-    document.body.style.color = "#fff";
+    document.body.style.background="#0b1b33";
+    document.body.style.color="#fff";
   }
-}
-
-document.getElementById("themeSelect").addEventListener("change", function(){
-  const mode = this.value;
-  localStorage.setItem("cb_theme", mode);
-  applyTheme(mode);
 });
 
-loadTheme();
+atualizarGrafico();
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("SW registrado"))
-    .catch(err => console.log("Erro SW:", err));
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
 }
 </script>
 
