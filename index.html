@@ -3,10 +3,44 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Controle Combustível - Ford Fiesta</title>
+  <title>Controle Combustível</title>
 
   <!-- Libs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">
+/* =========================
+   Tema (claro/escuro/sistema)
+========================= */
+const THEME_KEY = "combustivel_theme_v1";
+
+function applyTheme(mode){
+  const body = document.body;
+  if(mode === "light"){
+    body.classList.add("light");
+  } else if(mode === "dark"){
+    body.classList.remove("light");
+  } else {
+    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    body.classList.toggle("light", !!prefersLight);
+  }
+  localStorage.setItem(THEME_KEY, mode);
+}
+
+function loadTheme(){
+  const saved = localStorage.getItem(THEME_KEY) || "system";
+  const sel = $("themeSelect");
+  if(sel) sel.value = saved;
+  applyTheme(saved);
+
+  // Se estiver em "system", reage às mudanças do sistema
+  if(window.matchMedia){
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    mq.onchange = () => {
+      if((localStorage.getItem(THEME_KEY) || "system") === "system") applyTheme("system");
+    };
+  }
+}
+
+</script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -25,12 +59,25 @@
       --ok:#29d17c;
       --shadow:0 12px 30px rgba(0,0,0,.28);
       --radius:18px;
+    
+    /* Light mode overrides */
+    body.light{
+      --bg:#f4f7fb;
+      --panel:#ffffff;
+      --card:#ffffff;
+      --card2:#f0f3f9;
+      --text:#1b1f28;
+      --muted:rgba(0,0,0,.55);
+      --stroke:rgba(0,0,0,.08);
+      --shadow:0 8px 20px rgba(0,0,0,.08);
     }
+}
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      background:linear-gradient(180deg, #071225 0%, #06101f 70%, #050c17 100%);
+      background: var(--bg);
+      background:linear-gradient(180deg, var(--bg) 0%, rgba(6,16,31,1) 70%, rgba(5,12,23,1) 100%);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
@@ -307,7 +354,6 @@
     }
 
   </style>
-  <link rel="manifest" href="manifest.json">\n  <meta name="theme-color" content="#071225">\n
 </head>
 <body>
   <div class="app">
@@ -316,12 +362,12 @@
         <div class="emoji">🚗</div>
         <div>
           <h1>Controle Combustível</h1>
-          <p>Ford Fiesta • focado no celular</p>
+          <p id="vehicleSubtitle">Meu veículo • focado no celular</p>
         </div>
       </div>
 
       <div class="tabs-desktop" aria-label="Menu desktop">
-        <button class="tab-btn active" data-tab="dash">Dashboard</button>
+        <button class="tab-btn active" data-tab="dash">Painel</button>
         <button class="tab-btn" data-tab="rel">Relatórios</button>
         <button class="tab-btn" data-tab="cfg">Config</button>
       </div>
@@ -487,7 +533,7 @@
           </div>
           <div>
             <label for="vModelo">Modelo</label>
-            <input id="vModelo" placeholder="Ex: Ford Fiesta" />
+            <input id="vModelo" placeholder="Ex: Meu veículo" />
           </div>
         </div>
 
@@ -517,6 +563,17 @@
           </div>
         </div>
 
+        
+        <div class="divider"></div>
+        <h2 class="module-title">🎨 Aparência</h2>
+
+        <label for="themeSelect">Tema</label>
+        <select id="themeSelect">
+          <option value="system">Seguir sistema</option>
+          <option value="dark">Escuro</option>
+          <option value="light">Claro</option>
+        </select>
+
         <button class="btn" id="btnSalvarCfg" type="button" style="margin-top:10px">Salvar config</button>
         <div class="status" id="cfgStatus">—</div>
       </div>
@@ -524,7 +581,7 @@
   </div>
 
   <div class="bottom-nav" aria-label="Menu">
-    <button class="nav-btn active" data-tab="dash">🏠 Dashboard</button>
+    <button class="nav-btn active" data-tab="dash">📋 Painel</button>
     <button class="nav-btn" data-tab="rel">📊 Relatórios</button>
     <button class="nav-btn" data-tab="cfg">⚙️ Config</button>
   </div>
@@ -987,6 +1044,7 @@ function salvarCfg(){
   saveCfg(cfg);
   $("cfgStatus").textContent = "Config salva ✅";
   toast("Config salva ✅");
+  updateVehicleSubtitle();
   renderAll();
 }
 
@@ -1091,6 +1149,18 @@ function showTab(tab){
 /* =========================
    Init / Render
 ========================= */
+
+function updateVehicleSubtitle(){
+  const el = $("vehicleSubtitle");
+  if(!el) return;
+  const v = (cfg && cfg.veiculo) ? cfg.veiculo : {};
+  const name = [v.nome, v.modelo].filter(Boolean).join(" ").trim() || "Meu veículo";
+  const extras = [];
+  if(v.placa) extras.push(v.placa);
+  if(v.ano) extras.push(v.ano);
+  const extraStr = extras.length ? (" • " + extras.join(" • ")) : "";
+  el.textContent = `${name}${extraStr} • focado no celular`;
+}
 function carregarCfgUI(){
   const tank = Number.isFinite(parseBRNumber(cfg.tank)) ? cfg.tank : 52;
   const win  = Number.isFinite(parseBRNumber(cfg.kmlWindow)) ? cfg.kmlWindow : 6;
@@ -1112,6 +1182,11 @@ function renderAll(){
   renderTable();
 }
 document.addEventListener("DOMContentLoaded", ()=>{
+  // Tema
+  loadTheme();
+  const themeSel = $("themeSelect");
+  if(themeSel){ themeSel.addEventListener("change", (e)=> applyTheme(e.target.value)); }
+
   const now = new Date();
   const iso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
   $("data").value = iso;
@@ -1157,14 +1232,5 @@ document.addEventListener("DOMContentLoaded", ()=>{
   showTab("dash");
 });
 </script>
-
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
-    });
-  }
-</script>
-
 </body>
 </html>
