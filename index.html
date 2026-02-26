@@ -307,6 +307,7 @@
     }
 
   </style>
+  <link rel="manifest" href="manifest.json">\n  <meta name="theme-color" content="#071225">\n
 </head>
 <body>
   <div class="app">
@@ -1156,5 +1157,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
   showTab("dash");
 });
 </script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+</script>
+
 </body>
 </html>
