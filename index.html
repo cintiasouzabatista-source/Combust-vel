@@ -656,6 +656,216 @@ function loadScript(src){
     s.async = true;
     s.dataset.src = src;
     s.onload = ()=>resolve();
+    s.onerror = ()=        </div>
+
+        <div class="row">
+          <div>
+            <label for="valor">Valor (R$)</label>
+            <input id="valor" inputmode="decimal" placeholder="Ex: 50,00" />
+          </div>
+          <div>
+            <label for="nfceLink">Link NFC-e (opcional)</label>
+            <input id="nfceLink" placeholder="Fica salvo no histórico" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="btnSalvar" type="button">Salvar</button>
+          <button class="btn danger" id="btnLimpar" type="button">Limpar histórico</button>
+        </div>
+
+        <div class="status" id="saveStatus">—</div>
+      </div>
+
+      <div class="panel">
+        <h2 class="module-title">🧾 Histórico</h2>
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Km</th>
+                <th>Litros</th>
+                <th>R$</th>
+                <th>Tipo</th>
+                <th>NFC-e</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIOS -->
+    <section id="tab-rel" class="hidden">
+      <div class="panel">
+        <h2 class="module-title">📊 Gráfico mensal (gasto)</h2>
+        <p class="muted">Somatório por mês (R$). Use Exportar para PDF/Excel.</p>
+        <div class="chart-wrapper"><canvas id="chartMes"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="module-title">📦 Exportar</h2>
+        <div class="row">
+          <button class="btn" id="btnPdf" type="button">📄 Exportar PDF</button>
+          <button class="btn secondary" id="btnExcel" type="button">📥 Exportar Excel</button>
+        </div>
+        <div class="status" id="exportStatus">—</div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section id="tab-cfg" class="hidden">
+      <div class="panel">
+        <h2 class="module-title">⚙️ Configurações</h2>
+        <p class="muted">Ajuste tanque e quantos lançamentos usar para calcular a média.</p>
+
+        <div class="row">
+          <div>
+            <label for="tank">Tanque (L)</label>
+            <input id="tank" inputmode="decimal" placeholder="Ex: 52" />
+          </div>
+          <div>
+            <label for="kmlWindow">Média por quantos lançamentos</label>
+            <input id="kmlWindow" inputmode="numeric" placeholder="Ex: 6" />
+          </div>
+        </div>
+
+        
+        <div class="divider"></div>
+        <h2 class="module-title">🚘 Veículo</h2>
+
+        <div class="row">
+          <div>
+            <label for="vNome">Apelido</label>
+            <input id="vNome" placeholder="Ex: Fiesta" />
+          </div>
+          <div>
+            <label for="vModelo">Modelo</label>
+            <input id="vModelo" placeholder="Ex: Meu veículo" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="vAno">Ano</label>
+            <input id="vAno" inputmode="numeric" placeholder="Ex: 2014" />
+          </div>
+          <div>
+            <label for="vMotor">Motor</label>
+            <input id="vMotor" placeholder="Ex: 1.6" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="vComb">Combustível</label>
+            <select id="vComb">
+              <option value="Flex">Flex</option>
+              <option value="Gasolina">Gasolina</option>
+              <option value="Etanol">Etanol</option>
+            </select>
+          </div>
+          <div>
+            <label for="vPlaca">Placa (opcional)</label>
+            <input id="vPlaca" placeholder="ABC-1234" />
+          </div>
+        </div>
+
+        
+        <div class="divider"></div>
+        <h2 class="module-title">🎨 Aparência</h2>
+
+        <label for="themeSelect">Tema</label>
+        <select id="themeSelect">
+          <option value="system">Seguir sistema</option>
+          <option value="dark">Escuro</option>
+          <option value="light">Claro</option>
+        </select>
+
+        <button class="btn" id="btnSalvarCfg" type="button" style="margin-top:10px">Salvar config</button>
+        <div class="status" id="cfgStatus">—</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="bottom-nav" aria-label="Menu">
+    <button class="nav-btn active" data-tab="dash">📋 Painel</button>
+    <button class="nav-btn" data-tab="rel">📊 Relatórios</button>
+    <button class="nav-btn" data-tab="cfg">⚙️ Config</button>
+  </div>
+
+  <!-- Scanner Modal -->
+  <div class="modal" id="qrModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>📷 Ler QR da NFC-e (beta)</h3>
+        <button class="modal-close" id="btnFecharQR" type="button">Fechar</button>
+      </div>
+      <div class="scanner-box">
+        <div id="qrRegion"></div>
+      </div>
+      <div class="modal-help" id="qrHelp">
+        Dica: se falhar no seu Xiaomi, use o Lens/Camera para abrir o link e cole no campo.
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+/* =========================
+   Helpers
+========================= */
+const STORE_KEY = "combustivel_abastecimentos_v1";
+const CFG_KEY   = "combustivel_cfg_v1";
+
+const $ = (id)=>document.getElementById(id);
+function toast(msg){
+  const t = $("toast");
+  if(!t) return;
+  t.textContent = msg;
+  t.style.display="block";
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
+}
+function parseBRNumber(s){
+  if(s === null || s === undefined) return null;
+  const v = String(s).trim();
+  if(!v) return null;
+  const norm = v.replace(/\./g,"").replace(",", ".");
+  const n = Number(norm);
+  return Number.isFinite(n) ? n : null;
+}
+function formatBRL(n){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "R$ 0,00";
+  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function formatNum(n, digits=2){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "—";
+  return v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits});
+}
+function ymFromDateISO(iso){
+  const [y,m] = String(iso||"").split("-");
+  if(!y || !m) return null;
+  return `${y}-${m}`;
+}
+function ymLabel(ym){
+  const [y,m] = ym.split("-");
+  return `${m}/${y}`;
+}
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const existing = document.querySelector(`script[data-src="${src}"]`);
+    if(existing){ existing.addEventListener("load", resolve, {once:true}); return resolve(); }
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    s.dataset.src = src;
+    s.onload = ()=>resolve();
     s.onerror = ()=>reject(new Error("Falha ao carregar script"));
     document.head.appendChild(s);
   });
