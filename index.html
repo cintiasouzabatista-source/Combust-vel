@@ -11,6 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <!-- Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+  <!-- QR Scanner (compatível) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
 
   <style>
     :root{
@@ -301,7 +303,12 @@
             <h2>🧾 Ler NFC-e (SP)</h2>
             <span class="pill">opcional</span>
           </div>
-          <div class="muted">Cole o link da NFC-e (consulta) e eu preencho litros/valor/tipo/data.</div>
+          <div class="muted">Cole o link da NFC-e ou leia o QR com a câmera.</div>
+          <div class="row">
+            <button class="secondary" type="button" id="btnAbrirQr">📷 Ler QR</button>
+            <button class="secondary" type="button" id="btnPararQr" style="display:none">⏹️ Parar</button>
+          </div>
+          <div id="qrBox" style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:#000;min-height:320px"></div>
           <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
           <div class="row">
             <button class="secondary" type="button" id="btnUsarLink">Usar link no lançamento</button>
@@ -856,11 +863,105 @@ function renderAll(){
   }
 }
 
+
+let _qr = null;
+async function startQr(){
+  const box = document.getElementById("qrBox");
+  const bStart = document.getElementById("btnAbrirQr");
+  const bStop  = document.getElementById("btnPararQr");
+  const st = document.getElementById("nfceStatus");
+  if(!box || !bStart || !bStop) return;
+
+  box.style.display = "block";
+  bStart.style.display = "none";
+  bStop.style.display = "block";
+  box.innerHTML = "";
+
+  try{
+    if(typeof Html5Qrcode === "undefined"){
+      toast("Scanner não carregou.");
+      if(st) st.textContent = "Scanner não carregou (html5-qrcode).";
+      stopQr();
+      return;
+    }
+
+    _qr = new Html5Qrcode("qrBox");
+
+    // Preferir câmera traseira (facingMode)
+    toast("Abrindo câmera…");
+    if(st) st.textContent = "Abrindo câmera… (se pedir, permita o uso)";
+
+    await _qr.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        const v = decodedText.trim();
+        document.getElementById("nfceUrl").value = v;
+        document.getElementById("nfceLink").value = v;
+        toast("QR lido ✅");
+        if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
+        stopQr();
+        lerNfce();
+      },
+      (_) => {}
+    );
+  }catch(e){
+    const msg = String(e?.message || e);
+    toast("Não abriu a câmera.");
+    if(st) st.textContent = "Não consegui abrir a câmera. Erro: " + msg;
+    // fallback: tentar escolher a primeira câmera disponível
+    try{
+      const cams = await Html5Qrcode.getCameras();
+      if(cams && cams.length){
+        const camId = cams[cams.length-1].id; // costuma ser traseira em alguns Android
+        await _qr.start(
+          { deviceId: { exact: camId } },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            const v = decodedText.trim();
+            document.getElementById("nfceUrl").value = v;
+            document.getElementById("nfceLink").value = v;
+            toast("QR lido ✅");
+            if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
+            stopQr();
+            lerNfce();
+          },
+          (_) => {}
+        );
+      }else{
+        stopQr();
+      }
+    }catch(_){
+      stopQr();
+    }
+  }
+}
+async function stopQr(){
+  const box = document.getElementById("qrBox");
+  const bStart = document.getElementById("btnAbrirQr");
+  const bStop  = document.getElementById("btnPararQr");
+  if(box){ box.style.display = "none"; box.innerHTML=""; }
+  if(bStart) bStart.style.display = "block";
+  if(bStop) bStop.style.display = "none";
+
+  try{
+    if(_qr){
+      await _qr.stop();
+      await _qr.clear();
+    }
+  }catch(e){}
+  _qr = null;
+}
+
 document.addEventListener("DOMContentLoaded", ()=>{
   const b1 = document.getElementById("btnUsarLink");
   const b2 = document.getElementById("btnLerNfce");
   if(b1) b1.addEventListener("click", (e)=>{ e.preventDefault(); colocarLinkNoForm(); toast("Link copiado para o lançamento."); });
   if(b2) b2.addEventListener("click", (e)=>{ e.preventDefault(); lerNfce(); });
+  const qb = document.getElementById("btnAbrirQr");
+  const qs = document.getElementById("btnPararQr");
+  if(qb) qb.addEventListener("click", (e)=>{ e.preventDefault(); startQr(); });
+  if(qs) qs.addEventListener("click", (e)=>{ e.preventDefault(); stopQr(); });
 });
 
 renderAll();
