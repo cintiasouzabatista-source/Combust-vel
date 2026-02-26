@@ -3,47 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle Combustível - Fiesta</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<title>Controle Combustível - Ford Fiesta</title>
 
 <style>
 body{
-    font-family: Arial;
-    background:#0f172a;
-    color:#fff;
-    margin:0;
-    padding:15px;
+  font-family: Arial, sans-serif;
+  background:#0f172a;
+  color:white;
+  margin:0;
+  padding:20px;
 }
-h1{font-size:18px}
+h1{margin-bottom:20px}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  margin-bottom:20px;
+}
 .card{
-    background:#1e293b;
-    padding:15px;
-    border-radius:15px;
-    margin-bottom:15px;
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
 }
-input, select, button{
-    width:100%;
-    padding:10px;
-    margin-top:5px;
-    border-radius:10px;
-    border:none;
+input,select,button{
+  width:100%;
+  padding:8px;
+  margin-top:8px;
+  border-radius:8px;
+  border:none;
 }
 button{
-    background:#3b82f6;
-    color:white;
-    font-weight:bold;
+  background:#2563eb;
+  color:white;
+  cursor:pointer;
 }
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-    gap:10px;
-}
-.big{font-size:18px;font-weight:bold}
 small{color:#94a3b8}
-canvas{background:white;border-radius:10px;padding:5px}
+video{border-radius:12px}
 </style>
 </head>
 
@@ -52,148 +48,174 @@ canvas{background:white;border-radius:10px;padding:5px}
 <h1>🚗 Controle Combustível - Ford Fiesta</h1>
 
 <div class="grid">
-<div class="card">
-<div class="big" id="mediaGas">--</div>
-<small>Km/L Gasolina</small>
+  <div class="card">
+    <h3>Km/L Gasolina</h3>
+    <div id="kmlGas">-</div>
+  </div>
+  <div class="card">
+    <h3>Km/L Etanol</h3>
+    <div id="kmlEta">-</div>
+  </div>
+  <div class="card">
+    <h3>Gasto no mês</h3>
+    <div id="gastoMes">-</div>
+  </div>
+  <div class="card">
+    <h3>Autonomia estimada</h3>
+    <div id="autonomia">-</div>
+  </div>
 </div>
 
 <div class="card">
-<div class="big" id="mediaEta">--</div>
-<small>Km/L Etanol</small>
-</div>
+<h3>Nota fiscal (NFC-e)</h3>
 
-<div class="card">
-<div class="big" id="gastoMes">--</div>
-<small>Gasto no mês</small>
-</div>
+<button onclick="toggleScanner()">📷 Ler QR da NFC-e</button>
+<video id="qrVideo" style="display:none;width:100%;margin-top:10px" playsinline></video>
 
-<div class="card">
-<div class="big" id="autonomia">--</div>
-<small>Autonomia estimada</small>
-</div>
+<input id="nfceUrl" placeholder="Cole aqui o link da NFC-e" />
+<button onclick="lerNfce()">Ler NFC-e</button>
+
+<small id="nfceStatus">—</small>
 </div>
 
 <div class="card">
 <h3>Novo abastecimento</h3>
+
 <input type="date" id="data">
-<input type="number" id="km" placeholder="Odômetro (km)">
+<input type="number" id="odometro" placeholder="Odômetro (km)">
 <input type="number" id="litros" placeholder="Litros">
 <input type="number" id="valor" placeholder="Valor (R$)">
 <select id="tipo">
-<option>Gasolina</option>
-<option>Etanol</option>
+  <option>Gasolina</option>
+  <option>Etanol</option>
 </select>
+
 <button onclick="salvar()">Salvar</button>
 </div>
 
-<div class="card">
-<h3>Configuração Tanque</h3>
-<input type="number" id="tanque" placeholder="Capacidade do tanque (ex: 52)">
-<input type="number" id="odometroAtual" placeholder="Odômetro atual">
-<button onclick="salvarConfig()">Salvar Configuração</button>
-</div>
-
-<div class="card">
-<canvas id="grafico"></canvas>
-</div>
-
-<div class="card">
-<button onclick="exportarExcel()">Exportar Excel</button>
-<button onclick="exportarPDF()">Exportar PDF</button>
-</div>
-
 <script>
-let dados = JSON.parse(localStorage.getItem("combustivel")) || [];
-let config = JSON.parse(localStorage.getItem("config")) || {tanque:52};
 
-document.getElementById("tanque").value=config.tanque;
+let abastecimentos = JSON.parse(localStorage.getItem("abastecimentos")||"[]");
 
 function salvar(){
-    let novo = {
-        data:document.getElementById("data").value,
-        km:Number(document.getElementById("km").value),
-        litros:Number(document.getElementById("litros").value),
-        valor:Number(document.getElementById("valor").value),
-        tipo:document.getElementById("tipo").value
-    };
-    dados.push(novo);
-    localStorage.setItem("combustivel",JSON.stringify(dados));
-    atualizar();
-}
-
-function salvarConfig(){
-    config.tanque=Number(document.getElementById("tanque").value);
-    localStorage.setItem("config",JSON.stringify(config));
-    atualizar();
+  const item = {
+    data:document.getElementById("data").value,
+    odometro:Number(document.getElementById("odometro").value),
+    litros:Number(document.getElementById("litros").value),
+    valor:Number(document.getElementById("valor").value),
+    tipo:document.getElementById("tipo").value
+  };
+  abastecimentos.push(item);
+  localStorage.setItem("abastecimentos",JSON.stringify(abastecimentos));
+  atualizar();
 }
 
 function atualizar(){
-    if(dados.length<2) return;
+  if(abastecimentos.length<2)return;
 
-    let gas=[], eta=[];
-    for(let i=1;i<dados.length;i++){
-        let kmRodado=dados[i].km-dados[i-1].km;
-        let consumo=kmRodado/dados[i].litros;
-        if(dados[i].tipo=="Gasolina") gas.push(consumo);
-        if(dados[i].tipo=="Etanol") eta.push(consumo);
+  let gas=[],eta=[];
+  for(let i=1;i<abastecimentos.length;i++){
+    let atual=abastecimentos[i];
+    let anterior=abastecimentos[i-1];
+    let km=atual.odometro-anterior.odometro;
+    let consumo=km/atual.litros;
+    if(atual.tipo==="Gasolina")gas.push(consumo);
+    else eta.push(consumo);
+  }
+
+  const media=(arr)=>arr.length?(arr.reduce((a,b)=>a+b)/arr.length).toFixed(2):"-";
+
+  document.getElementById("kmlGas").innerText=media(gas);
+  document.getElementById("kmlEta").innerText=media(eta);
+
+  const mesAtual=new Date().getMonth();
+  let gasto=abastecimentos
+    .filter(a=>new Date(a.data).getMonth()===mesAtual)
+    .reduce((s,a)=>s+a.valor,0);
+
+  document.getElementById("gastoMes").innerText="R$ "+gasto.toFixed(2);
+
+  if(gas.length){
+    document.getElementById("autonomia").innerText=(media(gas)*52).toFixed(0)+" km";
+  }
+}
+
+function setStatus(msg){
+  document.getElementById("nfceStatus").innerText=msg;
+}
+
+function preencherCampos(n){
+  if(n.dataHora){
+    const d=n.dataHora.split(" ")[0];
+    const [dd,mm,aaaa]=d.split("/");
+    document.getElementById("data").value=`${aaaa}-${mm}-${dd}`;
+  }
+  if(n.litros)document.getElementById("litros").value=n.litros;
+  if(n.valor)document.getElementById("valor").value=n.valor;
+  if(n.tipo)document.getElementById("tipo").value=n.tipo;
+}
+
+async function lerNfce(){
+  const url=document.getElementById("nfceUrl").value.trim();
+  if(!url){setStatus("Cole o link.");return;}
+  setStatus("Lendo NFC-e...");
+
+  const r=await fetch("/api/nfce?url="+encodeURIComponent(url));
+  const j=await r.json();
+
+  if(!j.ok){setStatus("Erro.");return;}
+
+  preencherCampos(j.normalized);
+  setStatus("OK ✔ Dados preenchidos.");
+}
+
+let qrStream=null;
+
+async function toggleScanner(){
+  const video=document.getElementById("qrVideo");
+
+  if(qrStream){
+    qrStream.getTracks().forEach(t=>t.stop());
+    qrStream=null;
+    video.style.display="none";
+    return;
+  }
+
+  try{
+    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    video.srcObject=qrStream;
+    await video.play();
+    video.style.display="block";
+
+    if(!("BarcodeDetector" in window)){
+      setStatus("QR não suportado neste navegador.");
+      return;
     }
 
-    let mediaGas = gas.length? (gas.reduce((a,b)=>a+b)/gas.length):0;
-    let mediaEta = eta.length? (eta.reduce((a,b)=>a+b)/eta.length):0;
+    const detector=new BarcodeDetector({formats:["qr_code"]});
 
-    document.getElementById("mediaGas").innerText=mediaGas.toFixed(2)+" km/L";
-    document.getElementById("mediaEta").innerText=mediaEta.toFixed(2)+" km/L";
-
-    let mesAtual=new Date().getMonth();
-    let totalMes=dados.filter(d=>new Date(d.data).getMonth()==mesAtual)
-        .reduce((a,b)=>a+b.valor,0);
-    document.getElementById("gastoMes").innerText="R$ "+totalMes.toFixed(2);
-
-    let ultima=dados[dados.length-1];
-    let odometroAtual=Number(document.getElementById("odometroAtual").value)||ultima.km;
-    let kmDesde=odometroAtual-ultima.km;
-    let consumoRef=ultima.tipo=="Gasolina"?mediaGas:mediaEta;
-    let autonomiaRest=(config.tanque-(kmDesde/consumoRef))*consumoRef;
-
-    document.getElementById("autonomia").innerText=autonomiaRest.toFixed(0)+" km";
-
-    criarGrafico(gas,eta);
-}
-
-let chart;
-function criarGrafico(gas,eta){
-    let ctx=document.getElementById("grafico").getContext("2d");
-    if(chart) chart.destroy();
-    chart=new Chart(ctx,{
-        type:"bar",
-        data:{
-            labels:["Gasolina","Etanol"],
-            datasets:[{
-                label:"Km/L médio",
-                data:[
-                    gas.length?gas.reduce((a,b)=>a+b)/gas.length:0,
-                    eta.length?eta.reduce((a,b)=>a+b)/eta.length:0
-                ]
-            }]
-        }
-    });
-}
-
-function exportarExcel(){
-    let wb=XLSX.utils.book_new();
-    let ws=XLSX.utils.json_to_sheet(dados);
-    XLSX.utils.book_append_sheet(wb,ws,"Abastecimentos");
-    XLSX.writeFile(wb,"relatorio.xlsx");
-}
-
-function exportarPDF(){
-    let doc=new jspdf.jsPDF();
-    doc.text("Relatório Combustível",20,20);
-    doc.text("Total registros: "+dados.length,20,30);
-    doc.save("relatorio.pdf");
+    const scan=async()=>{
+      if(!qrStream)return;
+      const codes=await detector.detect(video);
+      if(codes.length){
+        const raw=codes[0].rawValue;
+        document.getElementById("nfceUrl").value=raw;
+        qrStream.getTracks().forEach(t=>t.stop());
+        qrStream=null;
+        video.style.display="none";
+        lerNfce();
+        return;
+      }
+      requestAnimationFrame(scan);
+    };
+    scan();
+  }catch(e){
+    setStatus("Erro câmera.");
+  }
 }
 
 atualizar();
+
 </script>
 
 </body>
