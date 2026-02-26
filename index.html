@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Combustível</title>
+  <title>Combustível </title>
 
   <!-- Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -308,7 +308,7 @@
             <button class="secondary" type="button" id="btnAbrirQr">📷 Ler QR</button>
             <button class="secondary" type="button" id="btnPararQr" style="display:none">⏹️ Parar</button>
           </div>
-          <div id="qrBox" style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:#000"></div>
+          <div id="qrBox" style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden;background:#000;min-height:320px"></div>
           <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
           <div class="row">
             <button class="secondary" type="button" id="btnUsarLink">Usar link no lançamento</button>
@@ -869,42 +869,71 @@ async function startQr(){
   const box = document.getElementById("qrBox");
   const bStart = document.getElementById("btnAbrirQr");
   const bStop  = document.getElementById("btnPararQr");
+  const st = document.getElementById("nfceStatus");
   if(!box || !bStart || !bStop) return;
 
-  // precisa ser https (no Vercel é)
   box.style.display = "block";
   bStart.style.display = "none";
   bStop.style.display = "block";
-  box.innerHTML = ""; // reset container
+  box.innerHTML = "";
 
   try{
-    _qr = new Html5Qrcode("qrBox");
-    const cameras = await Html5Qrcode.getCameras();
-    const camId = cameras?.[0]?.id;
-    if(!camId){
-      toast("Nenhuma câmera encontrada.");
+    if(typeof Html5Qrcode === "undefined"){
+      toast("Scanner não carregou.");
+      if(st) st.textContent = "Scanner não carregou (html5-qrcode).";
       stopQr();
       return;
     }
 
+    _qr = new Html5Qrcode("qrBox");
+
+    // Preferir câmera traseira (facingMode)
     toast("Abrindo câmera…");
+    if(st) st.textContent = "Abrindo câmera… (se pedir, permita o uso)";
+
     await _qr.start(
-      { deviceId: { exact: camId } },
+      { facingMode: "environment" },
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (decodedText) => {
-        // sucesso
-        document.getElementById("nfceUrl").value = decodedText.trim();
-        document.getElementById("nfceLink").value = decodedText.trim();
+        const v = decodedText.trim();
+        document.getElementById("nfceUrl").value = v;
+        document.getElementById("nfceLink").value = v;
         toast("QR lido ✅");
+        if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
         stopQr();
-        // já tenta ler a NF
         lerNfce();
       },
-      (err) => { /* ignora erros de frame */ }
+      (_) => {}
     );
   }catch(e){
-    toast("Não consegui abrir a câmera. Verifique permissão.");
-    stopQr();
+    const msg = String(e?.message || e);
+    toast("Não abriu a câmera.");
+    if(st) st.textContent = "Não consegui abrir a câmera. Erro: " + msg;
+    // fallback: tentar escolher a primeira câmera disponível
+    try{
+      const cams = await Html5Qrcode.getCameras();
+      if(cams && cams.length){
+        const camId = cams[cams.length-1].id; // costuma ser traseira em alguns Android
+        await _qr.start(
+          { deviceId: { exact: camId } },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            const v = decodedText.trim();
+            document.getElementById("nfceUrl").value = v;
+            document.getElementById("nfceLink").value = v;
+            toast("QR lido ✅");
+            if(st) st.textContent = "QR lido ✅ Buscando NFC-e…";
+            stopQr();
+            lerNfce();
+          },
+          (_) => {}
+        );
+      }else{
+        stopQr();
+      }
+    }catch(_){
+      stopQr();
+    }
   }
 }
 async function stopQr(){
