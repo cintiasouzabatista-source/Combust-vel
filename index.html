@@ -309,6 +309,70 @@
       max-width:92vw;
       text-align:center;
     }
+  
+    /* Premium report cards */
+    .reportGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    @media (min-width: 980px){
+      .reportGrid{
+        grid-template-columns: 1fr 1fr;
+        gap:14px;
+      }
+    }
+    .reportCard{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .reportCard:before{
+      content:"";
+      position:absolute;
+      inset:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      pointer-events:none;
+    }
+    .reportHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:2px 2px 10px;
+    }
+    .reportTitle{
+      font-size:13px;
+      font-weight:950;
+      color:rgba(234,241,255,.88);
+      margin:0;
+    }
+    .reportSub{
+      font-size:12px;
+      font-weight:800;
+      color:var(--muted);
+      margin:0;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .chartBox{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:14px;
+      padding:10px;
+      height:220px; /* compacto */
+    }
+    @media (min-width: 980px){
+      .chartBox{ height:240px; }
+    }
+    
+
   </style>
 </head>
 
@@ -481,16 +545,30 @@
     <section class="section view" id="view-relatorios" style="display:none">
       <div class="sectionTitle">📊 Relatórios</div>
       <p class="hint">Consumo (Km/L) por abastecimento e gasto mensal.</p>
-
       <div class="divider"></div>
-      <div class="sectionTitle">Consumo (Km/L)</div>
-      <canvas id="chartKml" height="200"></canvas>
 
-      <div class="divider"></div>
-      <div class="sectionTitle">Gasto mensal (R$)</div>
-      <canvas id="chartMes" height="200"></canvas>
+      <div class="reportGrid">
+        <div class="reportCard">
+          <div class="reportHead">
+            <p class="reportTitle">Consumo (Km/L)</p>
+            <p class="reportSub">linha</p>
+          </div>
+          <div class="chartBox">
+            <canvas id="chartKml" height="220"></canvas>
+          </div>
+        </div>
 
-      <div class="statusLine" id="relStatus">—</div>
+        <div class="reportCard">
+          <div class="reportHead">
+            <p class="reportTitle">Gasto mensal (R$)</p>
+            <p class="reportSub">barras</p>
+          </div>
+          <div class="chartBox">
+            <canvas id="chartMes" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+<div class="statusLine" id="relStatus">—</div>
     </section>
 
     <!-- CONFIG -->
@@ -962,7 +1040,7 @@ function renderCharts(){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,
+      maintainAspectRatio:true,
       plugins:{ legend:{ labels:{ color:"#eaf1ff" } } },
       scales:{
         x:{ ticks:{ color:"rgba(234,241,255,.75)" }, grid:{ color:"rgba(255,255,255,.06)" } },
@@ -981,7 +1059,7 @@ function renderCharts(){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,
+      maintainAspectRatio:true,
       plugins:{ legend:{ labels:{ color:"#eaf1ff" } } },
       scales:{
         x:{ ticks:{ color:"rgba(234,241,255,.75)" }, grid:{ color:"rgba(255,255,255,.06)" } },
