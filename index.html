@@ -1,344 +1,1027 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Combustivel </title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Painel Combustível</title>
 
-<style>
-  body{
-    font-family: Arial, sans-serif;
-    background:#0f272a;
-    color:white;
-    margin:0;
-    padding:20px;
-  }
-  h1{margin:0 0 16px 0; line-height:1.2}
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:15px;
-    margin-bottom:20px;
-  }
-  .card{
-    background:#1e293b;
-    padding:8px;
-    border-radius:14px;
-  }
-  .row{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top:10px;
-  }
-  .row > *{flex:1}
-  input,select,button{
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    border-radius:10px;
-    border:none;
-    outline:none;
-    box-sizing:border-box;
-  }
-  input,select{background:#f8fafc;color:#0f172a}
-  button{
-    background:#2563eb;
-    color:white;
-    cursor:pointer;
-    font-weight:600;
-  }
-  button.secondary{background:#334155}
-  button.danger{background:#dc2626}
-  small{color:#94a3b8; display:block; margin-top:8px}
-  video{border-radius:12px}
-  .value{font-size:22px; font-weight:800; margin-top:6px}
-</style>
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#06101f;
+      --bg2:#071225;
+      --panel:rgba(255,255,255,.04);
+      --card:rgba(255,255,255,.06);
+      --stroke:rgba(255,255,255,.10);
+      --text:#eaf1ff;
+      --muted:rgba(234,241,255,.70);
+      --accent:#2b6dff;
+      --accent2:#1f55cc;
+      --danger:#ff476f;
+      --ok:#29d17c;
+      --shadow:0 14px 34px rgba(0,0,0,.28);
+      --radius:18px;
+      --line:rgba(255,255,255,.08);
+      --sideW: 280px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
+      overflow-x:hidden;
+    }
+    a{color:#bcd0ff}
+    .app{
+      min-height:100vh;
+      display:flex;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      width:var(--sideW);
+      background:rgba(5,12,23,.86);
+      border-right:1px solid var(--line);
+      padding:14px 12px;
+      position:fixed;
+      top:0; bottom:0; left:0;
+      transform: translateX(-102%);
+      transition: transform .22s ease;
+      z-index:2500;
+      backdrop-filter: blur(14px);
+    }
+    .sidebar.open{ transform: translateX(0); }
+    .sidebar .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 10px 14px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:10px;
+    }
+    .brand .logo{font-size:22px}
+    .brand .txt{display:flex; flex-direction:column}
+    .brand .txt .t{font-size:14px; font-weight:900}
+    .brand .txt .s{font-size:12px; color:var(--muted); font-weight:800}
+
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding:10px 6px;
+    }
+    .nav button{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      padding:12px 12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .nav button.active{
+      background:rgba(43,109,255,.16);
+      border-color:rgba(43,109,255,.35);
+      color:var(--text);
+    }
+    .nav .ic{width:22px; display:inline-flex; justify-content:center}
+    .side-footer{
+      position:absolute;
+      left:12px; right:12px; bottom:12px;
+      border-top:1px solid var(--line);
+      padding-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      display:none;
+      z-index:2400;
+    }
+    .overlay.show{display:block}
+
+    /* Main */
+    .main{
+      width:100%;
+      padding:16px 14px 28px;
+      margin-left:0;
+    }
+    @media (min-width: 980px){
+      .sidebar{ transform: translateX(0); position:sticky; z-index:1; }
+      .overlay{display:none !important;}
+      .main{ margin-left:0; padding-left:18px; }
+      .topbar .menuBtn{ display:none; }
+      .app{ gap:0; }
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .menuBtn{
+      width:auto;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .statusPill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(41,209,124,.18)}
+    h1{
+      margin:0;
+      font-size:24px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* Sections */
+    .section{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin:14px 0;
+    }
+    .sectionTitle{
+      margin:0 0 10px;
+      font-size:14px;
+      font-weight:950;
+    }
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:14px 0;
+    }
+
+    /* Cards */
+    .cards{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media (min-width: 560px){
+      .cards{ grid-template-columns:1fr 1fr; }
+    }
+    @media (min-width: 980px){
+      .cards{ grid-template-columns:repeat(4, 1fr); }
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px 14px;
+      min-height:92px;
+    }
+    .card .label{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:850;
+    }
+    .card .val{
+      margin-top:10px;
+      font-size:22px;
+      font-weight:950;
+    }
+    .small{
+      margin-top:6px;
+      color:rgba(234,241,255,.55);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* Form */
+    label{
+      display:block;
+      margin:10px 0 6px;
+      color:rgba(234,241,255,.78);
+      font-size:12px;
+      font-weight:900;
+    }
+    input, select, button{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:12px 12px;
+      outline:none;
+      font-weight:900;
+      font-size:14px;
+    }
+    input::placeholder{ color:rgba(234,241,255,.45); font-weight:800; }
+    input:focus, select:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
+
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
+
+    .btn{
+      background:linear-gradient(180deg, var(--accent), var(--accent2));
+      border:1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      font-weight:950;
+    }
+    .btn.secondary{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--text);
+    }
+    .btn.danger{
+      background:rgba(255,71,111,.12);
+      border-color:rgba(255,71,111,.30);
+      color:#ffd7e0;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .hint{ color:var(--muted); font-size:12px; font-weight:800; margin:0 0 10px; }
+    .statusLine{ color:rgba(234,241,255,.78); font-size:12px; font-weight:900; margin-top:10px; }
+
+    /* Table */
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    th, td{
+      padding:10px 10px;
+      text-align:left;
+      font-size:12px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      vertical-align:top;
+      font-weight:800;
+    }
+    th{ color:rgba(234,241,255,.70); font-weight:900; }
+    tr:last-child td{ border-bottom:none; }
+
+    /* Toast */
+    #toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.76);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      font-weight:900;
+      font-size:12px;
+      display:none;
+      z-index:4000;
+      max-width:92vw;
+      text-align:center;
+    }
+  </style>
 </head>
 
 <body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">🚗</div>
+      <div class="txt">
+        <div class="t">Painel Combustível</div>
+        <div class="s">focado no celular</div>
+      </div>
+    </div>
 
-<h1> Painel </h1>
+    <nav class="nav" aria-label="Menu">
+      <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
+      <button data-view="abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
+      <button data-view="historico"><span class="ic">🧾</span><span>Histórico</span></button>
+      <button data-view="relatorios"><span class="ic">📊</span><span>Relatórios</span></button>
+      <button data-view="config"><span class="ic">⚙️</span><span>Configurações</span></button>
+    </nav>
 
-<div class="grid">
-  <div class="card">
-    <h3>Km/L Gasolina</h3>
-    <div class="value" id="kmlGas">—</div>
-  </div>
-  <div class="card">
-    <h3>Km/L Etanol</h3>
-    <div class="value" id="kmlEta">—</div>
-  </div>
-  <div class="card">
-    <h3>Gasto no mês</h3>
-    <div class="value" id="gastoMes">R$ 0,00</div>
-  </div>
-  <div class="card">
-    <h3>Autonomia estimada</h3>
-    <div class="value" id="autonomia">—</div>
-  </div>
+    <div class="side-footer">
+      Dica: NFC-e SP funciona melhor colando o link. QR pode depender do aparelho.
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <button class="menuBtn" id="menuBtn">☰ Menu</button>
+      <div>
+        <h1 id="pageTitle">Painel</h1>
+        <div class="subtitle" id="pageSub">Resumo rápido do consumo</div>
+      </div>
+      <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
+    </div>
+
+    <!-- PAINEL -->
+    <section class="section view" id="view-painel">
+      <div class="cards">
+        <div class="card">
+          <div class="label">Km/L Gasolina</div>
+          <div class="val" id="kmlGas">—</div>
+          <div class="small">média (últimos)</div>
+        </div>
+        <div class="card">
+          <div class="label">Km/L Etanol</div>
+          <div class="val" id="kmlEta">—</div>
+          <div class="small">média (últimos)</div>
+        </div>
+        <div class="card">
+          <div class="label">Gasto no mês</div>
+          <div class="val" id="gastoMes">R$ 0,00</div>
+          <div class="small">mês atual</div>
+        </div>
+        <div class="card">
+          <div class="label">Autonomia estimada</div>
+          <div class="val" id="autonomia">—</div>
+          <div class="small">estimativa simples</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="sectionTitle">📄 Nota fiscal (NFC-e)</div>
+      <p class="hint">Cole o link da NFC-e (SP) e toque em “Ler NFC-e e preencher”.</p>
+
+      <div class="row">
+        <button class="btn secondary" id="btnQrInfo" type="button">📷 Ler QR (dica)</button>
+        <button class="btn" id="btnLerNfce" type="button">✅ Ler NFC-e e preencher</button>
+      </div>
+
+      <label for="nfceUrl">Link da NFC-e</label>
+      <input id="nfceUrl" placeholder="https://www.nfce.fazenda.sp.gov.br/...ConsultaQRCode.aspx?p=..." />
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn secondary" id="btnUsarLink" type="button">🔗 Usar link no lançamento</button>
+        <button class="btn secondary" id="btnAbrirLink" type="button">🌐 Abrir consulta</button>
+      </div>
+
+      <div class="statusLine" id="nfceStatus">—</div>
+    </section>
+
+    <!-- ABASTECER -->
+    <section class="section view" id="view-abastecer" style="display:none">
+      <div class="sectionTitle">⛽ Novo abastecimento</div>
+      <p class="hint">Para calcular Km/L: informe sempre o odômetro. O app usa a diferença para o abastecimento anterior do mesmo combustível.</p>
+
+      <div class="row">
+        <div>
+          <label for="data">Data</label>
+          <input id="data" type="date" />
+        </div>
+        <div>
+          <label for="tipo">Combustível</label>
+          <select id="tipo">
+            <option value="Gasolina">Gasolina</option>
+            <option value="Etanol">Etanol</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="odometro">Odômetro (km)</label>
+          <input id="odometro" inputmode="numeric" placeholder="Ex: 84092" />
+        </div>
+        <div>
+          <label for="litros">Litros</label>
+          <input id="litros" inputmode="decimal" placeholder="Ex: 8,818" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="valor">Valor (R$)</label>
+          <input id="valor" inputmode="decimal" placeholder="Ex: 50,00" />
+        </div>
+        <div>
+          <label for="nfceLink">Link NFC-e (opcional)</label>
+          <input id="nfceLink" placeholder="Fica salvo no histórico" />
+        </div>
+      </div>
+
+      <label for="kmAntes">Km que o painel mostrava ANTES (opcional)</label>
+      <input id="kmAntes" inputmode="numeric" placeholder="Ex: 18" />
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnSalvar" type="button">Salvar</button>
+        <button class="btn secondary" id="btnLimparForm" type="button">Limpar</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn danger" id="btnApagarTudo" type="button">🧹 Apagar tudo</button>
+        <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Exportar backup (JSON)</button>
+      </div>
+
+      <div class="statusLine" id="saveStatus">—</div>
+    </section>
+
+    <!-- HISTORICO -->
+    <section class="section view" id="view-historico" style="display:none">
+      <div class="sectionTitle">🧾 Histórico de consumo</div>
+      <p class="hint">Toque no link da NFC-e para abrir quando quiser.</p>
+
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Km</th>
+              <th>Litros</th>
+              <th>R$</th>
+              <th>Tipo</th>
+              <th>Km/L</th>
+              <th>NFC-e</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="statusLine" id="histStatus">—</div>
+    </section>
+
+    <!-- RELATORIOS -->
+    <section class="section view" id="view-relatorios" style="display:none">
+      <div class="sectionTitle">📊 Relatórios</div>
+      <p class="hint">Consumo (Km/L) por abastecimento e gasto mensal.</p>
+
+      <div class="divider"></div>
+      <div class="sectionTitle">Consumo (Km/L)</div>
+      <canvas id="chartKml" height="200"></canvas>
+
+      <div class="divider"></div>
+      <div class="sectionTitle">Gasto mensal (R$)</div>
+      <canvas id="chartMes" height="200"></canvas>
+
+      <div class="statusLine" id="relStatus">—</div>
+    </section>
+
+    <!-- CONFIG -->
+    <section class="section view" id="view-config" style="display:none">
+      <div class="sectionTitle">⚙️ Configurações</div>
+      <p class="hint">Ajuste tanque e janela de média. A autonomia usa: (kmAntes informado) + (litros * média Km/L).</p>
+
+      <div class="row">
+        <div>
+          <label for="tank">Capacidade do tanque (L)</label>
+          <input id="tank" inputmode="decimal" placeholder="Ex: 52" />
+        </div>
+        <div>
+          <label for="kmlWindow">Média por quantos lançamentos</label>
+          <input id="kmlWindow" inputmode="numeric" placeholder="Ex: 6" />
+        </div>
+      </div>
+
+      <button class="btn" id="btnSalvarCfg" type="button" style="margin-top:10px">Salvar configurações</button>
+      <div class="statusLine" id="cfgStatus">—</div>
+
+      <div class="divider"></div>
+      <div class="sectionTitle">ℹ️ Como a autonomia é calculada</div>
+      <p class="hint">
+        O painel do carro pode variar muito (trânsito, estilo de direção). Aqui usamos uma estimativa simples:
+        <br><br>
+        <b>Autonomia ≈ (km antes, se você informar) + (litros abastecidos × sua média Km/L)</b>.
+        <br><br>
+        Se você não informar “km antes”, mostramos apenas <b>litros × média</b> do combustível.
+      </p>
+    </section>
+  </main>
 </div>
 
-<div class="card">
-  <h3>Nota fiscal (NFC-e)</h3>
-
-  <button type="button" onclick="toggleScanner()">📷 Ler QR da NFC-e</button>
-  <video id="qrVideo" style="display:none;width:100%;margin-top:10px" playsinline></video>
-
-  <input id="nfceUrl" placeholder="Cole aqui o link da NFC-e (ConsultaQRCode.aspx?p=...)" />
-  <button type="button" onclick="lerNfce()">✅ Ler NFC-e e preencher</button>
-
-  <small id="nfceStatus">—</small>
-</div>
-
-<div class="card">
-  <h3>Novo abastecimento</h3>
-
-  <input type="date" id="data">
-  <input type="number" id="odometro" placeholder="Odômetro (km)">
-  <input type="number" id="litros" placeholder="Litros">
-  <input type="number" id="valor" placeholder="Valor (R$)">
-  <select id="tipo">
-    <option>Gasolina</option>
-    <option>Etanol</option>
-  </select>
-
-  <div class="row">
-    <button type="button" onclick="salvar()">Salvar</button>
-    <button type="button" class="secondary" onclick="limparCampos()">Limpar</button>
-  </div>
-
-  <div class="row">
-    <button type="button" class="danger" onclick="resetar()">🧹 Apagar tudo</button>
-  </div>
-
-  <small id="status">—</small>
-</div>
+<div id="toast"></div>
 
 <script>
-  // ====== DADOS ======
-  let abastecimentos = JSON.parse(localStorage.getItem("abastecimentos") || "[]");
+/* =========================
+   Storage
+========================= */
+const STORE_KEY = "cb_abastecimentos_v3";
+const CFG_KEY   = "cb_cfg_v3";
 
-  // ====== HELPERS ======
-  const brMoney = (n) => {
-    const v = Number(n || 0);
-    return v.toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+const $ = (id)=>document.getElementById(id);
+
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.style.display="block";
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
+}
+function setPill(msg){ $("pillStatus").textContent = msg; }
+
+function parseBRNumber(s){
+  if(s === null || s === undefined) return null;
+  const v = String(s).trim();
+  if(!v) return null;
+  const norm = v.replace(/\./g,"").replace(",", ".");
+  const n = Number(norm);
+  return Number.isFinite(n) ? n : null;
+}
+function formatBRL(n){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "R$ 0,00";
+  return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function formatNum(n, digits=2){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "—";
+  return v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits});
+}
+function formatInt(n){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "—";
+  return Math.round(v).toLocaleString("pt-BR");
+}
+function ymFromDateISO(iso){
+  const [y,m] = String(iso||"").split("-");
+  if(!y || !m) return null;
+  return `${y}-${m}`;
+}
+function ymLabel(ym){
+  const [y,m] = ym.split("-");
+  return `${m}/${y}`;
+}
+
+function loadItems(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
+  catch(e){ return []; }
+}
+function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+
+function loadCfg(){
+  try{ return JSON.parse(localStorage.getItem(CFG_KEY) || "{}"); }
+  catch(e){ return {}; }
+}
+function saveCfg(cfg){ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }
+
+let items = loadItems();
+let cfg = Object.assign({ tank: 52, kmlWindow: 6 }, loadCfg());
+
+/* =========================
+   Menu / Views
+========================= */
+const views = ["painel","abastecer","historico","relatorios","config"];
+function showView(name){
+  for(const v of views){
+    const el = document.getElementById("view-"+v);
+    if(!el) continue;
+    el.style.display = (v===name) ? "block" : "none";
+  }
+  // sidebar active
+  document.querySelectorAll(".nav button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.view===name);
+  });
+  // title
+  const titles = {
+    painel: ["Painel","Resumo rápido do consumo"],
+    abastecer: ["Abastecer","Novo abastecimento"],
+    historico: ["Histórico","Seus lançamentos"],
+    relatorios: ["Relatórios","Consumo e gasto mensal"],
+    config: ["Configurações","Ajustes do app"]
+  };
+  $("pageTitle").textContent = titles[name][0];
+  $("pageSub").textContent = titles[name][1];
+
+  // close mobile sidebar
+  closeSidebar();
+
+  // lazy render charts when open
+  if(name==="relatorios") renderCharts();
+}
+function openSidebar(){
+  $("sidebar").classList.add("open");
+  $("overlay").classList.add("show");
+}
+function closeSidebar(){
+  $("sidebar").classList.remove("open");
+  $("overlay").classList.remove("show");
+}
+$("menuBtn").addEventListener("click", openSidebar);
+$("overlay").addEventListener("click", closeSidebar);
+document.querySelectorAll(".nav button").forEach(b=>{
+  b.addEventListener("click", ()=>showView(b.dataset.view));
+});
+document.addEventListener("keydown", (e)=>{
+  if(e.key==="Escape") closeSidebar();
+});
+
+/* =========================
+   NFC-e (link)
+========================= */
+async function lerNfce(){
+  const url = ($("nfceUrl").value || "").trim();
+  if(!url){
+    $("nfceStatus").textContent = "Cole o link da NFC-e primeiro.";
+    toast("Cole o link da NFC-e.");
+    return;
+  }
+  $("nfceStatus").textContent = "Lendo NFC-e…";
+  setPill("Lendo NFC-e…");
+
+  try{
+    const r = await fetch(`/api/nfce?url=${encodeURIComponent(url)}`);
+    const data = await r.json();
+
+    if(!data.ok){
+      $("nfceStatus").textContent = `Erro: ${data.error || "não foi possível ler"}`;
+      setPill("Erro");
+      toast("Erro ao ler NFC-e");
+      return;
+    }
+
+    const n = data.normalized || {};
+    if(n.dataHora){
+      const d = n.dataHora.slice(0,10).split("/");
+      if(d.length === 3) $("data").value = `${d[2]}-${d[1]}-${d[0]}`;
+    }
+    if(n.tipo) $("tipo").value = n.tipo;
+    if(Number.isFinite(n.litros)) $("litros").value = String(n.litros).replace(".", ",");
+    if(Number.isFinite(n.valor)) $("valor").value = String(n.valor).replace(".", ",");
+
+    $("nfceLink").value = url;
+
+    $("nfceStatus").textContent = "OK ✅ Dados preenchidos. Agora informe o odômetro e salve.";
+    setPill("Pronto");
+    toast("Dados preenchidos ✅");
+    // abre tela de abastecer
+    showView("abastecer");
+  }catch(e){
+    $("nfceStatus").textContent = "Falha ao chamar /api/nfce. Confira se a API está no ar.";
+    setPill("Falha");
+    toast("Falha na API");
+  }
+}
+function usarLinkNoLancamento(){
+  const url = ($("nfceUrl").value || "").trim();
+  if(!url){ toast("Cole o link da NFC-e primeiro."); return; }
+  $("nfceLink").value = url;
+  toast("Link colocado no lançamento.");
+}
+function abrirLink(){
+  const url = ($("nfceUrl").value || "").trim();
+  if(!url){ toast("Cole o link da NFC-e."); return; }
+  window.open(url, "_blank", "noopener");
+}
+$("btnLerNfce").addEventListener("click", lerNfce);
+$("btnUsarLink").addEventListener("click", usarLinkNoLancamento);
+$("btnAbrirLink").addEventListener("click", abrirLink);
+$("btnQrInfo").addEventListener("click", ()=>{
+  toast("No Xiaomi pode falhar. Use a câmera/Lens para abrir o link e cole aqui.");
+});
+
+/* =========================
+   Save abastecimento
+========================= */
+function sortItems(){
+  // order by date then odometer
+  items.sort((a,b)=>{
+    const da = (a.data||"");
+    const db = (b.data||"");
+    if(da<db) return -1;
+    if(da>db) return 1;
+    return (Number(a.odometro)||0) - (Number(b.odometro)||0);
+  });
+}
+
+function lastItemOfType(tipo, currentOdo){
+  const filtered = items
+    .filter(x => x.tipo===tipo && Number.isFinite(Number(x.odometro)) && Number(x.odometro) < currentOdo);
+  if(filtered.length===0) return null;
+  filtered.sort((a,b)=>Number(a.odometro)-Number(b.odometro));
+  return filtered[filtered.length-1];
+}
+
+function computeKmlForEntry(tipo, odometro, litros){
+  const odo = Number(odometro);
+  const l = Number(litros);
+  if(!Number.isFinite(odo) || !Number.isFinite(l) || l<=0) return null;
+
+  const prev = lastItemOfType(tipo, odo);
+  if(!prev) return null;
+
+  const delta = odo - Number(prev.odometro);
+  if(!Number.isFinite(delta) || delta<=0) return null;
+
+  return { kml: delta / l, deltaKm: delta };
+}
+
+function avgKml(tipo){
+  const w = Number(cfg.kmlWindow) || 6;
+  const list = items
+    .filter(x => x.tipo===tipo && Number.isFinite(Number(x.kml)))
+    .sort((a,b)=> (a.data||"").localeCompare(b.data||""));
+  const last = list.slice(-w);
+  if(last.length===0) return null;
+  const sum = last.reduce((acc,x)=>acc+Number(x.kml),0);
+  return sum / last.length;
+}
+
+function estimateAutonomy(tipo, litros, kmAntes){
+  const av = avgKml(tipo);
+  if(!Number.isFinite(Number(litros)) || !(Number(litros)>0) || !Number.isFinite(av)) return null;
+  const add = Number(litros) * av;
+  const before = Number(kmAntes);
+  if(Number.isFinite(before) && before>=0) return before + add;
+  return add;
+}
+
+function saveForm(){
+  const data = $("data").value;
+  const tipo = $("tipo").value;
+  const odometro = parseBRNumber($("odometro").value);
+  const litros = parseBRNumber($("litros").value);
+  const valor = parseBRNumber($("valor").value);
+  const nfceLink = ($("nfceLink").value || "").trim();
+  const kmAntes = parseBRNumber($("kmAntes").value);
+
+  if(!data){ toast("Informe a data."); return; }
+  if(!Number.isFinite(odometro)){ toast("Informe o odômetro."); return; }
+  if(!Number.isFinite(litros) || litros<=0){ toast("Informe os litros."); return; }
+  if(!Number.isFinite(valor) || valor<0){ toast("Informe o valor."); return; }
+
+  const kmlObj = computeKmlForEntry(tipo, odometro, litros);
+  const kml = kmlObj ? kmlObj.kml : null;
+  const deltaKm = kmlObj ? kmlObj.deltaKm : null;
+
+  const autonomiaEst = estimateAutonomy(tipo, litros, kmAntes);
+
+  const item = {
+    id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    data, tipo,
+    odometro, litros, valor,
+    nfceLink: nfceLink || null,
+    kmAntes: Number.isFinite(kmAntes) ? kmAntes : null,
+    kml: (Number.isFinite(kml) ? kml : null),
+    deltaKm: (Number.isFinite(deltaKm) ? deltaKm : null),
+    autonomiaEst: (Number.isFinite(autonomiaEst) ? autonomiaEst : null)
   };
 
-  function setStatus(msg){
-    document.getElementById("status").innerText = msg;
+  items.push(item);
+  sortItems();
+  saveItems(items);
+
+  $("saveStatus").textContent = (item.kml ? `Salvo ✅ Km/L calculado: ${formatNum(item.kml,2)} (Δ ${formatInt(item.deltaKm)} km)` : "Salvo ✅ (Km/L será calculado a partir do 2º abastecimento do mesmo combustível)");
+  toast("Salvo ✅");
+  setPill("Pronto");
+
+  clearForm(false);
+  renderAll();
+}
+
+function clearForm(clearNf=false){
+  $("odometro").value = "";
+  $("litros").value = "";
+  $("valor").value = "";
+  $("kmAntes").value = "";
+  if(clearNf){
+    $("nfceLink").value = "";
+    $("nfceUrl").value = "";
   }
-  function setNfceStatus(msg){
-    document.getElementById("nfceStatus").innerText = msg;
+}
+$("btnSalvar").addEventListener("click", saveForm);
+$("btnLimparForm").addEventListener("click", ()=>{ clearForm(false); toast("Campos limpos"); });
+
+$("btnApagarTudo").addEventListener("click", ()=>{
+  if(!confirm("Apagar TODO o histórico?")) return;
+  items = [];
+  saveItems(items);
+  renderAll();
+  toast("Histórico apagado");
+});
+
+$("btnExportarJson").addEventListener("click", ()=>{
+  const payload = { exportedAt: new Date().toISOString(), cfg, items };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `backup_combustivel_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  toast("Backup baixado");
+});
+
+/* =========================
+   Config
+========================= */
+function loadCfgToUI(){
+  $("tank").value = (cfg.tank ?? 52);
+  $("kmlWindow").value = (cfg.kmlWindow ?? 6);
+}
+function saveCfgFromUI(){
+  const tank = parseBRNumber($("tank").value);
+  const kmlWindow = parseBRNumber($("kmlWindow").value);
+  if(!Number.isFinite(tank) || tank<=0){ toast("Tanque inválido"); return; }
+  if(!Number.isFinite(kmlWindow) || kmlWindow<1){ toast("Janela inválida"); return; }
+  cfg.tank = tank;
+  cfg.kmlWindow = Math.round(kmlWindow);
+  saveCfg(cfg);
+  $("cfgStatus").textContent = "Configurações salvas ✅";
+  toast("Config salva ✅");
+  renderAll();
+}
+$("btnSalvarCfg").addEventListener("click", saveCfgFromUI);
+
+/* =========================
+   Render (cards, table, charts)
+========================= */
+function gastoMesAtual(){
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  const sum = items
+    .filter(x => ymFromDateISO(x.data)===ym && Number.isFinite(Number(x.valor)))
+    .reduce((acc,x)=>acc+Number(x.valor),0);
+  return sum;
+}
+function autonomiaAtual(){
+  // preferência: usar a última autonomiaEst calculada
+  const last = [...items].sort((a,b)=>(a.data||"").localeCompare(b.data||"")).slice(-1)[0];
+  if(!last) return null;
+  if(Number.isFinite(Number(last.autonomiaEst))) return Number(last.autonomiaEst);
+
+  // fallback: tanque * média geral do tipo do último abastecimento
+  const av = avgKml(last.tipo);
+  if(!Number.isFinite(av)) return null;
+  const tank = Number(cfg.tank) || 52;
+  return tank * av;
+}
+
+function renderCards(){
+  const gas = avgKml("Gasolina");
+  const eta = avgKml("Etanol");
+  $("kmlGas").textContent = gas ? formatNum(gas,2) : "—";
+  $("kmlEta").textContent = eta ? formatNum(eta,2) : "—";
+  $("gastoMes").textContent = formatBRL(gastoMesAtual());
+
+  const aut = autonomiaAtual();
+  $("autonomia").textContent = aut ? `${formatInt(aut)} km` : "—";
+}
+
+function renderTable(){
+  const tb = $("tbody");
+  tb.innerHTML = "";
+  if(items.length===0){
+    $("histStatus").textContent = "Sem lançamentos ainda.";
+    return;
   }
-
-  function limparCampos(){
-    document.getElementById("nfceUrl").value = "";
-    document.getElementById("data").value = "";
-    document.getElementById("odometro").value = "";
-    document.getElementById("litros").value = "";
-    document.getElementById("valor").value = "";
-    document.getElementById("tipo").value = "Gasolina";
-    setStatus("Campos limpos.");
-    setNfceStatus("—");
+  const rows = [...items].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  for(const x of rows){
+    const tr = document.createElement("tr");
+    const nf = x.nfceLink ? `<a href="${x.nfceLink}" target="_blank" rel="noopener">abrir</a>` : "—";
+    tr.innerHTML = `
+      <td>${x.data || "—"}</td>
+      <td>${Number.isFinite(Number(x.odometro)) ? formatInt(x.odometro) : "—"}</td>
+      <td>${Number.isFinite(Number(x.litros)) ? formatNum(x.litros,3) : "—"}</td>
+      <td>${Number.isFinite(Number(x.valor)) ? formatBRL(x.valor) : "—"}</td>
+      <td>${x.tipo || "—"}</td>
+      <td>${Number.isFinite(Number(x.kml)) ? formatNum(x.kml,2) : "—"}</td>
+      <td>${nf}</td>
+    `;
+    tb.appendChild(tr);
   }
+  $("histStatus").textContent = `${items.length} lançamento(s).`;
+}
 
-  function resetar(){
-    if(confirm("Apagar todos os abastecimentos salvos?")){
-      localStorage.removeItem("abastecimentos");
-      abastecimentos = [];
-      atualizar();
-      setStatus("Zerado! Nenhum lançamento salvo.");
-    }
+let chartKml = null;
+let chartMes = null;
+
+function buildKmlSeries(){
+  const rows = [...items].sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+  const labels = rows.map(x=>x.data);
+  const gas = rows.map(x=>(x.tipo==="Gasolina" && Number.isFinite(Number(x.kml))) ? Number(x.kml) : null);
+  const eta = rows.map(x=>(x.tipo==="Etanol" && Number.isFinite(Number(x.kml))) ? Number(x.kml) : null);
+  return { labels, gas, eta };
+}
+function buildMonthlySpend(){
+  const map = new Map();
+  for(const x of items){
+    const ym = ymFromDateISO(x.data);
+    if(!ym) continue;
+    const v = Number(x.valor);
+    if(!Number.isFinite(v)) continue;
+    map.set(ym, (map.get(ym)||0)+v);
   }
+  const keys = [...map.keys()].sort();
+  return { labels: keys.map(ymLabel), values: keys.map(k=>map.get(k)) };
+}
 
-  // ====== SALVAR ======
-  function salvar(){
-    const data = document.getElementById("data").value;
-    const odometro = Number(document.getElementById("odometro").value);
-    const litros = Number(document.getElementById("litros").value);
-    const valor = Number(document.getElementById("valor").value);
-    const tipo = document.getElementById("tipo").value;
+function renderCharts(){
+  const kml = buildKmlSeries();
+  const ms = buildMonthlySpend();
 
-    if(!data || !odometro || !litros || !valor){
-      setStatus("Preencha data, odômetro, litros e valor.");
-      return;
-    }
+  const ctx1 = document.getElementById("chartKml");
+  const ctx2 = document.getElementById("chartMes");
 
-    const item = { data, odometro, litros, valor, tipo };
+  if(chartKml) chartKml.destroy();
+  if(chartMes) chartMes.destroy();
 
-    abastecimentos.push(item);
-
-    // manter em ordem por data/odômetro (evita bagunça)
-    abastecimentos.sort((a,b)=> (a.odometro - b.odometro));
-
-    localStorage.setItem("abastecimentos", JSON.stringify(abastecimentos));
-    atualizar();
-    setStatus("Salvo ✅");
-  }
-
-  // ====== DASHBOARD ======
-  function atualizar(){
-    // gasto do mês (sempre dá pra calcular)
-    const hoje = new Date();
-    const mesAtual = hoje.getMonth();
-    const anoAtual = hoje.getFullYear();
-
-    const gasto = abastecimentos
-      .filter(a => {
-        const d = new Date(a.data + "T00:00:00");
-        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
-      })
-      .reduce((s,a)=> s + Number(a.valor || 0), 0);
-
-    document.getElementById("gastoMes").innerText = brMoney(gasto);
-
-    // Km/L e autonomia só com pelo menos 2 registros válidos
-    if(abastecimentos.length < 2){
-      document.getElementById("kmlGas").innerText = "—";
-      document.getElementById("kmlEta").innerText = "—";
-      document.getElementById("autonomia").innerText = "—";
-      return;
-    }
-
-    let gas = [];
-    let eta = [];
-
-    for(let i=1; i<abastecimentos.length; i++){
-      const atual = abastecimentos[i];
-      const anterior = abastecimentos[i-1];
-
-      const km = (atual.odometro - anterior.odometro);
-      if(km <= 0) continue;          // odômetro inválido
-      if(atual.litros <= 0) continue;
-
-      const consumo = km / atual.litros;  // km/l
-      if(atual.tipo === "Gasolina") gas.push(consumo);
-      else eta.push(consumo);
-    }
-
-    const media = (arr) => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : null;
-
-    const mg = media(gas);
-    const me = media(eta);
-
-    document.getElementById("kmlGas").innerText = (mg ? mg.toFixed(2) : "—");
-    document.getElementById("kmlEta").innerText = (me ? me.toFixed(2) : "—");
-
-    // autonomia estimada (tanque 52L como padrão)
-    const tanque = 52;
-    if(mg){
-      document.getElementById("autonomia").innerText = Math.round(mg * tanque) + " km";
-    }else if(me){
-      document.getElementById("autonomia").innerText = Math.round(me * tanque) + " km";
-    }else{
-      document.getElementById("autonomia").innerText = "—";
-    }
-  }
-
-  // ====== NFC-e (colar link + QR) ======
-  function preencherCampos(n){
-    // dataHora: "25/02/2026 18:15:50" -> "2026-02-25"
-    if(n.dataHora){
-      const d = n.dataHora.split(" ")[0];
-      const [dd,mm,aaaa] = d.split("/");
-      document.getElementById("data").value = `${aaaa}-${mm}-${dd}`;
-    }
-    if(n.litros != null) document.getElementById("litros").value = n.litros;
-    if(n.valor != null) document.getElementById("valor").value = n.valor;
-    if(n.tipo) document.getElementById("tipo").value = n.tipo;
-  }
-
-  async function lerNfce(){
-    const url = (document.getElementById("nfceUrl").value || "").trim();
-    if(!url){
-      setNfceStatus("Cole o link da NFC-e primeiro.");
-      return;
-    }
-
-    setNfceStatus("Lendo NFC-e…");
-
-    try{
-      const apiUrl = "/api/nfce?url=" + encodeURIComponent(url);
-      const r = await fetch(apiUrl);
-      const j = await r.json();
-
-      if(!j.ok){
-        setNfceStatus("Erro: " + (j.error || "não consegui ler a NFC-e"));
-        return;
+  chartKml = new Chart(ctx1, {
+    type:"line",
+    data:{
+      labels: kml.labels,
+      datasets:[
+        { label:"Gasolina (Km/L)", data:kml.gas, spanGaps:true, tension:.25 },
+        { label:"Etanol (Km/L)", data:kml.eta, spanGaps:true, tension:.25 },
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:"#eaf1ff" } } },
+      scales:{
+        x:{ ticks:{ color:"rgba(234,241,255,.75)" }, grid:{ color:"rgba(255,255,255,.06)" } },
+        y:{ ticks:{ color:"rgba(234,241,255,.75)" }, grid:{ color:"rgba(255,255,255,.06)" } }
       }
-
-      preencherCampos(j.normalized || {});
-      setNfceStatus(`OK ✅ ${j.normalized?.tipo || "-"} • ${brMoney(j.normalized?.valor)} • ${j.normalized?.litros ?? "-"} L`);
-    }catch(e){
-      setNfceStatus("Falha ao chamar a API.");
     }
-  }
+  });
 
-  // ====== QR Scanner (nativo) ======
-  let qrStream = null;
-
-  async function toggleScanner(){
-    const video = document.getElementById("qrVideo");
-
-    // se já estiver aberto, fecha
-    if(qrStream){
-      qrStream.getTracks().forEach(t=>t.stop());
-      qrStream = null;
-      video.style.display = "none";
-      setNfceStatus("Scanner fechado.");
-      return;
-    }
-
-    // abre câmera
-    try{
-      qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      video.srcObject = qrStream;
-      await video.play();
-      video.style.display = "block";
-      setNfceStatus("Aponte para o QR da NFC-e…");
-
-      if(!("BarcodeDetector" in window)){
-        setNfceStatus("Seu navegador não suporta leitura nativa de QR. Use 'colar link' por enquanto.");
-        return;
+  chartMes = new Chart(ctx2, {
+    type:"bar",
+    data:{
+      labels: ms.labels,
+      datasets:[
+        { label:"Gasto (R$)", data: ms.values }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:"#eaf1ff" } } },
+      scales:{
+        x:{ ticks:{ color:"rgba(234,241,255,.75)" }, grid:{ color:"rgba(255,255,255,.06)" } },
+        y:{ ticks:{ color:"rgba(234,241,255,.75)" }, grid:{ color:"rgba(255,255,255,.06)" } }
       }
-
-      const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-      const scanLoop = async () => {
-        if(!qrStream) return;
-
-        try{
-          const codes = await detector.detect(video);
-          if(codes && codes.length){
-            const raw = (codes[0].rawValue || "").trim();
-
-            // fecha câmera
-            qrStream.getTracks().forEach(t=>t.stop());
-            qrStream = null;
-            video.style.display = "none";
-
-            document.getElementById("nfceUrl").value = raw;
-            setNfceStatus("QR lido! Buscando dados…");
-            await lerNfce();
-            return;
-          }
-        }catch(e){}
-
-        requestAnimationFrame(scanLoop);
-      };
-
-      scanLoop();
-    }catch(e){
-      setNfceStatus("Não consegui abrir a câmera (permissão negada ou sem câmera).");
     }
-  }
+  });
 
-  // inicializa
-  atualizar();
-  setStatus(abastecimentos.length ? `Você tem ${abastecimentos.length} lançamento(s) salvo(s).` : "Nenhum lançamento salvo ainda.");
+  $("relStatus").textContent = items.length ? "Atualizado." : "Sem dados para gráficos.";
+}
 
+function renderAll(){
+  loadCfgToUI();
+  renderCards();
+  renderTable();
+  // charts render only when tab open; but if already open, refresh
+  const isRelOpen = document.getElementById("view-relatorios").style.display !== "none";
+  if(isRelOpen) renderCharts();
+}
+
+/* =========================
+   Init
+========================= */
+(function init(){
+  // default date
+  const today = new Date();
+  $("data").value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+
+  $("nfceStatus").textContent = "Cole o link da NFC-e e toque em “Ler NFC-e e preencher”.";
+  $("saveStatus").textContent = "—";
+  $("cfgStatus").textContent = "—";
+  $("histStatus").textContent = "—";
+  $("relStatus").textContent = "—";
+
+  renderAll();
+  showView("painel");
+})();
 </script>
-
 </body>
 </html>
