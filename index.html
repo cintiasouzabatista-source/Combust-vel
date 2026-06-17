@@ -219,6 +219,7 @@
     .file-label-btn input[type="file"] { display: none; }
 
     .danger-zone { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); text-align: center; }
+    .btn.secondary { background: var(--bg); color: var(--text); font-size: 11px; padding: 10px; border: 1px solid var(--line); }
     .btn.danger-text { background: transparent; color: var(--muted); font-size: 12px; padding: 6px; width: auto; display: inline-block; }
     .btn.danger-text:hover { color: var(--danger); }
 
@@ -359,8 +360,8 @@
         <button class="btn primary" id="btnSalvar" type="button">Salvar Registro</button>
         
         <div class="compact-actions-grid">
-          <button class="btn secondary" id="btnExportarJson" type="button">Exportar JSON</button>
-          <button class="btn secondary" id="btnExportarCsv" type="button">Exportar CSV</button>
+          <button class="btn secondary" id="btnExportarJson" type="button">Backup (JSON)</button>
+          <button class="btn secondary" id="btnExportarCsv" type="button">Exportar Tabela (CSV)</button>
         </div>
 
         <div class="import-zone">
@@ -375,9 +376,9 @@
         </div>
 
         <div class="danger-zone">
-          <button class="btn secondary" id="btnLimparForm" type="button" style="width:auto; padding: 6px 12px; margin-bottom: 12px;">Limpar Campos</button>
+          <button class="btn secondary" id="btnLimparForm" type="button" style="width:auto; padding: 6px 12px; margin-bottom: 12px;">Limpar / Cancelar</button>
           <br>
-          <button class="btn danger-text" id="btnApagarTudo" type="button">Excluir todos os registros deste veículo</button>
+          <button class="btn danger-text" id="btnApagarTudo" type="button">Apagar tudo deste carro</button>
         </div>
       </div>
     </section>
@@ -541,15 +542,11 @@ function toast(msg){
   toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
 }
 
-// Corrigido para converter corretamente valores com vírgula do padrão PT-BR para decimal interno do JS
 function parseBRNumber(s){
   if(s === null || s === undefined) return null;
   let str = String(s).trim().replace(/\s/g, "");
   if(!str) return null;
-  
-  // Se contiver vírgula, substitui por ponto para o JS aceitar como número válido
   str = str.replace(",", ".");
-  
   const n = Number(str);
   return Number.isFinite(n) ? n : null;
 }
@@ -637,7 +634,7 @@ function showView(name){
 }
 
 function openSidebar(){ $("sidebar").classList.add("open"); $("overlay").classList.add("show"); }
-function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); }
+function closeSidebar(){ $("sidebar").remove("open"); $("overlay").classList.remove("show"); }
 
 $("menuBtn").addEventListener("click", openSidebar);
 $("overlay").addEventListener("click", closeSidebar);
@@ -938,7 +935,7 @@ $("btnSalvar").addEventListener("click", () => {
 
   if(editId) {
     currentItems = currentItems.map(x => x.id === editId ? novoRegistro : x);
-    toast("Registro atualizado!");
+    toast("Registro updated!");
   } else {
     currentItems.push(novoRegistro);
     toast("Registro salvo!");
@@ -1005,7 +1002,7 @@ $("btnCadastrarVeiculo").addEventListener("click", () => {
 
   if(editId) {
     currentVehicles = currentVehicles.map(v => v.id === editId ? { id: editId, nome, odoCompra: Number(odo) } : v);
-    toast("Veículo updated!");
+    toast("Veículo atualizado!");
   } else {
     const novoId = "v_" + Date.now();
     currentVehicles.push({ id: novoId, nome, odoCompra: Number(odo) });
@@ -1061,31 +1058,59 @@ function limparVehForm() {
 $("btnLimparVehForm").addEventListener("click", limparVehForm);
 
 
-/* EXPORTAÇÃO E IMPORTAÇÃO DE DADOS */
+/* EXPORTAÇÃO E IMPORTAÇÃO DE DADOS CORRIGIDA COM BLOBS */
 $("btnExportarJson").addEventListener("click", () => {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
-  const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute("href", dataStr);
-  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.json`);
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
-  toast("JSON Exportado com sucesso!");
+  try {
+    const dataStr = JSON.stringify(items, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = blobUrl;
+    downloadAnchor.download = `abastecimentos_backup_${activeVehicleId}.json`;
+    
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    
+    // Pequeno delay para garantir que o navegador processe o download antes de limpar a memória
+    setTimeout(() => {
+      downloadAnchor.remove();
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
+    
+    toast("JSON Exportado com sucesso!");
+  } catch (err) {
+    toast("Erro ao exportar JSON.");
+  }
 });
 
 $("btnExportarCsv").addEventListener("click", () => {
-  let csvContent = "data:text/csv;charset=utf-8,id;veiculoId;data;odometro;litros;precoLitro\n";
-  items.forEach(x => {
-    csvContent += `${x.id};${x.veiculoId};${x.data};${x.odometro};${x.litros};${x.precoLitro || ''}\n`;
-  });
-  const encodedUri = encodeURI(csvContent);
-  const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute("href", encodedUri);
-  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.csv`);
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
-  toast("CSV Exportado com sucesso!");
+  try {
+    let csvContent = "id;veiculoId;data;odometro;litros;precoLitro\n";
+    items.forEach(x => {
+      csvContent += `${x.id};${x.veiculoId};${x.data};${x.odometro};${x.litros};${x.precoLitro || ''}\n`;
+    });
+    
+    // Adicionado BOM (\uFEFF) para forçar o Excel / Google Sheets a reconhecerem a codificação UTF-8 perfeitamente
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const blobUrl = URL.createObjectURL(blob);
+    
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = blobUrl;
+    downloadAnchor.download = `abastecimentos_backup_${activeVehicleId}.csv`;
+    
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    
+    setTimeout(() => {
+      downloadAnchor.remove();
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
+    
+    toast("CSV Exportado com sucesso!");
+  } catch (err) {
+    toast("Erro ao exportar CSV.");
+  }
 });
 
 $("importJsonFile").addEventListener("change", (e) => {
