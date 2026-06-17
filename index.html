@@ -1,10 +1,9 @@
-
 <!doctype html>
 <html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Controle de Combustível</title>
+  <title>Controle de Combustível & Manutenção</title>
 
   <style>
     :root {
@@ -18,6 +17,7 @@
       --accent2: #1f55cc;
       --danger: #ff476f;
       --ok: #29d17c;
+      --warning: #ffb84d;
       --shadow: 0 14px 34px rgba(0,0,0,.28);
       --radius: 18px;
       --line: rgba(255,255,255,.08);
@@ -162,6 +162,17 @@
     .card .val{ margin-top:8px; font-size:20px; font-weight:950; }
     .small{ margin-top:6px; color:var(--muted); font-size:12px; font-weight:800; }
 
+    /* Manutenção Card */
+    .maintenance-box {
+      margin-top: 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--stroke);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    [data-theme="light"] .maintenance-box { background: #f8fafc; }
+    .m-title { font-size: 13px; font-weight: 900; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+
     /* Form & Clean Buttons */
     label{ display:block; margin:12px 0 6px; color:var(--text); font-size:12px; font-weight:850; }
     input, select{
@@ -302,6 +313,13 @@
           <div class="small">último odômetro</div>
         </div>
       </div>
+
+      <div class="maintenance-box" id="oilMaintenanceBox" style="display: none;">
+        <div class="m-title">🛵 Monitor de Manutenção (Honda Lead)</div>
+        <div class="small" id="oilStatusText" style="margin-top: 2px; font-size: 13px; font-weight: 800;">
+          Calculando dados do óleo...
+        </div>
+      </div>
     </section>
 
     <section class="section view" id="view-abastecer" style="display:none">
@@ -339,7 +357,11 @@
 
       <div class="row" style="margin-top:12px">
         <button class="btn danger" id="btnApagarTudo" type="button">🧹 Apagar tudo deste carro</button>
-        <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Backup Geral (JSON)</button>
+        <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Backup (JSON)</button>
+      </div>
+      
+      <div class="row" style="margin-top:10px">
+        <button class="btn secondary" id="btnExportarCsv" type="button">📊 Exportar Tabela (CSV)</button>
       </div>
 
       <div class="statusLine" id="saveStatus">—</div>
@@ -399,7 +421,7 @@
 
 <script>
 const STORE_KEY = "cb_abastecimentos_v5";
-const VEHICLES_KEY = "cb_veiculos_v6"; // Chave atualizada para suportar objetos de veículos
+const VEHICLES_KEY = "cb_veiculos_v6"; 
 const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
 const THEME_KEY = "cb_theme_v5";
 
@@ -445,12 +467,11 @@ function loadVehicles(){
   try{ 
     let raw = localStorage.getItem(VEHICLES_KEY);
     if(!raw) {
-      // Migração simples caso houvesse dados antigos em string pura
-      return [{ id: "1", nome: "Padrão", odoCompra: 0 }];
+      return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93667 }];
     }
     return JSON.parse(raw);
   } catch(e){ 
-    return [{ id: "1", nome: "Padrão", odoCompra: 0 }]; 
+    return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93667 }]; 
   }
 }
 function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
@@ -509,12 +530,8 @@ function sortItems(){
 function processMetrics(){
   sortItems();
   
-  // Encontra o veículo ativo atual para pegar o odômetro de compra inicial
   const currentVeh = vehicles.find(v => v.id === activeVehicleId) || { odoCompra: 0 };
   const initialOdo = Number(currentVeh.odoCompra) || 0;
-  
-  let baseOdo = initialOdo;
-  let firstFound = false;
 
   for(let i=0; i<items.length; i++){
     if(items[i].veiculoId !== activeVehicleId) continue;
@@ -532,7 +549,6 @@ function processMetrics(){
       items[i].deltaKm = delta > 0 ? delta : null;
       items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
     } else {
-      // É o primeiro abastecimento registrado. Usamos o odoCompra se ele existir e for coerente
       const delta = Number(items[i].odometro) - initialOdo;
       items[i].deltaKm = delta > 0 ? delta : null;
       items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
@@ -546,6 +562,7 @@ function renderAll(){
   renderCards();
   renderTable();
   renderVehiclesList();
+  renderMaintenanceAlerts();
 }
 
 function updateVehicleSelectors(){
@@ -593,13 +610,11 @@ function renderCards(){
   });
   $("totalGasto").textContent = custoAcumulado > 0 ? `R$ ${formatNum(custoAcumulado, 2)}` : "—";
 
-  // Média Geral baseada no Odômetro Inicial de Compra até o último odômetro lançado
   const primeirOdo = Number(currentVeh.odoCompra) || (filtered.length > 0 ? Number(filtered[0].odometro) : 0);
   const ultimoOdo = Number(ultimoItem.odometro);
   const deltaTotalKm = ultimoOdo - primeirOdo;
 
   let litrosConsiderados = 0;
-  // Se começou do odômetro de compra, somamos todos os litros. Se não, exclui o primeiro como antes.
   const startIndex = (Number(currentVeh.odoCompra) > 0) ? 0 : 1;
   for(let i = startIndex; i < filtered.length; i++){
     litrosConsiderados += Number(filtered[i].litros) || 0;
@@ -607,6 +622,31 @@ function renderCards(){
 
   const mediaGeral = (deltaTotalKm > 0 && litrosConsiderados > 0) ? (deltaTotalKm / litrosConsiderados) : null;
   $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
+}
+
+/* Alertas de Manutenção do Óleo baseados na OS da Pavani */
+function renderMaintenanceAlerts() {
+  const currentVeh = vehicles.find(v => v.id === activeVehicleId);
+  const mBox = $("oilMaintenanceBox");
+  
+  if (currentVeh && currentVeh.nome.toLowerCase().includes("lead")) {
+    mBox.style.display = "block";
+    
+    let filtered = items.filter(x => x.veiculoId === activeVehicleId);
+    let kmAtual = filtered.length > 0 ? Number(filtered[filtered.length - 1].odometro) : Number(currentVeh.odoCompra);
+    
+    const ultimaTrocaKM = 93290; // Conforme OS 1264 da Pavani Moto Center
+    const limiteTrocaKM = ultimaTrocaKM + 1000; // Trocas controladas a cada 1.000 km
+    const kmRestantes = limiteTrocaKM - kmAtual;
+    
+    if (kmRestantes <= 0) {
+      $("oilStatusText").innerHTML = `⚠️ <span style="color:var(--danger)">ATENÇÃO: Troca de óleo vencida há ${Math.abs(kmRestantes)} km!</span><br>Troque imediatamente com óleo SAE 10W-30.`;
+    } else {
+      $("oilStatusText").innerHTML = `🟢 Óleo do motor está OK. Faltam <strong style="color:var(--ok)">${kmRestantes} km</strong> para a próxima troca (Trocar com ${limiteTrocaKM.toLocaleString("pt-BR")} km).`;
+    }
+  } else {
+    mBox.style.display = "none";
+  }
 }
 
 function renderTable(){
@@ -703,7 +743,7 @@ $("btnCadastrarVeiculo").addEventListener("click", ()=>{
   
   if(editId) {
     vehicles = vehicles.map(v => v.id === editId ? { ...v, nome, odoCompra } : v);
-    toast("Veículo atualizado!");
+    toast("Veículo updated!");
   } else {
     if(vehicles.some(v => v.nome.toLowerCase() === nome.toLowerCase())) { 
       toast("Esse carro já está cadastrado."); 
@@ -796,7 +836,6 @@ $("btnSalvar").addEventListener("click", ()=>{
   if(!odometro || odometro <= 0){ toast("Odômetro inválido."); return; }
   if(!litros || litros <= 0){ toast("Volume de litros inválido."); return; }
 
-  // Coerência com o odômetro de compra
   const currentVeh = vehicles.find(v => v.id === activeVehicleId);
   if(currentVeh && odometro < (Number(currentVeh.odoCompra) || 0)) {
     toast(`Erro: Odômetro menor que o odômetro de compra (${currentVeh.odoCompra} km)`);
@@ -837,6 +876,7 @@ $("btnApagarTudo").addEventListener("click", ()=>{
   toast("Histórico limpo!");
 });
 
+/* Exportação via JSON */
 $("btnExportarJson").addEventListener("click", ()=>{
   const payload = { veiculos: vehicles, historicoCompleto: items };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
@@ -845,7 +885,41 @@ $("btnExportarJson").addEventListener("click", ()=>{
   a.href = url;
   a.download = `backup_garagem_combustivel.json`;
   a.click();
-  toast("Backup baixado");
+  toast("Backup JSON baixado");
+});
+
+/* MODO BACKUP VIA CSV (Novo recurso solicitado) */
+$("btnExportarCsv").addEventListener("click", () => {
+  const currentVeh = vehicles.find(v => v.id === activeVehicleId);
+  const veiculoNome = currentVeh ? currentVeh.nome : "Desconhecido";
+  let filtered = items.filter(x => x.veiculoId === activeVehicleId);
+
+  if (filtered.length === 0) {
+    toast("Nenhum dado para exportar deste veículo.");
+    return;
+  }
+
+  // Cabeçalho estruturado do CSV
+  let csvContent = "Veiculo,Data,Odometro(km),Litros,PrecoPorLitro(R$),KmRodados(Delta),Rendimento(Km/L)\n";
+
+  // Montando as linhas com escape básico de string
+  filtered.forEach(x => {
+    const dataFormatada = x.data.split("-").reverse().join("/");
+    const preco = x.precoLitro || 0;
+    const delta = x.deltaKm || "—";
+    const rendimento = x.kml ? Number(x.kml).toFixed(2) : "—";
+    
+    csvContent += `"${veiculoNome}","${dataFormatada}",${x.odometro},${x.litros},${preco},${delta},${rendimento}\n`;
+  });
+
+  // Geração e download do arquivo com encoding correto para aceitar acentos no Excel
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `backup_${veiculoNome.toLowerCase().replace(/\s+/g, '_')}.csv`;
+  a.click();
+  toast("Tabela CSV baixada!");
 });
 
 // Inicialização
