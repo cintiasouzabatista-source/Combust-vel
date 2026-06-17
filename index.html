@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Controle de Combustível</title>
+  <title>Controle de Combustível & Manutenção</title>
 
   <style>
     :root {
@@ -80,14 +80,14 @@
     .brand .txt .t{font-size:14px; font-weight:900}
     .brand .txt .s{font-size:12px; color:var(--muted); font-weight:800}
 
-    .nav{ display:flex; flex-direction:column; gap:8px; padding:10px 6px; }
+    .nav{ display:flex; flex-direction:column; gap:4px; padding:10px 6px; }
     .nav button{
       width:100%;
       border-radius:14px;
       border:none;
       background:transparent;
       color:var(--muted);
-      padding:12px 12px;
+      padding:11px 12px;
       cursor:pointer;
       font-weight:800;
       font-size:13px;
@@ -161,16 +161,17 @@
     .card .val{ margin-top:8px; font-size:20px; font-weight:950; }
     .small{ margin-top:6px; color:var(--muted); font-size:12px; font-weight:800; }
 
-    /* Form & Clean Buttons */
+    /* Form Inputs */
     label{ display:block; margin:12px 0 6px; color:var(--text); font-size:12px; font-weight:850; }
-    input, select{
+    input, select, textarea{
       width:100%; border-radius:12px; border:1px solid var(--line);
       background:rgba(255,255,255,.05); color:var(--text);
       padding:11px 12px; outline:none; font-weight:800; font-size:14px;
+      font-family: inherit;
     }
-    [data-theme="light"] input, [data-theme="light"] select { background: #ffffff; }
-    input::placeholder{ color:var(--muted); opacity: 0.4; }
-    input:focus, select:focus{ border-color:rgba(43,109,255,.45); }
+    [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea { background: #ffffff; }
+    input::placeholder, textarea::placeholder{ color:var(--muted); opacity: 0.4; }
+    input:focus, select:focus, textarea:focus{ border-color:rgba(43,109,255,.45); }
     select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
 
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -183,28 +184,20 @@
       border: none; transition: background 0.15s, color 0.15s;
       display: inline-flex; align-items: center; justify-content: center; gap:6px;
     }
-    .btn.primary {
-      background: var(--accent); color: #ffffff;
-    }
+    .btn.primary { background: var(--accent); color: #ffffff; }
     .btn.primary:hover { background: var(--accent2); }
     
-    .btn.secondary {
-      background: rgba(255,255,255,.05); color: var(--text);
-    }
+    .btn.secondary { background: rgba(255,255,255,.05); color: var(--text); }
     .btn.secondary:hover { background: rgba(255,255,255,.10); }
     [data-theme="light"] .btn.secondary { background: rgba(0,0,0,.04); }
     [data-theme="light"] .btn.secondary:hover { background: rgba(0,0,0,.08); }
 
-    .btn.danger {
-      background: rgba(255,71,111,.08); color: var(--danger);
-    }
+    .btn.danger { background: rgba(255,71,111,.08); color: var(--danger); }
     .btn.danger:hover { background: rgba(255,71,111,.15); }
 
-    .btn.mini {
-      width: auto; padding: 6px 10px; font-size: 11px; border-radius: 8px; font-weight: 800;
-    }
-
+    .btn.mini { width: auto; padding: 6px 10px; font-size: 11px; border-radius: 8px; font-weight: 800; }
     .btn:active{ transform: translateY(1px); }
+    
     .statusLine{ color:var(--muted); font-size:12px; font-weight:800; margin-top:12px; }
 
     /* Table */
@@ -250,8 +243,9 @@
 
       <nav class="nav" aria-label="Menu">
         <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
-        <button data-view="abastecer" id="nav-abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
+        <button data-view="abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
         <button data-view="historico"><span class="ic">🧾</span><span>Histórico</span></button>
+        <button data-view="manutencao"><span class="ic">🔧</span><span>Manutenção</span></button>
         <button data-view="veiculos"><span class="ic">🚘</span><span>Veículos</span></button>
       </nav>
     </div>
@@ -291,9 +285,9 @@
           <div class="small">litros colocados</div>
         </div>
         <div class="card">
-          <div class="label">Total Investido</div>
+          <div class="label">Total Gasto (Filtros)</div>
           <div class="val" id="totalGasto">—</div>
-          <div class="small">gasto acumulado</div>
+          <div class="small">combustível acumulado</div>
         </div>
         <div class="card">
           <div class="label">Km Atual</div>
@@ -340,13 +334,10 @@
         <button class="btn danger" id="btnApagarTudo" type="button">🧹 Apagar tudo deste carro</button>
         <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Backup Geral (JSON)</button>
       </div>
-
-      <div class="statusLine" id="saveStatus">—</div>
     </section>
 
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
-
       <div style="overflow:auto">
         <table>
           <thead>
@@ -364,6 +355,51 @@
         </table>
       </div>
       <div class="statusLine" id="histStatus">—</div>
+    </section>
+
+    <section class="section view" id="view-manutencao" style="display:none">
+      <div class="sectionTitle" id="mFormTitle">🔧 Registrar Manutenção / Serviço</div>
+      <input type="hidden" id="editMaintId" />
+
+      <label for="mData">Data</label>
+      <input id="mData" type="date" />
+
+      <div class="row">
+        <div>
+          <label for="mOdometro">Odômetro (km)</label>
+          <input id="mOdometro" placeholder="Ex: 84300" type="number" />
+        </div>
+        <div>
+          <label for="mCusto">Custo Total (R$)</label>
+          <input id="mCusto" placeholder="Ex: 250,00" />
+        </div>
+      </div>
+
+      <label for="mDescricao">Descrição do Serviço</label>
+      <textarea id="mDescricao" rows="2" placeholder="Ex: Troca de óleo, pastilhas de freio, alinhamento..."></textarea>
+
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="btnSalvarManutencao" type="button">Salvar Serviço</button>
+        <button class="btn secondary" id="btnLimparMaintForm" type="button">Limpar</button>
+      </div>
+
+      <div style="height:1px; background:var(--line); margin:24px 0;"></div>
+
+      <div class="sectionTitle">📋 Histórico de Manutenções</div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Odômetro</th>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th style="width: 100px; text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="mTbody"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="section view" id="view-veiculos" style="display:none">
@@ -398,7 +434,8 @@
 
 <script>
 const STORE_KEY = "cb_abastecimentos_v5";
-const VEHICLES_KEY = "cb_veiculos_v6"; // Chave atualizada para suportar objetos de veículos
+const VEHICLES_KEY = "cb_veiculos_v6";
+const MAINT_KEY = "cb_manutencoes_v5";
 const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
 const THEME_KEY = "cb_theme_v5";
 
@@ -427,41 +464,36 @@ function formatNum(n, digits=2){
 /* Gerenciamento de Tema */
 let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
 document.documentElement.setAttribute("data-theme", currentTheme);
-
 $("btnThemeToggle").addEventListener("click", () => {
   currentTheme = currentTheme === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", currentTheme);
   localStorage.setItem(THEME_KEY, currentTheme);
 });
 
-/* Storage */
-function loadItems(){
-  try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e){ return []; }
-}
+/* Carregar Dados */
+function loadItems(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e){ return []; } }
 function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+
+function loadMaintenances(){ try{ return JSON.parse(localStorage.getItem(MAINT_KEY) || "[]"); } catch(e){ return []; } }
+function saveMaintenances(m){ localStorage.setItem(MAINT_KEY, JSON.stringify(m)); }
 
 function loadVehicles(){
   try{ 
     let raw = localStorage.getItem(VEHICLES_KEY);
-    if(!raw) {
-      // Migração simples caso houvesse dados antigos em string pura
-      return [{ id: "1", nome: "Padrão", odoCompra: 0 }];
-    }
-    return JSON.parse(raw);
-  } catch(e){ 
-    return [{ id: "1", nome: "Padrão", odoCompra: 0 }]; 
-  }
+    return raw ? JSON.parse(raw) : [{ id: "1", nome: "Padrão", odoCompra: 0 }];
+  } catch(e){ return [{ id: "1", nome: "Padrão", odoCompra: 0 }]; }
 }
 function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
 
 let items = loadItems();
+let maintenances = loadMaintenances();
 let vehicles = loadVehicles();
 let activeVehicleId = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0].id;
 
 if (!vehicles.some(v => v.id === activeVehicleId)) { activeVehicleId = vehicles[0].id; }
 
-/* Views / Menu */
-const views = ["painel","abastecer","historico","veiculos"];
+/* Views / Naves */
+const views = ["painel","abastecer","historico","manutencao","veiculos"];
 function showView(name){
   for(const v of views){
     const el = document.getElementById("view-"+v);
@@ -475,11 +507,11 @@ function showView(name){
     painel: ["Painel","Métricas essenciais"],
     abastecer: ["Abastecer","Novo lançamento"],
     historico: ["Histórico","Seus lançamentos"],
+    manutencao: ["Manutenção","Controle de revisões"],
     veiculos: ["Veículos","Gerenciar garagem"]
   };
   $("pageTitle").textContent = titles[name][0];
   $("pageSub").textContent = titles[name][1];
-  
   $("globalVehiclesContainer").style.display = (name === "veiculos") ? "none" : "block";
   
   closeSidebar();
@@ -488,42 +520,32 @@ function showView(name){
 
 function openSidebar(){ $("sidebar").classList.add("open"); $("overlay").classList.add("show"); }
 function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); }
-
 $("menuBtn").addEventListener("click", openSidebar);
 $("overlay").addEventListener("click", closeSidebar);
+
 document.querySelectorAll(".nav button").forEach(b=>{
   b.addEventListener("click", ()=>{
-    if(b.dataset.view === "abastecer" && !$("editId").value) {
-      limparFormulario();
-    }
     showView(b.dataset.view);
   });
 });
 
-/* Regras de negócio / Cálculo */
+/* Logica de Negocio */
 function sortItems(){
   items.sort((a,b)=> (a.data||"").localeCompare(b.data||"") || (Number(a.odometro)-Number(b.odometro)));
+  maintenances.sort((a,b)=> (a.data||"").localeCompare(b.data||"") || (Number(a.odometro)-Number(b.odometro)));
 }
 
 function processMetrics(){
   sortItems();
-  
-  // Encontra o veículo ativo atual para pegar o odômetro de compra inicial
   const currentVeh = vehicles.find(v => v.id === activeVehicleId) || { odoCompra: 0 };
   const initialOdo = Number(currentVeh.odoCompra) || 0;
   
-  let baseOdo = initialOdo;
-  let firstFound = false;
-
   for(let i=0; i<items.length; i++){
     if(items[i].veiculoId !== activeVehicleId) continue;
     
     let prev = null;
     for(let j = i - 1; j >= 0; j--){
-      if(items[j].veiculoId === activeVehicleId){
-        prev = items[j];
-        break;
-      }
+      if(items[j].veiculoId === activeVehicleId){ prev = items[j]; break; }
     }
     
     if(prev){
@@ -531,7 +553,6 @@ function processMetrics(){
       items[i].deltaKm = delta > 0 ? delta : null;
       items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
     } else {
-      // É o primeiro abastecimento registrado. Usamos o odoCompra se ele existir e for coerente
       const delta = Number(items[i].odometro) - initialOdo;
       items[i].deltaKm = delta > 0 ? delta : null;
       items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
@@ -544,6 +565,7 @@ function renderAll(){
   processMetrics();
   renderCards();
   renderTable();
+  renderMaintenanceTable();
   renderVehiclesList();
 }
 
@@ -552,8 +574,7 @@ function updateVehicleSelectors(){
   select.innerHTML = "";
   vehicles.forEach(v => {
     const opt = document.createElement("option");
-    opt.value = v.id;
-    opt.textContent = v.nome;
+    opt.value = v.id; opt.textContent = v.nome;
     if(v.id === activeVehicleId) opt.selected = true;
     select.appendChild(opt);
   });
@@ -563,6 +584,7 @@ $("globalVehicle").addEventListener("change", (e)=>{
   activeVehicleId = e.target.value;
   localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
   limparFormulario();
+  limparMaintForm();
   renderAll();
   const target = vehicles.find(v => v.id === activeVehicleId);
   toast(`Carro ativo: ${target ? target.nome : ""}`);
@@ -586,19 +608,15 @@ function renderCards(){
 
   let custoAcumulado = 0;
   filtered.forEach(x => {
-    if(x.litros && x.precoLitro) {
-      custoAcumulado += (Number(x.litros) * Number(x.precoLitro));
-    }
+    if(x.litros && x.precoLitro) custoAcumulado += (Number(x.litros) * Number(x.precoLitro));
   });
   $("totalGasto").textContent = custoAcumulado > 0 ? `R$ ${formatNum(custoAcumulado, 2)}` : "—";
 
-  // Média Geral baseada no Odômetro Inicial de Compra até o último odômetro lançado
-  const primeirOdo = Number(currentVeh.odoCompra) || (filtered.length > 0 ? Number(filtered[0].odometro) : 0);
+  const primeirOdo = Number(currentVeh.odoCompra) || Number(filtered[0].odometro);
   const ultimoOdo = Number(ultimoItem.odometro);
   const deltaTotalKm = ultimoOdo - primeirOdo;
 
   let litrosConsiderados = 0;
-  // Se começou do odômetro de compra, somamos todos os litros. Se não, exclui o primeiro como antes.
   const startIndex = (Number(currentVeh.odoCompra) > 0) ? 0 : 1;
   for(let i = startIndex; i < filtered.length; i++){
     litrosConsiderados += Number(filtered[i].litros) || 0;
@@ -609,9 +627,7 @@ function renderCards(){
 }
 
 function renderTable(){
-  const tb = $("tbody");
-  tb.innerHTML = "";
-  
+  const tb = $("tbody"); tb.innerHTML = "";
   let filtered = items.filter(x => x.veiculoId === activeVehicleId);
 
   if(filtered.length===0){
@@ -643,20 +659,17 @@ function renderTable(){
   $("histStatus").textContent = `${filtered.length} lançamento(s) deste veículo.`;
 }
 
-/* Ações de Editar e Deletar Itens */
+/* CRUD Abastecimentos */
 window.entrarModoEdicao = function(id) {
   const item = items.find(x => x.id === id);
   if(!item) return;
-
   $("editId").value = item.id;
   $("data").value = item.data;
   $("odometro").value = item.odometro;
   $("litros").value = item.litros;
   $("precoLitro").value = item.precoLitro || "";
-  
   $("formTitle").textContent = "✏️ Editar lançamento";
   $("btnSalvar").textContent = "Atualizar";
-  
   calcularPreviewCusto();
   showView("abastecer");
 };
@@ -664,33 +677,120 @@ window.entrarModoEdicao = function(id) {
 window.removerRegistro = function(id) {
   if(!confirm("Deseja mesmo excluir esse registro?")) return;
   items = items.filter(x => x.id !== id);
-  saveItems(items);
-  renderAll();
+  saveItems(items); renderAll();
   toast("Registro deletado!");
 };
 
 function limparFormulario() {
-  $("editId").value = "";
-  $("odometro").value = "";
-  $("litros").value = "";
-  $("precoLitro").value = "";
+  $("editId").value = ""; $("odometro").value = ""; $("litros").value = ""; $("precoLitro").value = "";
   $("data").value = new Date().toISOString().slice(0,10);
-  $("formTitle").textContent = "⛽ Novo lançamento";
-  $("btnSalvar").textContent = "Salvar";
+  $("formTitle").textContent = "⛽ Novo lançamento"; $("btnSalvar").textContent = "Salvar";
   $("previewCusto").textContent = "Custo Total: R$ 0,00";
 }
 
 function calcularPreviewCusto() {
   const l = parseBRNumber($("litros").value);
   const p = parseBRNumber($("precoLitro").value);
-  if(l && p) {
-    $("previewCusto").textContent = `Custo Total: R$ ${formatNum(l * p, 2)}`;
-  } else {
-    $("previewCusto").textContent = "Custo Total: R$ 0,00";
-  }
+  $("previewCusto").textContent = (l && p) ? `Custo Total: R$ ${formatNum(l * p, 2)}` : "Custo Total: R$ 0,00";
 }
 $("litros").addEventListener("input", calcularPreviewCusto);
 $("precoLitro").addEventListener("input", calcularPreviewCusto);
+
+$("btnSalvar").addEventListener("click", ()=>{
+  const idEdicao = $("editId").value;
+  const data = $("data").value;
+  const odometro = parseBRNumber($("odometro").value);
+  const litros = parseBRNumber($("litros").value);
+  const precoLitro = parseBRNumber($("precoLitro").value);
+
+  if(!data || !odometro || !litros){ toast("Preencha todos os campos obrigatórios."); return; }
+
+  if(idEdicao) {
+    items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
+    toast("Registro atualizado!");
+  } else {
+    items.push({ id: `${Date.now()}`, veiculoId: activeVehicleId, data, odometro, litros, precoLitro });
+    toast("Salvo ✅");
+  }
+  saveItems(items); limparFormulario(); renderAll(); showView("painel");
+});
+$("btnLimparForm").addEventListener("click", limparFormulario);
+
+/* CRUD Manutenção */
+function renderMaintenanceTable(){
+  const tb = $("mTbody"); tb.innerHTML = "";
+  let filtered = maintenances.filter(x => x.veiculoId === activeVehicleId);
+
+  if(filtered.length === 0){
+    tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--muted)">Nenhuma manutenção registrada.</td>`;
+    tb.appendChild(tr);
+    return;
+  }
+
+  [...filtered].reverse().forEach(x => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${x.data.split("-").reverse().join("/")}</td>
+      <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
+      <td>${x.descricao}</td>
+      <td>R$ ${formatNum(x.custo, 2)}</td>
+      <td>
+        <div class="action-cell">
+          <button class="btn secondary mini" onclick="editarManutencao('${x.id}')">✏️</button>
+          <button class="btn danger mini" onclick="removerManutencao('${x.id}')">🗑️</button>
+        </div>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+$("btnSalvarManutencao").addEventListener("click", () => {
+  const idEdicao = $("editMaintId").value;
+  const data = $("mData").value;
+  const odometro = parseBRNumber($("mOdometro").value);
+  const custo = parseBRNumber($("mCusto").value) || 0;
+  const descricao = $("mDescricao").value.trim();
+
+  if(!data || !odometro || !descricao){ toast("Preencha Data, Odômetro e Descrição."); return; }
+
+  if(idEdicao){
+    maintenances = maintenances.map(x => x.id === idEdicao ? { ...x, data, odometro, custo, descricao } : x);
+    toast("Manutenção atualizada!");
+  } else {
+    maintenances.push({ id: `${Date.now()}`, veiculoId: activeVehicleId, data, odometro, custo, descricao });
+    toast("Serviço salvo!");
+  }
+  saveMaintenances(maintenances); limparMaintForm(); renderAll();
+});
+
+window.editarManutencao = function(id){
+  const m = maintenances.find(x => x.id === id);
+  if(!m) return;
+  $("editMaintId").value = m.id;
+  $("mData").value = m.data;
+  $("mOdometro").value = m.odometro;
+  $("mCusto").value = m.custo;
+  $("mDescricao").value = m.descricao;
+  $("mFormTitle").textContent = "✏️ Editar Manutenção";
+  $("btnSalvarManutencao").textContent = "Atualizar Serviço";
+};
+
+window.removerManutencao = function(id){
+  if(!confirm("Remover esta manutenção permanentemente?")) return;
+  maintenances = maintenances.filter(x => x.id !== id);
+  saveMaintenances(maintenances); renderAll();
+  toast("Removido.");
+};
+
+function limparMaintForm(){
+  $("editMaintId").value = ""; $("mOdometro").value = ""; $("mCusto").value = ""; $("mDescricao").value = "";
+  $("mData").value = new Date().toISOString().slice(0,10);
+  $("mFormTitle").textContent = "🔧 Registrar Manutenção / Serviço";
+  $("btnSalvarManutencao").textContent = "Salvar Serviço";
+}
+$("btnLimparMaintForm").addEventListener("click", limparMaintForm);
 
 /* Gestão de Veículos */
 $("btnCadastrarVeiculo").addEventListener("click", ()=>{
@@ -698,43 +798,30 @@ $("btnCadastrarVeiculo").addEventListener("click", ()=>{
   const odoCompra = parseBRNumber($("odometroCompra").value) || 0;
   const editId = $("editVehId").value;
 
-  if(!nome) { toast("Digite o nome do veículo."); return; }
+  if(!nome) { toast("Digite o nome."); return; }
   
   if(editId) {
     vehicles = vehicles.map(v => v.id === editId ? { ...v, nome, odoCompra } : v);
     toast("Veículo atualizado!");
   } else {
-    if(vehicles.some(v => v.nome.toLowerCase() === nome.toLowerCase())) { 
-      toast("Esse carro já está cadastrado."); 
-      return; 
-    }
+    if(vehicles.some(v => v.nome.toLowerCase() === nome.toLowerCase())) { toast("Carro já existente."); return; }
     const novo = { id: `${Date.now()}`, nome, odoCompra };
-    vehicles.push(novo);
-    activeVehicleId = novo.id;
+    vehicles.push(novo); activeVehicleId = novo.id;
     localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
-    toast(`🚙 ${nome} cadastrado e ativo!`);
   }
-  
-  saveVehicles(vehicles);
-  limparVehForm();
-  renderAll();
+  saveVehicles(vehicles); limparVehForm(); renderAll();
 });
 
 window.editarVeiculo = function(id) {
-  const v = vehicles.find(x => x.id === id);
-  if(!v) return;
-  $("editVehId").value = v.id;
-  $("novoVeiculo").value = v.nome;
-  $("odometroCompra").value = v.odoCompra || 0;
+  const v = vehicles.find(x => x.id === id); if(!v) return;
+  $("editVehId").value = v.id; $("novoVeiculo").value = v.nome; $("odometroCompra").value = v.odoCompra || 0;
   $("vehFormTitle").textContent = "✏️ Editar Veículo";
   $("btnCadastrarVeiculo").textContent = "Atualizar Veículo";
   $("btnLimparVehForm").style.display = "inline-flex";
 };
 
 function limparVehForm() {
-  $("editVehId").value = "";
-  $("novoVeiculo").value = "";
-  $("odometroCompra").value = "";
+  $("editVehId").value = ""; $("novoVeiculo").value = ""; $("odometroCompra").value = "";
   $("vehFormTitle").textContent = "🚘 Cadastrar Veículo";
   $("btnCadastrarVeiculo").textContent = "Adicionar à Garagem";
   $("btnLimparVehForm").style.display = "none";
@@ -742,22 +829,17 @@ function limparVehForm() {
 $("btnLimparVehForm").addEventListener("click", limparVehForm);
 
 function renderVehiclesList(){
-  const list = $("listaVeiculos");
-  list.innerHTML = "";
-  
+  const list = $("listaVeiculos"); list.innerHTML = "";
   vehicles.forEach(v => {
-    const itemEl = document.createElement("div");
-    itemEl.className = "v-item";
-    
+    const itemEl = document.createElement("div"); itemEl.className = "v-item";
     const isDefault = vehicles.length === 1;
     const deleteBtn = isDefault ? "" : `<button class="btn danger mini" onclick="removerVeiculo('${v.id}')">🗑️</button>`;
     const activeLabel = v.id === activeVehicleId ? " <small style='color:var(--ok)'>(Ativo)</small>" : "";
-    const odoExibicao = v.odoCompra ? `${Number(v.odoCompra).toLocaleString("pt-BR")} km` : "0 km";
 
     itemEl.innerHTML = `
       <div class="info">
         <span class="name">🚗 ${v.nome} ${activeLabel}</span>
-        <span class="sub">Compra: ${odoExibicao}</span>
+        <span class="sub">Compra: ${(v.odoCompra||0).toLocaleString("pt-BR")} km</span>
       </div>
       <div class="action-cell">
         <button class="btn secondary mini" onclick="editarVeiculo('${v.id}')">✏️</button>
@@ -769,87 +851,29 @@ function renderVehiclesList(){
 }
 
 window.removerVeiculo = function(id){
-  const target = vehicles.find(x => x.id === id);
-  if(!target) return;
-  if(!confirm(`Apagar o veículo "${target.nome}"? Os dados de abastecimento atrelados a ele não aparecerão mais.`)) return;
-  
-  vehicles = vehicles.filter(x => x.id !== id);
-  saveVehicles(vehicles);
-  if(activeVehicleId === id){
-    activeVehicleId = vehicles[0].id;
-    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
-  }
+  if(!confirm("Remover veículo? Seus abastecimentos e manutenções deixarão de ser listados.")) return;
+  vehicles = vehicles.filter(x => x.id !== id); saveVehicles(vehicles);
+  if(activeVehicleId === id){ activeVehicleId = vehicles[0].id; localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId); }
   renderAll();
-  toast("Veículo removido.");
 };
 
-/* Lançamentos de abastecimento */
-$("btnSalvar").addEventListener("click", ()=>{
-  const idEdicao = $("editId").value;
-  const data = $("data").value;
-  const odometro = parseBRNumber($("odometro").value);
-  const litros = parseBRNumber($("litros").value);
-  const precoLitro = parseBRNumber($("precoLitro").value);
-
-  if(!data){ toast("Selecione a data."); return; }
-  if(!odometro || odometro <= 0){ toast("Odômetro inválido."); return; }
-  if(!litros || litros <= 0){ toast("Volume de litros inválido."); return; }
-
-  // Coerência com o odômetro de compra
-  const currentVeh = vehicles.find(v => v.id === activeVehicleId);
-  if(currentVeh && odometro < (Number(currentVeh.odoCompra) || 0)) {
-    toast(`Erro: Odômetro menor que o odômetro de compra (${currentVeh.odoCompra} km)`);
-    return;
-  }
-
-  if(idEdicao) {
-    items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
-    toast("Registro atualizado!");
-  } else {
-    const item = {
-      id: `${Date.now()}`,
-      veiculoId: activeVehicleId, 
-      data, odometro, litros, precoLitro
-    };
-    items.push(item);
-    toast("Salvo ✅");
-  }
-
-  saveItems(items);
-  limparFormulario();
-  renderAll();
-  showView("painel");
-});
-
-$("btnLimparForm").addEventListener("click", ()=>{
-  limparFormulario();
-  toast("Formulário redefinido");
-});
-
 $("btnApagarTudo").addEventListener("click", ()=>{
-  const target = vehicles.find(v => v.id === activeVehicleId);
-  if(!confirm(`Apagar TODO o histórico do veículo "${target ? target.nome : ""}"?`)) return;
+  if(!confirm("Apagar todo o histórico de abastecimentos deste carro?")) return;
   items = items.filter(x => x.veiculoId !== activeVehicleId);
-  saveItems(items);
-  limparFormulario();
-  renderAll();
-  toast("Histórico limpo!");
+  saveItems(items); limparFormulario(); renderAll();
 });
 
 $("btnExportarJson").addEventListener("click", ()=>{
-  const payload = { veiculos: vehicles, historicoCompleto: items };
+  const payload = { veiculos: vehicles, historicoCompleto: items, manutencoes: list=maintenances };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `backup_garagem_combustivel.json`;
-  a.click();
-  toast("Backup baixado");
+  const a = document.createElement("a"); a.href = url;
+  a.download = `backup_completo_veiculos.json`; a.click();
 });
 
 // Inicialização
 const hoje = new Date().toISOString().slice(0,10);
-$("data").value = hoje;
+$("data").value = hoje; $("mData").value = hoje;
 renderAll();
 </script>
 </body>
