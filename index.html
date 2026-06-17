@@ -493,13 +493,24 @@
         </div>
         
         <div style="display: flex; gap: 12px; max-width: 320px;">
-          <button class="btn primary" id="btnCadastrarVeiculo" type="button" style="padding: 10px 14px; font-size: 13px;">Adicionar à Garagem</button>
+          <button class="btn primary" id="btnCadastrarVeiculo" type="button" style="padding: 10px 14px; font-size: 13px;">Salvar Veículo</button>
           <button class="btn secondary" id="btnLimparVehForm" type="button" style="display:none; padding: 0 16px;">Cancelar</button>
         </div>
       </div>
       
       <div class="sectionTitle">📋 Seus Veículos</div>
-      <div class="v-list" id="listaVeiculos"></div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome do Veículo</th>
+              <th>Odômetro Compra</th>
+              <th style="width: 110px; text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaVeiculos"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 </div>
@@ -567,9 +578,9 @@ const DIRETRIZES_MANUTENCAO = [
 ];
 
 function loadItems(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e){ return []; } }
-function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+function saveItems(itemsList){ localStorage.setItem(STORE_KEY, JSON.stringify(itemsList)); items = itemsList; }
 function loadMaint(){ try{ return JSON.parse(localStorage.getItem(MAINT_KEY) || "[]"); } catch(e){ return []; } }
-function saveMaint(m){ localStorage.setItem(MAINT_KEY, JSON.stringify(m)); }
+function saveMaint(m){ localStorage.setItem(MAINT_KEY, JSON.stringify(m)); maints = m; }
 
 function loadVehicles(){
   try{ 
@@ -578,7 +589,7 @@ function loadVehicles(){
     return JSON.parse(raw);
   } catch(e){ return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93671 }]; }
 }
-function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
+function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); vehicles = v; }
 
 let items = loadItems();
 let maints = loadMaint();
@@ -768,29 +779,358 @@ function renderManutencaoTela() {
   });
 }
 
-// Funções de placeholder obrigatórias para evitar erros ao carregar a página inicialmente
 function renderTable() {
   const tbody = $("tbody");
   if (!tbody) return;
   let filtered = items.filter(x => x.veiculoId === activeVehicleId);
-  tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center; color:var(--muted)">Nenhum abastecimento cadastrado.</td></tr>` : "";
-  // Lógica de renderização da tabela de consumo vai aqui se necessário expandir...
+  tbody.innerHTML = "";
+  
+  if(filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted)">Nenhum abastecimento cadastrado.</td></tr>`;
+    $("histStatus").textContent = "—";
+    return;
+  }
+
+  filtered.forEach(x => {
+    const tr = document.createElement("tr");
+    const custoTotal = (x.litros && x.precoLitro) ? Number(x.litros) * Number(x.precoLitro) : 0;
+    tr.innerHTML = `
+      <td>${x.data.split('-').reverse().join('/')}</td>
+      <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
+      <td>${formatNum(x.litros, 2)} L</td>
+      <td>${custoTotal > 0 ? 'R$ ' + formatNum(custoTotal, 2) : '—'}</td>
+      <td>${x.deltaKm ? x.deltaKm + ' km' : '—'}</td>
+      <td>${x.kml ? formatNum(x.kml, 2) + ' Km/L' : '—'}</td>
+      <td style="text-align:center;">
+        <button class="btn mini" onclick="editarAbastecimento('${x.id}')">✏️</button>
+        <button class="btn mini danger" onclick="deletarAbastecimento('${x.id}')">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  $("histStatus").textContent = `${filtered.length} lançamento(s) encontrado(s)`;
 }
+
 function renderVehiclesList() {
   const lista = $("listaVeiculos");
   if (!lista) return;
   lista.innerHTML = "";
   vehicles.forEach(v => {
-    const div = document.createElement("div");
-    div.className = "v-item";
-    div.innerHTML = `<div class="name">${v.nome}</div><div class="sub">${(v.odoCompra || 0).toLocaleString("pt-BR")} km iniciais</div>`;
-    lista.appendChild(div);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${v.nome}</strong> ${v.id === activeVehicleId ? '<span class="badge ok">Ativo</span>' : ''}</td>
+      <td>${Number(v.odoCompra || 0).toLocaleString("pt-BR")} km</td>
+      <td style="text-align:center;">
+        <button class="btn mini" onclick="editarVeiculo('${v.id}')">✏️</button>
+        <button class="btn mini danger" onclick="deletarVeiculo('${v.id}')">🗑️</button>
+      </td>
+    `;
+    lista.appendChild(tr);
   });
 }
-function limparFormulario() { if($("editId")) $("editId").value = ""; }
-function limparMaintForm() { if($("editMaintId")) $("editMaintId").value = ""; }
 
-// Inicialização da View padrão
+/* LÓGICA DE MANUTENÇÃO MANUAL */
+$("btnSalvarMaint").addEventListener("click", () => {
+  const data = $("maintData").value;
+  const odo = $("maintOdometro").value;
+  const item = $("maintItem").value;
+  const valor = $("maintValor").value;
+
+  if(!data || !odo || !item || !valor) {
+    toast("Preencha todos os campos da manutenção!");
+    return;
+  }
+
+  const editId = $("editMaintId").value;
+  let currentMaints = loadMaint();
+
+  if(editId) {
+    currentMaints = currentMaints.map(m => m.id === editId ? { id: editId, veiculoId: activeVehicleId, data, odometro: odo, item, valor } : m);
+    toast("Manutenção atualizada!");
+  } else {
+    currentMaints.push({ id: "m_" + Date.now(), veiculoId: activeVehicleId, data, odometro: odo, item, valor });
+    toast("Manutenção salva!");
+  }
+
+  saveMaint(currentMaints);
+  limparMaintForm();
+  renderAll();
+});
+
+window.editarMaint = function(id) {
+  const m = maints.find(x => x.id === id);
+  if(!m) return;
+  $("editMaintId").value = m.id;
+  $("maintData").value = m.data;
+  $("maintOdometro").value = m.odometro;
+  $("maintItem").value = m.item;
+  $("maintValor").value = m.valor;
+  $("maintFormTitle").textContent = "Editar Manutenção";
+};
+
+window.deletarMaint = function(id) {
+  if(!confirm("Deseja excluir esta manutenção?")) return;
+  const filtered = maints.filter(x => x.id !== id);
+  saveMaint(filtered);
+  toast("Manutenção removida!");
+  renderAll();
+};
+
+function limparMaintForm() {
+  $("editMaintId").value = "";
+  $("maintData").value = "";
+  $("maintOdometro").value = "";
+  $("maintItem").value = "";
+  $("maintValor").value = "";
+  $("maintFormTitle").textContent = "Registrar Manutenção ou Peça";
+}
+$("btnLimparMaintForm").addEventListener("click", limparMaintForm);
+
+
+/* LÓGICA DE ABASTECIMENTO */
+function calcularCustoPreview() {
+  const litros = parseBRNumber($("litros").value);
+  const preco = parseBRNumber($("precoLitro").value);
+  if(litros && preco) {
+    $("previewCusto").textContent = `Custo Total: R$ ${formatNum(litros * preco, 2)}`;
+  } else {
+    $("previewCusto").textContent = "Custo Total: R$ 0,00";
+  }
+}
+$("litros").addEventListener("input", calcularCustoPreview);
+$("precoLitro").addEventListener("input", calcularCustoPreview);
+
+$("btnSalvar").addEventListener("click", () => {
+  const data = $("data").value;
+  const odo = $("odometro").value;
+  const litros = $("litros").value;
+  const preco = $("precoLitro").value;
+
+  if(!data || !odo || !litros) {
+    toast("Data, Odômetro e Litros são obrigatórios!");
+    return;
+  }
+
+  const editId = $("editId").value;
+  let currentItems = loadItems();
+
+  const novoRegistro = {
+    id: editId || "f_" + Date.now(),
+    veiculoId: activeVehicleId,
+    data,
+    odometro: Number(odo),
+    litros: parseBRNumber(litros),
+    precoLitro: preco ? parseBRNumber(preco) : null
+  };
+
+  if(editId) {
+    currentItems = currentItems.map(x => x.id === editId ? novoRegistro : x);
+    toast("Registro atualizado!");
+  } else {
+    currentItems.push(novoRegistro);
+    toast("Registro salvo!");
+  }
+
+  saveItems(currentItems);
+  limparFormulario();
+  renderAll();
+});
+
+window.editarAbastecimento = function(id) {
+  const x = items.find(v => v.id === id);
+  if(!x) return;
+  $("editId").value = x.id;
+  $("data").value = x.data;
+  $("odometro").value = x.odometro;
+  $("litros").value = x.litros;
+  $("precoLitro").value = x.precoLitro || "";
+  $("formTitle").textContent = "Editar lançamento";
+  calcularCustoPreview();
+  showView("abastecer");
+};
+
+window.deletarAbastecimento = function(id) {
+  if(!confirm("Excluir este abastecimento?")) return;
+  const filtered = items.filter(x => x.id !== id);
+  saveItems(filtered);
+  toast("Registro excluído!");
+  renderAll();
+};
+
+function limparFormulario() {
+  $("editId").value = "";
+  $("data").value = "";
+  $("odometro").value = "";
+  $("litros").value = "";
+  $("precoLitro").value = "";
+  $("formTitle").textContent = "Novo lançamento";
+  $("previewCusto").textContent = "Custo Total: R$ 0,00";
+}
+$("btnLimparForm").addEventListener("click", limparFormulario);
+
+$("btnApagarTudo").addEventListener("click", () => {
+  if(!confirm("⚠️ ATENÇÃO: Tem certeza que deseja apagar TODOS os abastecimentos deste veículo? Esta ação não pode ser desfeita.")) return;
+  const filtered = items.filter(x => x.veiculoId !== activeVehicleId);
+  saveItems(filtered);
+  toast("Todos os registros do veículo foram apagados!");
+  renderAll();
+});
+
+
+/* LÓGICA DE GERENCIAMENTO DE VEÍCULOS */
+$("btnCadastrarVeiculo").addEventListener("click", () => {
+  const nome = $("novoVeiculo").value.trim();
+  const odo = $("odometroCompra").value;
+
+  if(!nome || !odo) {
+    toast("Preencha o nome do veículo e o odômetro de compra!");
+    return;
+  }
+
+  const editId = $("editVehId").value;
+  let currentVehicles = loadVehicles();
+
+  if(editId) {
+    currentVehicles = currentVehicles.map(v => v.id === editId ? { id: editId, nome, odoCompra: Number(odo) } : v);
+    toast("Veículo atualizado!");
+  } else {
+    const novoId = "v_" + Date.now();
+    currentVehicles.push({ id: novoId, nome, odoCompra: Number(odo) });
+    activeVehicleId = novoId;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
+    toast("Veículo adicionado!");
+  }
+
+  saveVehicles(currentVehicles);
+  limparVehForm();
+  renderAll();
+});
+
+window.editarVeiculo = function(id) {
+  const v = vehicles.find(x => x.id === id);
+  if(!v) return;
+  $("editVehId").value = v.id;
+  $("novoVeiculo").value = v.nome;
+  $("odometroCompra").value = v.odoCompra;
+  $("vehFormTitle").textContent = "✏️ Editar Veículo";
+  $("btnCadastrarVeiculo").textContent = "Atualizar Veículo";
+  $("btnLimparVehForm").style.display = "inline-flex";
+};
+
+window.deletarVeiculo = function(id) {
+  if(vehicles.length <= 1) {
+    toast("Você precisa ter pelo menos um veículo cadastrado!");
+    return;
+  }
+  if(!confirm("Deseja realmente remover este veículo? Todos os abastecimentos e manutenções dele serão mantidos ou limpos.")) return;
+  
+  const filteredVeh = vehicles.filter(x => x.id !== id);
+  saveVehicles(filteredVeh);
+
+  if(activeVehicleId === id) {
+    activeVehicleId = filteredVeh[0].id;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
+  }
+
+  toast("Veículo removido!");
+  limparVehForm();
+  renderAll();
+};
+
+function limparVehForm() {
+  $("editVehId").value = "";
+  $("novoVeiculo").value = "";
+  $("odometroCompra").value = "";
+  $("vehFormTitle").textContent = "Cadastrar Veículo";
+  $("btnCadastrarVeiculo").textContent = "Adicionar à Garagem";
+  $("btnLimparVehForm").style.display = "none";
+}
+$("btnLimparVehForm").addEventListener("click", limparVehForm);
+
+
+/* EXPORTAÇÃO E IMPORTAÇÃO DE DADOS */
+$("btnExportarJson").addEventListener("click", () => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  toast("JSON Exportado com sucesso!");
+});
+
+$("btnExportarCsv").addEventListener("click", () => {
+  let csvContent = "data:text/csv;charset=utf-8,id;veiculoId;data;odometro;litros;precoLitro\n";
+  items.forEach(x => {
+    csvContent += `${x.id};${x.veiculoId};${x.data};${x.odometro};${x.litros};${x.precoLitro || ''}\n`;
+  });
+  const encodedUri = encodeURI(csvContent);
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", encodedUri);
+  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.csv`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  toast("CSV Exportado com sucesso!");
+});
+
+$("importJsonFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const parsed = JSON.parse(evt.target.result);
+      if(Array.isArray(parsed)) {
+        const merged = [...loadItems(), ...parsed.map(x => ({...x, veiculoId: x.veiculoId || activeVehicleId}))];
+        saveItems(merged);
+        toast("JSON importado e mesclado!");
+        renderAll();
+      } else {
+        toast("Formato JSON inválido. Deve ser uma lista.");
+      }
+    } catch(err) {
+      toast("Erro ao ler o arquivo JSON.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+$("importCsvFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const lines = evt.target.result.split('\n');
+      const currentItems = loadItems();
+      for(let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if(!line) continue;
+        const cols = line.split(';');
+        if(cols.length >= 5) {
+          currentItems.push({
+            id: cols[0] || "f_" + Date.now() + "_" + i,
+            veiculoId: cols[1] || activeVehicleId,
+            data: cols[2],
+            odometro: Number(cols[3]),
+            litros: Number(cols[4]),
+            precoLitro: cols[5] ? Number(cols[5]) : null
+          });
+        }
+      }
+      saveItems(currentItems);
+      toast("CSV importado com sucesso!");
+      renderAll();
+    } catch(err) {
+      toast("Erro ao processar o arquivo CSV.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Inicialização Inicial
 showView("painel");
 </script>
 </body>
