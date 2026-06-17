@@ -1,35 +1,54 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Controle de Combustível</title>
 
   <style>
-    :root{
-      --bg:#06101f;
-      --panel:rgba(255,255,255,.04);
-      --card:rgba(255,255,255,.06);
-      --stroke:rgba(255,255,255,.10);
-      --text:#eaf1ff;
-      --muted:rgba(234,241,255,.70);
-      --accent:#2b6dff;
-      --accent2:#1f55cc;
-      --danger:#ff476f;
-      --ok:#29d17c;
-      --shadow:0 14px 34px rgba(0,0,0,.28);
-      --radius:18px;
-      --line:rgba(255,255,255,.08);
+    :root {
+      --bg: #06101f;
+      --panel: rgba(255,255,255,.04);
+      --card: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.10);
+      --text: #eaf1ff;
+      --muted: rgba(234,241,255,.70);
+      --accent: #2b6dff;
+      --accent2: #1f55cc;
+      --danger: #ff476f;
+      --ok: #29d17c;
+      --shadow: 0 14px 34px rgba(0,0,0,.28);
+      --radius: 18px;
+      --line: rgba(255,255,255,.08);
       --sideW: 280px;
+      --gradient-bg: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
     }
+
+    [data-theme="light"] {
+      --bg: #f4f7fc;
+      --panel: #ffffff;
+      --card: #f8fafc;
+      --stroke: rgba(0,0,0,.08);
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #2b6dff;
+      --accent2: #1f55cc;
+      --danger: #ef4444;
+      --ok: #10b981;
+      --shadow: 0 10px 25px rgba(0,0,0,.05);
+      --line: rgba(0,0,0,.08);
+      --gradient-bg: #f4f7fc;
+    }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
+      background: var(--gradient-bg);
       overflow-x:hidden;
+      transition: background 0.2s, color 0.2s;
     }
     .app{
       min-height:100vh;
@@ -39,7 +58,7 @@
     /* Sidebar */
     .sidebar{
       width:var(--sideW);
-      background:rgba(5,12,23,.86);
+      background: rgba(5,12,23,.86);
       border-right:1px solid var(--line);
       padding:14px 12px;
       position:fixed;
@@ -48,6 +67,12 @@
       transition: transform .22s ease;
       z-index:2500;
       backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    [data-theme="light"] .sidebar {
+      background: rgba(255,255,255,.95);
     }
     .sidebar.open{ transform: translateX(0); }
     .sidebar .brand{
@@ -66,6 +91,7 @@
       flex-direction:column;
       gap:8px;
       padding:10px 6px;
+      flex-grow: 1;
     }
     .nav button{
       width:100%;
@@ -82,12 +108,20 @@
       align-items:center;
       gap:10px;
     }
+    [data-theme="light"] .nav button {
+      background: rgba(0,0,0,.02);
+    }
     .nav button.active{
       background:rgba(43,109,255,.16);
       border-color:rgba(43,109,255,.35);
       color:var(--text);
     }
     .nav .ic{width:22px; display:inline-flex; justify-content:center}
+
+    .theme-toggle-container {
+      padding: 10px 6px;
+      border-top: 1px solid var(--line);
+    }
 
     .overlay{
       position:fixed;
@@ -130,6 +164,7 @@
       cursor:pointer;
       font-weight:900;
     }
+    [data-theme="light"] .menuBtn { background: #ffffff; }
     .statusPill{
       display:flex;
       align-items:center;
@@ -143,6 +178,7 @@
       font-size:12px;
       white-space:nowrap;
     }
+    [data-theme="light"] .statusPill { background: #ffffff; }
     .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(41,209,124,.18)}
     h1{
       margin:0;
@@ -188,6 +224,9 @@
       padding:14px 14px;
       min-height:92px;
     }
+    [data-theme="light"] .card {
+      background: #ffffff;
+    }
     .card .label{
       margin:0;
       color:var(--muted);
@@ -201,7 +240,7 @@
     }
     .small{
       margin-top:6px;
-      color:rgba(234,241,255,.55);
+      color:var(--muted);
       font-size:12px;
       font-weight:800;
     }
@@ -210,7 +249,7 @@
     label{
       display:block;
       margin:10px 0 6px;
-      color:rgba(234,241,255,.78);
+      color:var(--text);
       font-size:12px;
       font-weight:900;
     }
@@ -225,9 +264,12 @@
       font-weight:900;
       font-size:14px;
     }
-    input::placeholder{ color:rgba(234,241,255,.45); font-weight:800; }
+    [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] .nav button:not(.active){
+      background: #ffffff;
+    }
+    input::placeholder{ color:var(--muted); opacity: 0.6; font-weight:800; }
     input:focus, select:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
-    select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23eaf1ff'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
+    select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
 
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
@@ -237,20 +279,22 @@
       border:1px solid rgba(255,255,255,.14);
       cursor:pointer;
       font-weight:950;
+      color: #ffffff;
     }
     .btn.secondary{
       background:rgba(255,255,255,.06);
       border:1px solid var(--line);
       color:var(--text);
     }
+    [data-theme="light"] .btn.secondary { background: #e2e8f0; }
     .btn.danger{
       background:rgba(255,71,111,.12);
       border-color:rgba(255,71,111,.30);
-      color:#ffd7e0;
+      color:var(--danger);
     }
     .btn:active{ transform: translateY(1px); }
 
-    .statusLine{ color:rgba(234,241,255,.78); font-size:12px; font-weight:900; margin-top:10px; }
+    .statusLine{ color:var(--muted); font-size:12px; font-weight:900; margin-top:10px; }
 
     /* Table & Lists */
     table{
@@ -261,47 +305,73 @@
       border:1px solid var(--line);
       background:rgba(255,255,255,.03);
     }
+    [data-theme="light"] table { background: #ffffff; }
     th, td{
-      padding:10px 10px;
+      padding:12px 10px;
       text-align:left;
       font-size:12px;
-      border-bottom:1px solid rgba(255,255,255,.07);
-      vertical-align:top;
+      border-bottom:1px solid var(--line);
+      vertical-align:middle;
       font-weight:800;
     }
-    th{ color:rgba(234,241,255,.70); font-weight:900; }
+    th{ color:var(--muted); font-weight:900; }
     tr:last-child td{ border-bottom:none; }
+
+    .action-btns { display: flex; gap: 6px; }
+    .action-btns button { width: auto; padding: 6px 10px; font-size: 11px; border-radius: 8px; }
 
     .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 10px;}
     .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; }
+    [data-theme="light"] .v-item { background: #ffffff; }
     .v-item span { font-weight: 800; font-size: 14px; }
     .v-item button { width: auto; padding: 6px 12px; font-size: 12px; }
+
+    /* Toast Minimalista */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 9999;
+    }
+    [data-theme="light"] #toast { background: #0f172a; }
   </style>
 </head>
 
 <body>
 <div class="app">
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="logo">🚗</div>
-      <div class="txt">
-        <div class="t">Painel Combustível</div>
-        <div class="s">Garagem multimarcas</div>
+    <div>
+      <div class="brand">
+        <div class="logo">🚗</div>
+        <div class="txt">
+          <div class="t">Painel Combustível</div>
+          <div class="s">Garagem multimarcas</div>
+        </div>
       </div>
+
+      <nav class="nav" aria-label="Menu">
+        <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
+        <button data-view="abastecer" id="nav-abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
+        <button data-view="historico"><span class="ic">🧾</span><span>Histórico</span></button>
+        <button data-view="veiculos"><span class="ic">🚘</span><span>Veículos</span></button>
+      </nav>
     </div>
 
-    <nav class="nav" aria-label="Menu">
-      <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
-      <button data-view="abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
-      <button data-view="historico"><span class="ic">🧾</span><span>Histórico</span></button>
-      <button data-view="veiculos"><span class="ic">🚘</span><span>Veículos</span></button>
-    </nav>
+    <div class="theme-toggle-container">
+      <button id="btnThemeToggle" class="btn secondary">🌓 Mudar Tema</button>
+    </div>
   </aside>
 
   <div class="overlay" id="overlay"></div>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="menuBtn" id="menuBtn">☰ Menu</button>
@@ -312,13 +382,11 @@
       <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
     </div>
 
-    <!-- SELETOR GLOBAL DE VEÍCULO -->
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
       <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
-    <!-- PAINEL -->
     <section class="section view" id="view-painel">
       <div class="cards">
         <div class="card">
@@ -332,9 +400,9 @@
           <div class="small">litros colocados</div>
         </div>
         <div class="card">
-          <div class="label">Dias Rodados</div>
-          <div class="val" id="diasRodados">0</div>
-          <div class="small">período ativo</div>
+          <div class="label">Total Gasto</div>
+          <div class="val" id="totalGasto">—</div>
+          <div class="small">acumulado em combustível</div>
         </div>
         <div class="card">
           <div class="label">Km Atual</div>
@@ -344,9 +412,9 @@
       </div>
     </section>
 
-    <!-- ABASTECER -->
     <section class="section view" id="view-abastecer" style="display:none">
-      <div class="sectionTitle">⛽ Novo lançamento</div>
+      <div class="sectionTitle" id="formTitle">⛽ Novo lançamento</div>
+      <input type="hidden" id="editId" />
       
       <label for="data">Data</label>
       <input id="data" type="date" />
@@ -354,7 +422,7 @@
       <div class="row">
         <div>
           <label for="odometro">Odômetro (km)</label>
-          <input id="odometro" placeholder="Ex: 84092" />
+          <input id="odometro" placeholder="Ex: 84092" type="number" />
         </div>
         <div>
           <label for="litros">Litros Abastecidos</label>
@@ -362,9 +430,19 @@
         </div>
       </div>
 
+      <div class="row" style="margin-top: 10px;">
+        <div>
+          <label for="precoLitro">Preço por Litro (R$) <small style="opacity:0.6">(Opcional)</small></label>
+          <input id="precoLitro" placeholder="Ex: 5,49" />
+        </div>
+        <div style="display: flex; align-items: flex-end; font-size: 13px; font-weight: 900; color: var(--ok); padding-bottom: 12px;" id="calcTotalAbastecimento">
+          Custo: R$ 0,00
+        </div>
+      </div>
+
       <div class="row" style="margin-top:16px">
         <button class="btn" id="btnSalvar" type="button">Salvar</button>
-        <button class="btn secondary" id="btnLimparForm" type="button">Limpar</button>
+        <button class="btn secondary" id="btnLimparForm" type="button">Cancelar / Limpar</button>
       </div>
 
       <div class="row" style="margin-top:12px">
@@ -375,7 +453,6 @@
       <div class="statusLine" id="saveStatus">—</div>
     </section>
 
-    <!-- HISTORICO -->
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
 
@@ -386,8 +463,10 @@
               <th>Data</th>
               <th>Odômetro</th>
               <th>Litros</th>
+              <th>Custo</th>
               <th>Km Rodados (Δ)</th>
               <th>Rendimento</th>
+              <th style="width: 130px; text-align: center;">Ações</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -396,7 +475,6 @@
       <div class="statusLine" id="histStatus">—</div>
     </section>
 
-    <!-- VEICULOS -->
     <section class="section view" id="view-veiculos" style="display:none">
       <div class="sectionTitle">🚘 Cadastrar Veículo</div>
       
@@ -419,6 +497,7 @@
 const STORE_KEY = "cb_abastecimentos_v5";
 const VEHICLES_KEY = "cb_veiculos_v5";
 const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
+const THEME_KEY = "cb_theme_v5";
 
 const $ = (id)=>document.getElementById(id);
 
@@ -441,6 +520,16 @@ function formatNum(n, digits=2){
   const v = Number(n);
   return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
 }
+
+/* Gerenciamento de Tema */
+let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
+document.documentElement.setAttribute("data-theme", currentTheme);
+
+$("btnThemeToggle").addEventListener("click", () => {
+  currentTheme = currentTheme === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", currentTheme);
+  localStorage.setItem(THEME_KEY, currentTheme);
+});
 
 /* Storage */
 function loadItems(){
@@ -479,7 +568,6 @@ function showView(name){
   $("pageTitle").textContent = titles[name][0];
   $("pageSub").textContent = titles[name][1];
   
-  // Esconde o seletor do topo se estiver na aba de gerenciar carros pra não confundir
   $("globalVehiclesContainer").style.display = (name === "veiculos") ? "none" : "block";
   
   closeSidebar();
@@ -492,7 +580,12 @@ function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").cla
 $("menuBtn").addEventListener("click", openSidebar);
 $("overlay").addEventListener("click", closeSidebar);
 document.querySelectorAll(".nav button").forEach(b=>{
-  b.addEventListener("click", ()=>showView(b.dataset.view));
+  b.addEventListener("click", ()=> {
+    if(b.dataset.view === "abastecer" && !$("editId").value) {
+      limparFormulario();
+    }
+    showView(b.dataset.view);
+  });
 });
 
 /* Regras de negócio / Cálculo */
@@ -502,13 +595,10 @@ function sortItems(){
 
 function processMetrics(){
   sortItems();
-  // Filtra e calcula apenas para o veículo ativo na sessão
-  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
   
   for(let i=0; i<items.length; i++){
     if((items[i].veiculo || "Padrão") !== activeVehicle) continue;
     
-    // Acha o registro anterior específico deste mesmo veículo
     let prev = null;
     for(let j = i - 1; j >= 0; j--){
       if((items[j].veiculo || "Padrão") === activeVehicle){
@@ -551,6 +641,7 @@ function updateVehicleSelectors(){
 $("globalVehicle").addEventListener("change", (e)=>{
   activeVehicle = e.target.value;
   localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  limparFormulario();
   renderAll();
   toast(`Carro ativo: ${activeVehicle}`);
 });
@@ -561,7 +652,7 @@ function renderCards(){
   if(filtered.length === 0){
     $("kmlGeral").textContent = "—";
     $("ultimoAbastecido").textContent = "—";
-    $("diasRodados").textContent = "0";
+    $("totalGasto").textContent = "—";
     $("kmAtual").textContent = "—";
     return;
   }
@@ -570,9 +661,16 @@ function renderCards(){
   $("kmAtual").textContent = `${Number(ultimoItem.odometro).toLocaleString("pt-BR")} km`;
   $("ultimoAbastecido").textContent = `${formatNum(ultimoItem.litros, 2)} L`;
 
+  // Gasto total acumulado
+  const totalDinheiro = filtered.reduce((acc, curr) => {
+    const l = Number(curr.litros) || 0;
+    const p = Number(curr.precoLitro) || 0;
+    return acc + (l * p);
+  }, 0);
+  $("totalGasto").textContent = totalDinheiro > 0 ? `R$ ${formatNum(totalDinheiro, 2)}` : "—";
+
   if(filtered.length < 2){
     $("kmlGeral").textContent = "—";
-    $("diasRodados").textContent = "0";
     return;
   }
 
@@ -587,13 +685,7 @@ function renderCards(){
 
   const mediaGeral = (deltaTotalKm > 0 && litrosConsiderados > 0) ? (deltaTotalKm / litrosConsiderados) : null;
 
-  const dataIni = new Date(filtered[0].data);
-  const dataFim = new Date(filtered[filtered.length-1].data);
-  const diffTime = Math.abs(dataFim - dataIni);
-  const diffDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-  $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
-  $("diasRodados").textContent = diffDias;
+  $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)} Km/L` : "—";
 }
 
 function renderTable(){
@@ -607,20 +699,81 @@ function renderTable(){
     return;
   }
 
+  // Clona e inverte para exibir o mais recente no topo da tabela
   const displayRows = [...filtered].reverse();
   for(const x of displayRows){
     const tr = document.createElement("tr");
+    
+    const custoTotal = (Number(x.litros) && Number(x.precoLitro)) ? `R$ ${formatNum(Number(x.litros) * Number(x.precoLitro), 2)}` : "—";
+
     tr.innerHTML = `
       <td>${x.data.split("-").reverse().join("/")}</td>
       <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
       <td>${formatNum(x.litros, 2)} L</td>
+      <td>${custoTotal}</td>
       <td>${x.deltaKm ? `${x.deltaKm.toLocaleString("pt-BR")} km` : "—"}</td>
       <td>${x.kml ? `${formatNum(x.kml, 2)} Km/L` : "—"}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn secondary" onclick="prepararEdicao('${x.id}')">✏️</button>
+          <button class="btn danger" onclick="excluirRegistro('${x.id}')">🗑️</button>
+        </div>
+      </td>
     `;
     tb.appendChild(tr);
   }
   $("histStatus").textContent = `${filtered.length} lançamento(s) deste veículo.`;
 }
+
+/* Edição e Exclusão */
+window.prepararEdicao = function(id) {
+  const item = items.find(x => x.id === id);
+  if(!item) return;
+
+  $("editId").value = item.id;
+  $("data").value = item.data;
+  $("odometro").value = item.odometro;
+  $("litros").value = item.litros;
+  $("precoLitro").value = item.precoLitro || "";
+  
+  $("formTitle").textContent = "✏️ Editar lançamento";
+  $("btnSalvar").textContent = "Atualizar Registro";
+  
+  atualizarPreviewCusto();
+  showView("abastecer");
+};
+
+window.excluirRegistro = function(id) {
+  if(!confirm("Tem certeza que deseja apagar este registro permanentemente?")) return;
+  items = items.filter(x => x.id !== id);
+  saveItems(items);
+  renderAll();
+  toast("Registro removido com sucesso!");
+};
+
+function limparFormulario() {
+  $("editId").value = "";
+  $("odometro").value = "";
+  $("litros").value = "";
+  $("precoLitro").value = "";
+  $("data").value = new Date().toISOString().slice(0,10);
+  $("formTitle").textContent = "⛽ Novo lançamento";
+  $("btnSalvar").textContent = "Salvar";
+  $("calcTotalAbastecimento").textContent = "Custo: R$ 0,00";
+}
+
+/* Eventos de cálculo em tempo real no formulário */
+function atualizarPreviewCusto() {
+  const l = parseBRNumber($("litros").value);
+  const p = parseBRNumber($("precoLitro").value);
+  if(l && p) {
+    $("calcTotalAbastecimento").textContent = `Custo: R$ ${formatNum(l * p, 2)}`;
+  } else {
+    $("calcTotalAbastecimento").textContent = "Custo: R$ 0,00";
+  }
+}
+$("litros").addEventListener("input", atualizarPreviewCusto);
+$("precoLitro").addEventListener("input", atualizarPreviewCusto);
 
 /* Gestão de Veículos */
 $("btnCadastrarVeiculo").addEventListener("click", ()=>{
@@ -672,34 +825,48 @@ window.removerVeiculo = function(nome){
 
 /* Lançamentos e Ações */
 $("btnSalvar").addEventListener("click", ()=>{
+  const idEdicao = $("editId").value;
   const data = $("data").value;
   const odometro = parseBRNumber($("odometro").value);
   const litros = parseBRNumber($("litros").value);
+  const precoLitro = parseBRNumber($("precoLitro").value);
 
   if(!data){ toast("Selecione a data."); return; }
   if(!odometro || odometro <= 0){ toast("Odômetro inválido."); return; }
   if(!litros || litros <= 0){ toast("Volume de litros inválido."); return; }
 
-  const item = {
-    id: `${Date.now()}`,
-    veiculo: activeVehicle, // Vincula o lançamento ao carro selecionado
-    data, odometro, litros
-  };
+  // [Negócio/Validação]: Impede odômetro retrocedido para novos itens
+  if(!idEdicao) {
+    let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
+    if(filtered.length > 0 && odometro <= filtered[filtered.length - 1].odometro) {
+      toast(`Erro: O Km atual deve ser maior que o último (${filtered[filtered.length - 1].odometro} km)`);
+      return;
+    }
+  }
 
-  items.push(item);
+  if(idEdicao) {
+    // Atualiza registro existente
+    items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
+    toast("Registro atualizado ✅");
+  } else {
+    // Cria novo registro
+    const item = {
+      id: `${Date.now()}`,
+      veiculo: activeVehicle,
+      data, odometro, litros, precoLitro
+    };
+    items.push(item);
+    toast("Salvo com sucesso ✅");
+  }
+
   saveItems(items);
+  limparFormulario();
   renderAll();
-
-  $("odometro").value = "";
-  $("litros").value = "";
-  $("saveStatus").textContent = `Salvo no veículo: ${activeVehicle} ✅`;
-  toast("Salvo ✅");
   showView("painel");
 });
 
 $("btnLimparForm").addEventListener("click", ()=>{
-  $("odometro").value = "";
-  $("litros").value = "";
+  limparFormulario();
   toast("Campos limpos");
 });
 
@@ -707,6 +874,7 @@ $("btnApagarTudo").addEventListener("click", ()=>{
   if(!confirm(`Apagar TODO o histórico do veículo "${activeVehicle}"?`)) return;
   items = items.filter(x => (x.veiculo || "Padrão") !== activeVehicle);
   saveItems(items);
+  limparFormulario();
   renderAll();
   toast("Histórico limpo!");
 });
