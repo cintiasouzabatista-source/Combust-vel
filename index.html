@@ -9,12 +9,12 @@
 
   <style>
     :root {
-      --bg: #090d16;
-      --panel: #111827;
-      --card: #1f2937;
+      --bg: #0b0f19;
+      --panel: #0b0f19;
+      --card: #131926;
       --text: #f9fafb;
       --muted: #9ca3af;
-      --line: rgba(255, 255, 255, 0.05);
+      --line: rgba(255, 255, 255, 0.04);
       --accent: #3b82f6;
       --accent-hover: #2563eb;
       --danger: #ef4444;
@@ -27,12 +27,12 @@
     }
 
     [data-theme="light"] {
-      --bg: #f3f4f6;
-      --panel: #ffffff;
-      --card: #f9fafb;
+      --bg: #f4f5f7;
+      --panel: #f4f5f7;
+      --card: #ffffff;
       --text: #111827;
       --muted: #6b7280;
-      --line: rgba(0, 0, 0, 0.06);
+      --line: rgba(0, 0, 0, 0.04);
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
     }
@@ -48,12 +48,12 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .app { display: flex; width: 100%; }
+    .app { display: flex; width: 100%; background: var(--bg); }
 
     /* Sidebar Sidebar Modern */
     .sidebar {
       width: var(--sideW);
-      background: var(--panel);
+      background: var(--card);
       padding: 32px 16px;
       position: fixed;
       top: 0; bottom: 0; left: 0;
@@ -80,20 +80,20 @@
       transition: all 0.15s;
     }
     .nav button:hover { color: var(--text); background: var(--line); }
-    .nav button.active { background: var(--card); color: var(--text); font-weight: 600; }
+    .nav button.active { background: var(--line); color: var(--text); font-weight: 600; }
 
     .theme-toggle-box { padding-top: 16px; border-top: 1px solid var(--line); }
     .theme-toggle-box button { background: transparent; border: none; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; padding: 4px; width: 100%; text-align: left; }
     .theme-toggle-box button:hover { color: var(--text); }
 
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: none; z-index: 2400; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: none; z-index: 2400; }
     .overlay.show { display: block; }
 
     /* Main Container */
-    .main { width: 100%; padding: 24px 16px; margin-left: 0; }
+    .main { width: 100%; padding: 24px 16px; margin-left: 0; background: var(--bg); }
     
     @media (min-width: 980px) {
-      .sidebar { transform: translateX(0); position: sticky; background: var(--panel); }
+      .sidebar { transform: translateX(0); position: sticky; background: var(--card); }
       .overlay { display: none !important; }
       .main { padding: 40px 48px; max-width: 1200px; margin: 0 auto; }
       .topbar .menuBtn { display: none; }
@@ -113,10 +113,10 @@
 
     /* Seletor de Veículo Destaque Premium */
     .selector-box { 
-      background: rgba(59, 130, 246, 0.08); 
+      background: rgba(59, 130, 246, 0.06); 
       padding: 10px 16px; 
       border-radius: var(--radius-lg); 
-      border: 1px solid rgba(59, 130, 246, 0.2); 
+      border: 1px solid rgba(59, 130, 246, 0.15); 
       width: 100%;
       max-width: 320px;
       display: flex;
@@ -153,20 +153,20 @@
 
     /* Dashboard Cards */
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .card { background: var(--panel); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--line); }
+    .card { background: var(--card); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--line); }
     .card .label { color: var(--muted); font-size: 12px; font-weight: 500; }
     .card .val { font-size: 26px; font-weight: 700; margin-top: 8px; letter-spacing: -0.5px; }
     .card .small { color: var(--muted); font-size: 11px; margin-top: 6px; }
 
     /* Premium Form Architecture */
-    .clean-form-container { max-width: 600px; margin: 0 auto; background: var(--panel); border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--line); }
+    .clean-form-container { max-width: 600px; margin: 0 auto; background: var(--card); border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--line); }
     
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
     .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 480px) { .form-row-2 { grid-template-columns: 1fr; } }
 
     .input-card {
-      background: var(--card);
+      background: var(--bg);
       border-radius: var(--radius-md);
       padding: 10px 14px;
       border: 1px solid transparent;
@@ -183,7 +183,7 @@
 
     /* Inline Cost Preview */
     .cost-preview-box {
-      background: rgba(16, 185, 129, 0.06);
+      background: rgba(16, 185, 129, 0.05);
       border-radius: var(--radius-md);
       padding: 12px 16px;
       font-size: 14px;
@@ -191,7 +191,7 @@
       color: var(--ok);
       text-align: center;
       margin-bottom: 24px;
-      border: 1px solid rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.12);
     }
 
     /* Buttons Configuration */
@@ -204,7 +204,7 @@
     .btn.primary:hover { background: var(--accent-hover); }
     
     .compact-actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
-    .btn.secondary { background: var(--card); color: var(--text); font-size: 11px; padding: 10px; border: 1px solid var(--line); }
+    .btn.secondary { background: var(--bg); color: var(--text); font-size: 11px; padding: 10px; border: 1px solid var(--line); }
     .btn.secondary:hover { background: var(--line); }
 
     .import-zone { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -215,12 +215,12 @@
     .btn.danger-text { background: transparent; color: var(--muted); font-size: 12px; padding: 6px; width: auto; display: inline-block; }
     .btn.danger-text:hover { color: var(--danger); }
 
-    .btn.mini { padding: 6px 10px; font-size: 12px; border-radius: 6px; background: var(--card); color: var(--text); width: auto; border: 1px solid var(--line); }
+    .btn.mini { padding: 6px 10px; font-size: 12px; border-radius: 6px; background: var(--bg); color: var(--text); width: auto; border: 1px solid var(--line); }
     .btn.mini:hover { background: var(--line); }
     .btn.mini.danger:hover { background: var(--danger-dim); color: var(--danger); border-color: transparent; }
 
     /* Table Design */
-    .table-responsive { width: 100%; overflow-x: auto; background: var(--panel); border-radius: var(--radius-lg); border: 1px solid var(--line); }
+    .table-responsive { width: 100%; overflow-x: auto; background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--line); }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th, td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--line); }
     th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -236,7 +236,7 @@
 
     /* Vehicle List Modern */
     .v-list { display: flex; flex-direction: column; gap: 10px; }
-    .v-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--panel); border-radius: var(--radius-lg); border: 1px solid var(--line); }
+    .v-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--line); }
     .v-item .name { font-weight: 600; font-size: 14px; }
     .v-item .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
@@ -925,7 +925,7 @@ $("btnSalvar").addEventListener("click", () => {
 
   if(editId) {
     currentItems = currentItems.map(x => x.id === editId ? novoRegistro : x);
-    toast("Registro atualizado!");
+    toast("Registro updated!");
   } else {
     currentItems.push(novoRegistro);
     toast("Registro salvo!");
