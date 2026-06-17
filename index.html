@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-BR" data-theme="dark">
 <head>
@@ -12,7 +13,7 @@
       --card: rgba(255,255,255,.06);
       --stroke: rgba(255,255,255,.10);
       --text: #eaf1ff;
-      --muted: rgba(234,241,255,.70);
+      --muted: rgba(234,241,255,.60);
       --accent: #2b6dff;
       --accent2: #1f55cc;
       --danger: #ff476f;
@@ -23,16 +24,15 @@
       --sideW: 280px;
     }
 
-    /* Regras do Modo Claro */
     [data-theme="light"] {
       --bg: #f4f7fc;
       --panel: #ffffff;
       --card: #e2e8f0;
-      --stroke: rgba(0,0,0,.10);
+      --stroke: rgba(0,0,0,.08);
       --text: #0f172a;
-      --muted: #475569;
-      --line: rgba(0,0,0,.08);
-      --shadow: 0 10px 25px rgba(0,0,0,.05);
+      --muted: #64748b;
+      --line: rgba(0,0,0,.06);
+      --shadow: 0 10px 25px rgba(0,0,0,.04);
     }
 
     *{box-sizing:border-box}
@@ -50,10 +50,7 @@
       background: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
     }
 
-    .app{
-      min-height:100vh;
-      display:flex;
-    }
+    .app{ min-height:100vh; display:flex; }
 
     /* Sidebar */
     .sidebar{
@@ -71,9 +68,7 @@
       flex-direction: column;
       justify-content: space-between;
     }
-    [data-theme="light"] .sidebar {
-      background: rgba(255, 255, 255, 0.9);
-    }
+    [data-theme="light"] .sidebar { background: rgba(255, 255, 255, 0.9); }
     .sidebar.open{ transform: translateX(0); }
     .sidebar .brand{
       display:flex; align-items:center; gap:10px;
@@ -86,58 +81,41 @@
     .brand .txt .t{font-size:14px; font-weight:900}
     .brand .txt .s{font-size:12px; color:var(--muted); font-weight:800}
 
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      padding:10px 6px;
-    }
+    .nav{ display:flex; flex-direction:column; gap:8px; padding:10px 6px; }
     .nav button{
       width:100%;
       border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
+      border:none;
+      background:transparent;
       color:var(--muted);
       padding:12px 12px;
       cursor:pointer;
-      font-weight:900;
+      font-weight:800;
       font-size:13px;
       text-align:left;
       display:flex;
       align-items:center;
       gap:10px;
+      transition: background 0.2s, color 0.2s;
     }
-    [data-theme="light"] .nav button {
-      background: rgba(0,0,0,.03);
-    }
+    .nav button:hover{ background: rgba(255,255,255,.03); color: var(--text); }
+    [data-theme="light"] .nav button:hover { background: rgba(0,0,0,.02); }
     .nav button.active{
-      background:rgba(43,109,255,.16);
-      border-color:rgba(43,109,255,.35);
-      color:var(--text);
+      background:rgba(43,109,255,.12);
+      color:var(--accent);
     }
     .nav .ic{width:22px; display:inline-flex; justify-content:center}
 
-    .theme-toggle-box {
-      padding: 10px 6px;
-      border-top: 1px solid var(--line);
-    }
+    .theme-toggle-box { padding: 10px 6px; border-top: 1px solid var(--line); }
 
     .overlay{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.45);
-      backdrop-filter: blur(6px);
-      display:none;
-      z-index:2400;
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      backdrop-filter: blur(6px); display:none; z-index:2400;
     }
     .overlay.show{display:block}
 
     /* Main */
-    .main{
-      width:100%;
-      padding:16px 14px 28px;
-      margin-left:0;
-    }
+    .main{ width:100%; padding:16px 14px 28px; margin-left:0; }
     @media (min-width: 980px){
       .sidebar{ transform: translateX(0); position:sticky; z-index:1; }
       .overlay{display:none !important;}
@@ -146,211 +124,121 @@
       .app{ gap:0; }
     }
 
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:12px;
-    }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
     .menuBtn{
-      width:auto;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      padding:10px 12px;
-      cursor:pointer;
-      font-weight:900;
+      width:auto; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.05); color:var(--text);
+      padding:10px 12px; cursor:pointer; font-weight:800;
     }
     [data-theme="light"] .menuBtn { background: #ffffff; }
     .statusPill{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      color:var(--muted);
-      font-weight:900;
-      font-size:12px;
-      white-space:nowrap;
+      display:flex; align-items:center; gap:8px; padding:10px 12px;
+      border-radius:999px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04); color:var(--muted);
+      font-weight:800; font-size:12px; white-space:nowrap;
     }
     [data-theme="light"] .statusPill { background: #ffffff; }
     .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(41,209,124,.18)}
-    h1{
-      margin:0;
-      font-size:24px;
-      font-weight:950;
-      letter-spacing:.2px;
-    }
-    .subtitle{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-    }
+    h1{ margin:0; font-size:24px; font-weight:950; letter-spacing:.2px; }
+    .subtitle{ margin:4px 0 0; color:var(--muted); font-size:12px; font-weight:800; }
 
     /* Sections */
     .section{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:14px;
-      margin:14px 0;
+      background:var(--panel); border:1px solid var(--line);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:16px; margin:14px 0;
     }
-    .sectionTitle{
-      margin:0 0 10px;
-      font-size:14px;
-      font-weight:950;
-    }
+    .sectionTitle{ margin:0 0 14px; font-size:14px; font-weight:950; }
 
     /* Cards */
-    .cards{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    @media (min-width: 980px){
-      .cards{ grid-template-columns:repeat(4, 1fr); }
-    }
+    .cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (min-width: 980px){ .cards{ grid-template-columns:repeat(4, 1fr); } }
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:14px 14px;
-      min-height:92px;
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line); border-radius:18px; padding:14px; min-height:92px;
     }
-    [data-theme="light"] .card {
-      background: #ffffff;
-    }
-    .card .label{
-      margin:0;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:850;
-    }
-    .card .val{
-      margin-top:10px;
-      font-size:22px;
-      font-weight:950;
-    }
-    .small{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-    }
+    [data-theme="light"] .card { background: #ffffff; }
+    .card .label{ margin:0; color:var(--muted); font-size:12px; font-weight:800; }
+    .card .val{ margin-top:8px; font-size:20px; font-weight:950; }
+    .small{ margin-top:6px; color:var(--muted); font-size:12px; font-weight:800; }
 
-    /* Form */
-    label{
-      display:block;
-      margin:10px 0 6px;
-      color:var(--text);
-      font-size:12px;
-      font-weight:900;
-    }
-    input, select, button{
-      width:100%;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      padding:12px 12px;
-      outline:none;
-      font-weight:900;
-      font-size:14px;
+    /* Form & Clean Buttons */
+    label{ display:block; margin:12px 0 6px; color:var(--text); font-size:12px; font-weight:850; }
+    input, select{
+      width:100%; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.05); color:var(--text);
+      padding:11px 12px; outline:none; font-weight:800; font-size:14px;
     }
     [data-theme="light"] input, [data-theme="light"] select { background: #ffffff; }
-    input::placeholder{ color:var(--muted); opacity: 0.5; font-weight:800; }
-    input:focus, select:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
+    input::placeholder{ color:var(--muted); opacity: 0.4; }
+    input:focus, select:focus{ border-color:rgba(43,109,255,.45); }
     select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
 
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
 
+    /* Clean Buttons */
     .btn{
-      background:linear-gradient(180deg, var(--accent), var(--accent2));
-      border:1px solid rgba(255,255,255,.14);
-      cursor:pointer;
-      font-weight:950;
-      color: #ffffff;
+      width:100%; border-radius:12px; padding:11px 14px;
+      font-size:13px; font-weight:900; cursor:pointer;
+      border: none; transition: background 0.15s, color 0.15s;
+      display: inline-flex; align-items: center; justify-content: center; gap:6px;
     }
-    .btn.secondary{
-      background:rgba(255,255,255,.06);
-      border:1px solid var(--line);
-      color:var(--text);
+    .btn.primary {
+      background: var(--accent); color: #ffffff;
     }
-    [data-theme="light"] .btn.secondary { background: #e2e8f0; }
-    .btn.danger{
-      background:rgba(255,71,111,.12);
-      border-color:rgba(255,71,111,.30);
-      color:var(--danger);
+    .btn.primary:hover { background: var(--accent2); }
+    
+    .btn.secondary {
+      background: rgba(255,255,255,.05); color: var(--text);
     }
+    .btn.secondary:hover { background: rgba(255,255,255,.10); }
+    [data-theme="light"] .btn.secondary { background: rgba(0,0,0,.04); }
+    [data-theme="light"] .btn.secondary:hover { background: rgba(0,0,0,.08); }
+
+    .btn.danger {
+      background: rgba(255,71,111,.08); color: var(--danger);
+    }
+    .btn.danger:hover { background: rgba(255,71,111,.15); }
+
+    .btn.mini {
+      width: auto; padding: 6px 10px; font-size: 11px; border-radius: 8px; font-weight: 800;
+    }
+
     .btn:active{ transform: translateY(1px); }
+    .statusLine{ color:var(--muted); font-size:12px; font-weight:800; margin-top:12px; }
 
-    .statusLine{ color:var(--muted); font-size:12px; font-weight:900; margin-top:10px; }
-
-    /* Table & Lists */
+    /* Table */
     table{
-      width:100%;
-      border-collapse:collapse;
-      overflow:hidden;
-      border-radius:16px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
+      width:100%; border-collapse:collapse; overflow:hidden;
+      border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.02);
     }
     [data-theme="light"] table { background: #ffffff; }
-    th, td{
-      padding:12px 10px;
-      text-align:left;
-      font-size:12px;
-      border-bottom:1px solid var(--line);
-      vertical-align:middle;
-      font-weight:800;
-    }
-    th{ color:var(--muted); font-weight:900; }
+    th, td{ padding:12px 10px; text-align:left; font-size:12px; border-bottom:1px solid var(--line); vertical-align:middle; }
+    th{ color:var(--muted); font-weight:900; background: rgba(255,255,255,.01); }
+    td { font-weight: 800; }
     tr:last-child td{ border-bottom:none; }
 
-    .action-cell {
-      display: flex;
-      gap: 6px;
-    }
-    .action-cell button {
-      width: auto;
-      padding: 6px 10px;
-      font-size: 11px;
-      border-radius: 8px;
-    }
+    .action-cell { display: flex; gap: 6px; justify-content: flex-start; }
 
+    /* Lists */
     .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 10px;}
-    .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; }
+    .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.02); border: 1px solid var(--line); border-radius: 12px; }
     [data-theme="light"] .v-item { background: #ffffff; }
-    .v-item span { font-weight: 800; font-size: 14px; }
-    .v-item button { width: auto; padding: 6px 12px; font-size: 12px; }
+    .v-item .info { display: flex; flex-direction: column; gap: 2px; }
+    .v-item .name { font-weight: 900; font-size: 14px; }
+    .v-item .sub { font-size: 11px; color: var(--muted); font-weight: 700; }
 
     #toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1e293b;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 900;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      display: none;
-      z-index: 9999;
+      position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff;
+      padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 900;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: none; z-index: 9999;
     }
   </style>
 </head>
 
 <body>
 <div class="app">
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div>
       <div class="brand">
@@ -369,7 +257,6 @@
       </nav>
     </div>
 
-    <!-- Alternador de Tema Minimalista -->
     <div class="theme-toggle-box">
       <button class="btn secondary" id="btnThemeToggle" type="button">🌓 Mudar Tema</button>
     </div>
@@ -377,7 +264,6 @@
 
   <div class="overlay" id="overlay"></div>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="menuBtn" id="menuBtn">☰ Menu</button>
@@ -388,13 +274,11 @@
       <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
     </div>
 
-    <!-- SELETOR GLOBAL DE VEÍCULO -->
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
       <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
-    <!-- PAINEL -->
     <section class="section view" id="view-painel">
       <div class="cards">
         <div class="card">
@@ -420,11 +304,8 @@
       </div>
     </section>
 
-    <!-- ABASTECER -->
     <section class="section view" id="view-abastecer" style="display:none">
       <div class="sectionTitle" id="formTitle">⛽ Novo lançamento</div>
-      
-      <!-- Input oculto para controlar se estamos editando um item específico -->
       <input type="hidden" id="editId" />
       
       <label for="data">Data</label>
@@ -441,7 +322,6 @@
         </div>
       </div>
 
-      <!-- Melhoria de Consumo: Controle Financeiro Opcional -->
       <div class="row" style="margin-top: 10px;">
         <div>
           <label for="precoLitro">Preço por Litro (R$) <small style="opacity: 0.6">(Opcional)</small></label>
@@ -452,8 +332,8 @@
         </div>
       </div>
 
-      <div class="row" style="margin-top:16px">
-        <button class="btn" id="btnSalvar" type="button">Salvar</button>
+      <div class="row" style="margin-top:20px">
+        <button class="btn primary" id="btnSalvar" type="button">Salvar</button>
         <button class="btn secondary" id="btnLimparForm" type="button">Limpar / Cancelar</button>
       </div>
 
@@ -465,7 +345,6 @@
       <div class="statusLine" id="saveStatus">—</div>
     </section>
 
-    <!-- HISTORICO -->
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
 
@@ -479,7 +358,7 @@
               <th>Custo</th>
               <th>Km Rodados (Δ)</th>
               <th>Rendimento</th>
-              <th style="width: 120px; text-align: center;">Ações</th>
+              <th style="width: 100px; text-align: center;">Ações</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -488,16 +367,27 @@
       <div class="statusLine" id="histStatus">—</div>
     </section>
 
-    <!-- VEICULOS -->
     <section class="section view" id="view-veiculos" style="display:none">
-      <div class="sectionTitle">🚘 Cadastrar Veículo</div>
+      <div class="sectionTitle" id="vehFormTitle">🚘 Cadastrar Veículo</div>
+      <input type="hidden" id="editVehId" />
       
-      <label for="novoVeiculo">Nome do Veículo</label>
-      <input id="novoVeiculo" placeholder="Ex: Onix 1.0, Moto Honda, Civic" />
+      <div class="row">
+        <div>
+          <label for="novoVeiculo">Nome do Veículo</label>
+          <input id="novoVeiculo" placeholder="Ex: Onix 1.0, Civic" />
+        </div>
+        <div>
+          <label for="odometroCompra">Odômetro Inicial (Compra)</label>
+          <input id="odometroCompra" placeholder="Ex: 40000" type="number" />
+        </div>
+      </div>
       
-      <button class="btn" id="btnCadastrarVeiculo" type="button" style="margin-top:12px">Adicionar à Garagem</button>
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="btnCadastrarVeiculo" type="button">Adicionar à Garagem</button>
+        <button class="btn secondary" id="btnLimparVehForm" type="button" style="display:none">Cancelar</button>
+      </div>
       
-      <div class="divider" style="height:1px; background:var(--line); margin:20px 0;"></div>
+      <div style="height:1px; background:var(--line); margin:24px 0;"></div>
       
       <div class="sectionTitle">📋 Seus Veículos</div>
       <div class="v-list" id="listaVeiculos"></div>
@@ -509,7 +399,7 @@
 
 <script>
 const STORE_KEY = "cb_abastecimentos_v5";
-const VEHICLES_KEY = "cb_veiculos_v5";
+const VEHICLES_KEY = "cb_veiculos_v6"; // Chave atualizada para suportar objetos de veículos
 const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
 const THEME_KEY = "cb_theme_v5";
 
@@ -535,7 +425,7 @@ function formatNum(n, digits=2){
   return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
 }
 
-/* Gerenciamento de Tema Claro / Escuro */
+/* Gerenciamento de Tema */
 let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
 document.documentElement.setAttribute("data-theme", currentTheme);
 
@@ -552,15 +442,24 @@ function loadItems(){
 function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
 
 function loadVehicles(){
-  try{ return JSON.parse(localStorage.getItem(VEHICLES_KEY) || '["Padrão"]'); } catch(e){ return ["Padrão"]; }
+  try{ 
+    let raw = localStorage.getItem(VEHICLES_KEY);
+    if(!raw) {
+      // Migração simples caso houvesse dados antigos em string pura
+      return [{ id: "1", nome: "Padrão", odoCompra: 0 }];
+    }
+    return JSON.parse(raw);
+  } catch(e){ 
+    return [{ id: "1", nome: "Padrão", odoCompra: 0 }]; 
+  }
 }
 function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
 
 let items = loadItems();
 let vehicles = loadVehicles();
-let activeVehicle = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0];
+let activeVehicleId = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0].id;
 
-if (!vehicles.includes(activeVehicle)) { activeVehicle = vehicles[0]; }
+if (!vehicles.some(v => v.id === activeVehicleId)) { activeVehicleId = vehicles[0].id; }
 
 /* Views / Menu */
 const views = ["painel","abastecer","historico","veiculos"];
@@ -610,12 +509,19 @@ function sortItems(){
 function processMetrics(){
   sortItems();
   
+  // Encontra o veículo ativo atual para pegar o odômetro de compra inicial
+  const currentVeh = vehicles.find(v => v.id === activeVehicleId) || { odoCompra: 0 };
+  const initialOdo = Number(currentVeh.odoCompra) || 0;
+  
+  let baseOdo = initialOdo;
+  let firstFound = false;
+
   for(let i=0; i<items.length; i++){
-    if((items[i].veiculo || "Padrão") !== activeVehicle) continue;
+    if(items[i].veiculoId !== activeVehicleId) continue;
     
     let prev = null;
     for(let j = i - 1; j >= 0; j--){
-      if((items[j].veiculo || "Padrão") === activeVehicle){
+      if(items[j].veiculoId === activeVehicleId){
         prev = items[j];
         break;
       }
@@ -626,8 +532,10 @@ function processMetrics(){
       items[i].deltaKm = delta > 0 ? delta : null;
       items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
     } else {
-      items[i].deltaKm = null;
-      items[i].kml = null;
+      // É o primeiro abastecimento registrado. Usamos o odoCompra se ele existir e for coerente
+      const delta = Number(items[i].odometro) - initialOdo;
+      items[i].deltaKm = delta > 0 ? delta : null;
+      items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
     }
   }
 }
@@ -645,29 +553,31 @@ function updateVehicleSelectors(){
   select.innerHTML = "";
   vehicles.forEach(v => {
     const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v;
-    if(v === activeVehicle) opt.selected = true;
+    opt.value = v.id;
+    opt.textContent = v.nome;
+    if(v.id === activeVehicleId) opt.selected = true;
     select.appendChild(opt);
   });
 }
 
 $("globalVehicle").addEventListener("change", (e)=>{
-  activeVehicle = e.target.value;
-  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  activeVehicleId = e.target.value;
+  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
   limparFormulario();
   renderAll();
-  toast(`Carro ativo: ${activeVehicle}`);
+  const target = vehicles.find(v => v.id === activeVehicleId);
+  toast(`Carro ativo: ${target ? target.nome : ""}`);
 });
 
 function renderCards(){
-  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
+  let filtered = items.filter(x => x.veiculoId === activeVehicleId);
+  const currentVeh = vehicles.find(v => v.id === activeVehicleId) || { odoCompra: 0 };
 
   if(filtered.length === 0){
     $("kmlGeral").textContent = "—";
     $("ultimoAbastecido").textContent = "—";
     $("totalGasto").textContent = "—";
-    $("kmAtual").textContent = "—";
+    $("kmAtual").textContent = `${(Number(currentVeh.odoCompra)||0).toLocaleString("pt-BR")} km`;
     return;
   }
 
@@ -675,7 +585,6 @@ function renderCards(){
   $("kmAtual").textContent = `${Number(ultimoItem.odometro).toLocaleString("pt-BR")} km`;
   $("ultimoAbastecido").textContent = `${formatNum(ultimoItem.litros, 2)} L`;
 
-  // Calcula o valor total financeiro investido
   let custoAcumulado = 0;
   filtered.forEach(x => {
     if(x.litros && x.precoLitro) {
@@ -684,22 +593,19 @@ function renderCards(){
   });
   $("totalGasto").textContent = custoAcumulado > 0 ? `R$ ${formatNum(custoAcumulado, 2)}` : "—";
 
-  if(filtered.length < 2){
-    $("kmlGeral").textContent = "—";
-    return;
-  }
-
-  const primeirOdo = Number(filtered[0].odometro);
-  const ultimoOdo = Number(filtered[filtered.length-1].odometro);
+  // Média Geral baseada no Odômetro Inicial de Compra até o último odômetro lançado
+  const primeirOdo = Number(currentVeh.odoCompra) || (filtered.length > 0 ? Number(filtered[0].odometro) : 0);
+  const ultimoOdo = Number(ultimoItem.odometro);
   const deltaTotalKm = ultimoOdo - primeirOdo;
 
   let litrosConsiderados = 0;
-  for(let i=1; i<filtered.length; i++){
+  // Se começou do odômetro de compra, somamos todos os litros. Se não, exclui o primeiro como antes.
+  const startIndex = (Number(currentVeh.odoCompra) > 0) ? 0 : 1;
+  for(let i = startIndex; i < filtered.length; i++){
     litrosConsiderados += Number(filtered[i].litros) || 0;
   }
 
   const mediaGeral = (deltaTotalKm > 0 && litrosConsiderados > 0) ? (deltaTotalKm / litrosConsiderados) : null;
-
   $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
 }
 
@@ -707,7 +613,7 @@ function renderTable(){
   const tb = $("tbody");
   tb.innerHTML = "";
   
-  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
+  let filtered = items.filter(x => x.veiculoId === activeVehicleId);
 
   if(filtered.length===0){
     $("histStatus").textContent = "Nenhum registro para este veículo.";
@@ -717,7 +623,6 @@ function renderTable(){
   const displayRows = [...filtered].reverse();
   for(const x of displayRows){
     const tr = document.createElement("tr");
-    
     const custoCalculado = (x.litros && x.precoLitro) ? `R$ ${formatNum(Number(x.litros) * Number(x.precoLitro), 2)}` : "—";
 
     tr.innerHTML = `
@@ -729,8 +634,8 @@ function renderTable(){
       <td>${x.kml ? `${formatNum(x.kml, 2)} Km/L` : "—"}</td>
       <td>
         <div class="action-cell">
-          <button class="btn secondary" onclick="entrarModoEdicao('${x.id}')">✏️</button>
-          <button class="btn danger" onclick="removerRegistro('${x.id}')">🗑️</button>
+          <button class="btn secondary mini" onclick="entrarModoEdicao('${x.id}')">✏️</button>
+          <button class="btn danger mini" onclick="removerRegistro('${x.id}')">🗑️</button>
         </div>
       </td>
     `;
@@ -758,11 +663,11 @@ window.entrarModoEdicao = function(id) {
 };
 
 window.removerRegistro = function(id) {
-  if(!confirm("Deseja mesmo excluir de forma permanente esse registro?")) return;
+  if(!confirm("Deseja mesmo excluir esse registro?")) return;
   items = items.filter(x => x.id !== id);
   saveItems(items);
   renderAll();
-  toast("Registro deletado com sucesso!");
+  toast("Registro deletado!");
 };
 
 function limparFormulario() {
@@ -776,7 +681,6 @@ function limparFormulario() {
   $("previewCusto").textContent = "Custo Total: R$ 0,00";
 }
 
-/* Eventos dinâmicos do formulário */
 function calcularPreviewCusto() {
   const l = parseBRNumber($("litros").value);
   const p = parseBRNumber($("precoLitro").value);
@@ -792,18 +696,51 @@ $("precoLitro").addEventListener("input", calcularPreviewCusto);
 /* Gestão de Veículos */
 $("btnCadastrarVeiculo").addEventListener("click", ()=>{
   const nome = $("novoVeiculo").value.trim();
+  const odoCompra = parseBRNumber($("odometroCompra").value) || 0;
+  const editId = $("editVehId").value;
+
   if(!nome) { toast("Digite o nome do veículo."); return; }
-  if(vehicles.includes(nome)) { toast("Esse carro já está cadastrado."); return; }
   
-  vehicles.push(nome);
+  if(editId) {
+    vehicles = vehicles.map(v => v.id === editId ? { ...v, nome, odoCompra } : v);
+    toast("Veículo atualizado!");
+  } else {
+    if(vehicles.some(v => v.nome.toLowerCase() === nome.toLowerCase())) { 
+      toast("Esse carro já está cadastrado."); 
+      return; 
+    }
+    const novo = { id: `${Date.now()}`, nome, odoCompra };
+    vehicles.push(novo);
+    activeVehicleId = novo.id;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
+    toast(`🚙 ${nome} cadastrado e ativo!`);
+  }
+  
   saveVehicles(vehicles);
-  activeVehicle = nome;
-  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
-  
-  $("novoVeiculo").value = "";
+  limparVehForm();
   renderAll();
-  toast(`🚙 ${nome} cadastrado e ativo!`);
 });
+
+window.editarVeiculo = function(id) {
+  const v = vehicles.find(x => x.id === id);
+  if(!v) return;
+  $("editVehId").value = v.id;
+  $("novoVeiculo").value = v.nome;
+  $("odometroCompra").value = v.odoCompra || 0;
+  $("vehFormTitle").textContent = "✏️ Editar Veículo";
+  $("btnCadastrarVeiculo").textContent = "Atualizar Veículo";
+  $("btnLimparVehForm").style.display = "inline-flex";
+};
+
+function limparVehForm() {
+  $("editVehId").value = "";
+  $("novoVeiculo").value = "";
+  $("odometroCompra").value = "";
+  $("vehFormTitle").textContent = "🚘 Cadastrar Veículo";
+  $("btnCadastrarVeiculo").textContent = "Adicionar à Garagem";
+  $("btnLimparVehForm").style.display = "none";
+}
+$("btnLimparVehForm").addEventListener("click", limparVehForm);
 
 function renderVehiclesList(){
   const list = $("listaVeiculos");
@@ -814,30 +751,40 @@ function renderVehiclesList(){
     itemEl.className = "v-item";
     
     const isDefault = vehicles.length === 1;
-    const deleteBtn = isDefault ? "" : `<button class="btn danger" onclick="removerVeiculo('${v}')">Remover</button>`;
-    const activeLabel = v === activeVehicle ? " <small style='color:var(--ok)'>(Ativo)</small>" : "";
+    const deleteBtn = isDefault ? "" : `<button class="btn danger mini" onclick="removerVeiculo('${v.id}')">🗑️</button>`;
+    const activeLabel = v.id === activeVehicleId ? " <small style='color:var(--ok)'>(Ativo)</small>" : "";
+    const odoExibicao = v.odoCompra ? `${Number(v.odoCompra).toLocaleString("pt-BR")} km` : "0 km";
 
     itemEl.innerHTML = `
-      <span>🚗 ${v} ${activeLabel}</span>
-      ${deleteBtn}
+      <div class="info">
+        <span class="name">🚗 ${v.nome} ${activeLabel}</span>
+        <span class="sub">Compra: ${odoExibicao}</span>
+      </div>
+      <div class="action-cell">
+        <button class="btn secondary mini" onclick="editarVeiculo('${v.id}')">✏️</button>
+        ${deleteBtn}
+      </div>
     `;
     list.appendChild(itemEl);
   });
 }
 
-window.removerVeiculo = function(nome){
-  if(!confirm(`Apagar o veículo "${nome}"? Isso NÃO deleta os dados do histórico, mas o carro sairá da lista.`)) return;
-  vehicles = vehicles.filter(x => x !== nome);
+window.removerVeiculo = function(id){
+  const target = vehicles.find(x => x.id === id);
+  if(!target) return;
+  if(!confirm(`Apagar o veículo "${target.nome}"? Os dados de abastecimento atrelados a ele não aparecerão mais.`)) return;
+  
+  vehicles = vehicles.filter(x => x.id !== id);
   saveVehicles(vehicles);
-  if(activeVehicle === nome){
-    activeVehicle = vehicles[0];
-    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  if(activeVehicleId === id){
+    activeVehicleId = vehicles[0].id;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
   }
   renderAll();
   toast("Veículo removido.");
 };
 
-/* Lançamentos e Ações */
+/* Lançamentos de abastecimento */
 $("btnSalvar").addEventListener("click", ()=>{
   const idEdicao = $("editId").value;
   const data = $("data").value;
@@ -849,24 +796,20 @@ $("btnSalvar").addEventListener("click", ()=>{
   if(!odometro || odometro <= 0){ toast("Odômetro inválido."); return; }
   if(!litros || litros <= 0){ toast("Volume de litros inválido."); return; }
 
-  // Melhoria de Negócio: Impede odômetros inconsistentes em inserções
-  if(!idEdicao) {
-    let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
-    if(filtered.length > 0 && odometro <= filtered[filtered.length - 1].odometro) {
-      toast(`Erro: Odômetro deve ser maior que o último (${filtered[filtered.length - 1].odometro} km)`);
-      return;
-    }
+  // Coerência com o odômetro de compra
+  const currentVeh = vehicles.find(v => v.id === activeVehicleId);
+  if(currentVeh && odometro < (Number(currentVeh.odoCompra) || 0)) {
+    toast(`Erro: Odômetro menor que o odômetro de compra (${currentVeh.odoCompra} km)`);
+    return;
   }
 
   if(idEdicao) {
-    // Modo Edição: Altera o elemento existente mapeando o ID
     items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
-    toast("Registro atualizado com sucesso!");
+    toast("Registro atualizado!");
   } else {
-    // Modo Inserção: Cria um novo objeto
     const item = {
       id: `${Date.now()}`,
-      veiculo: activeVehicle, 
+      veiculoId: activeVehicleId, 
       data, odometro, litros, precoLitro
     };
     items.push(item);
@@ -885,8 +828,9 @@ $("btnLimparForm").addEventListener("click", ()=>{
 });
 
 $("btnApagarTudo").addEventListener("click", ()=>{
-  if(!confirm(`Apagar TODO o histórico do veículo "${activeVehicle}"?`)) return;
-  items = items.filter(x => (x.veiculo || "Padrão") !== activeVehicle);
+  const target = vehicles.find(v => v.id === activeVehicleId);
+  if(!confirm(`Apagar TODO o histórico do veículo "${target ? target.nome : ""}"?`)) return;
+  items = items.filter(x => x.veiculoId !== activeVehicleId);
   saveItems(items);
   limparFormulario();
   renderAll();
@@ -901,7 +845,7 @@ $("btnExportarJson").addEventListener("click", ()=>{
   a.href = url;
   a.download = `backup_garagem_combustivel.json`;
   a.click();
-  toast("Backup completo baixado");
+  toast("Backup baixado");
 });
 
 // Inicialização
