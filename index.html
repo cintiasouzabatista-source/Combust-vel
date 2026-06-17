@@ -991,3 +991,160 @@ $("btnApagarTudo").addEventListener("click", () => {
 
 
 /* LÓGICA DE GERENCIAMENTO DE VEÍCULOS */
+$("btnCadastrarVeiculo").addEventListener("click", () => {
+  const nome = $("novoVeiculo").value.trim();
+  const odo = $("odometroCompra").value;
+
+  if(!nome || !odo) {
+    toast("Preencha o nome do veículo e o odômetro de compra!");
+    return;
+  }
+
+  const editId = $("editVehId").value;
+  let currentVehicles = loadVehicles();
+
+  if(editId) {
+    currentVehicles = currentVehicles.map(v => v.id === editId ? { id: editId, nome, odoCompra: Number(odo) } : v);
+    toast("Veículo updated!");
+  } else {
+    const novoId = "v_" + Date.now();
+    currentVehicles.push({ id: novoId, nome, odoCompra: Number(odo) });
+    activeVehicleId = novoId;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
+    toast("Veículo adicionado!");
+  }
+
+  saveVehicles(currentVehicles);
+  limparVehForm();
+  renderAll();
+});
+
+window.editarVeiculo = function(id) {
+  const v = vehicles.find(x => x.id === id);
+  if(!v) return;
+  $("editVehId").value = v.id;
+  $("novoVeiculo").value = v.nome;
+  $("odometroCompra").value = v.odoCompra;
+  $("vehFormTitle").textContent = "✏️ Editar Veículo";
+  $("btnCadastrarVeiculo").textContent = "Atualizar Veículo";
+  $("btnLimparVehForm").style.display = "inline-flex";
+};
+
+window.deletarVeiculo = function(id) {
+  if(vehicles.length <= 1) {
+    toast("Você precisa ter pelo menos um veículo cadastrado!");
+    return;
+  }
+  if(!confirm("Deseja realmente remover este veículo? Todos os abastecimentos e manutenções dele serão mantidos ou limpos.")) return;
+  
+  const filteredVeh = vehicles.filter(x => x.id !== id);
+  saveVehicles(filteredVeh);
+
+  if(activeVehicleId === id) {
+    activeVehicleId = filteredVeh[0].id;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
+  }
+
+  toast("Veículo removido!");
+  limparVehForm();
+  renderAll();
+};
+
+function limparVehForm() {
+  $("editVehId").value = "";
+  $("novoVeiculo").value = "";
+  $("odometroCompra").value = "";
+  $("vehFormTitle").textContent = "Cadastrar Veículo";
+  $("btnCadastrarVeiculo").textContent = "Adicionar à Garagem";
+  $("btnLimparVehForm").style.display = "none";
+}
+$("btnLimparVehForm").addEventListener("click", limparVehForm);
+
+
+/* EXPORTAÇÃO E IMPORTAÇÃO DE DADOS */
+$("btnExportarJson").addEventListener("click", () => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  toast("JSON Exportado com sucesso!");
+});
+
+$("btnExportarCsv").addEventListener("click", () => {
+  let csvContent = "data:text/csv;charset=utf-8,id;veiculoId;data;odometro;litros;precoLitro\n";
+  items.forEach(x => {
+    csvContent += `${x.id};${x.veiculoId};${x.data};${x.odometro};${x.litros};${x.precoLitro || ''}\n`;
+  });
+  const encodedUri = encodeURI(csvContent);
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", encodedUri);
+  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.csv`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  toast("CSV Exportado com sucesso!");
+});
+
+$("importJsonFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const parsed = JSON.parse(evt.target.result);
+      if(Array.isArray(parsed)) {
+        const merged = [...loadItems(), ...parsed.map(x => ({...x, veiculoId: x.veiculoId || activeVehicleId}))];
+        saveItems(merged);
+        toast("JSON importado e mesclado!");
+        renderAll();
+      } else {
+        toast("Formato JSON inválido. Deve ser uma lista.");
+      }
+    } catch(err) {
+      toast("Erro ao ler o arquivo JSON.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+$("importCsvFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const lines = evt.target.result.split('\n');
+      const currentItems = loadItems();
+      for(let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if(!line) continue;
+        const cols = line.split(';');
+        if(cols.length >= 5) {
+          currentItems.push({
+            id: cols[0] || "f_" + Date.now() + "_" + i,
+            veiculoId: cols[1] || activeVehicleId,
+            data: cols[2],
+            odometro: Number(cols[3]),
+            litros: Number(cols[4]),
+            precoLitro: cols[5] ? Number(cols[5]) : null
+          });
+        }
+      }
+      saveItems(currentItems);
+      toast("CSV importado com sucesso!");
+      renderAll();
+    } catch(err) {
+      toast("Erro ao processar o arquivo CSV.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Inicialização Inicial
+showView("painel");
+</script>
+</body>
+</html>
