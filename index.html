@@ -162,16 +162,13 @@
     .card .val{ margin-top:8px; font-size:20px; font-weight:950; }
     .small{ margin-top:6px; color:var(--muted); font-size:12px; font-weight:800; }
 
-    /* Manutenção Card */
-    .maintenance-box {
-      margin-top: 14px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px dashed var(--stroke);
-      border-radius: 14px;
-      padding: 12px 14px;
+    /* Badge Status */
+    .badge {
+      display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 900;
     }
-    [data-theme="light"] .maintenance-box { background: #f8fafc; }
-    .m-title { font-size: 13px; font-weight: 900; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .badge.ok { background: rgba(41,209,124,.15); color: var(--ok); }
+    .badge.warning { background: rgba(255,184,77,.15); color: var(--warning); }
+    .badge.danger { background: rgba(255,71,111,.15); color: var(--danger); }
 
     /* Form & Clean Buttons */
     label{ display:block; margin:12px 0 6px; color:var(--text); font-size:12px; font-weight:850; }
@@ -264,6 +261,7 @@
         <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
         <button data-view="abastecer" id="nav-abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
         <button data-view="historico"><span class="ic">🧾</span><span>Histórico</span></button>
+        <button data-view="manutencao"><span class="ic">🔧</span><span>Manutenção</span></button>
         <button data-view="veiculos"><span class="ic">🚘</span><span>Veículos</span></button>
       </nav>
     </div>
@@ -311,13 +309,6 @@
           <div class="label">Km Atual</div>
           <div class="val" id="kmAtual">—</div>
           <div class="small">último odômetro</div>
-        </div>
-      </div>
-
-      <div class="maintenance-box" id="oilMaintenanceBox" style="display: none;">
-        <div class="m-title">🛵 Monitor de Manutenção (Honda Lead)</div>
-        <div class="small" id="oilStatusText" style="margin-top: 2px; font-size: 13px; font-weight: 800;">
-          Calculando dados do óleo...
         </div>
       </div>
     </section>
@@ -369,7 +360,6 @@
 
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
-
       <div style="overflow:auto">
         <table>
           <thead>
@@ -387,6 +377,41 @@
         </table>
       </div>
       <div class="statusLine" id="histStatus">—</div>
+    </section>
+
+    <section class="section view" id="view-manutencao" style="display:none">
+      <div class="sectionTitle">🚨 Alertas Próximas Revisões (Conforme Fabr./Vida Útil)</div>
+      <div style="overflow:auto; margin-bottom: 24px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Item / Equipamento</th>
+              <th>Última Troca</th>
+              <th>Vida Útil Estimada</th>
+              <th>Trocar Com</th>
+              <th>Falta Rodar</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyAlertasManutencao"></tbody>
+        </table>
+      </div>
+
+      <div class="sectionTitle" style="border-top: 1px solid var(--line); padding-top: 16px;">🧾 Histórico de Peças Trocadas (Nota Pavani Moto Center)</div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Data OS</th>
+              <th>KM OS</th>
+              <th>Peça / Serviço Efetuado</th>
+              <th>Valor Unit.</th>
+              <th>Obs / Estabelecimento</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyHistoricoNotas"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="section view" id="view-veiculos" style="display:none">
@@ -457,6 +482,30 @@ $("btnThemeToggle").addEventListener("click", () => {
   localStorage.setItem(THEME_KEY, currentTheme);
 });
 
+/* Dados Estáticos Fixos: Histórico Real extraído da Nota Pavani (OS 1264) */
+const NOTAS_PAVANI_HISTORICO = [
+  { data: "10/04/2026", km: 93290, item: "Óleo de Motor 5000 20W50 4T (Aviso: Próxima usar 10W30)", valor: 73.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Revisão Geral Scooter até 450cc", valor: 570.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Placa de Partida", valor: 168.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Roletes do CVT", valor: 114.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Sapata de Embreagem (CVT)", valor: 220.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Pneu Traseiro Kenda", valor: 370.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Pastilha de Freio Dianteira", valor: 68.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Lona de Freio Traseira", valor: 65.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Fluido de Freio", valor: 45.00, obs: "Pavani OS 1264" },
+  { data: "10/04/2026", km: 93290, item: "Bateria (12 meses garantia)", valor: 215.00, obs: "Pavani OS 1264" },
+  { data: "24/10/2025", km: 90000, item: "Correia de Transmissão CVT", valor: 370.00, obs: "Pavani OS 1068" }
+];
+
+/* Diretrizes de Fábrica / Ciclo de Manutenção (Vida útil em KM) */
+const DIRETRIZES_MANUTENCAO = [
+  { item: "Óleo do Motor (SAE 10W-30)", ultimaTrocaKM: 93290, vidaUtilKM: 1000 },
+  { item: "Pastilhas & Lonas de Freio", ultimaTrocaKM: 93290, vidaUtilKM: 10000 },
+  { item: "Pneu Traseiro (Kenda)", ultimaTrocaKM: 93290, vidaUtilKM: 12000 },
+  { item: "Componentes Internos CVT (Roletes/Sapatas)", ultimaTrocaKM: 93290, vidaUtilKM: 20000 },
+  { item: "Correia de Transmissão", ultimaTrocaKM: 90000, vidaUtilKM: 20000 }
+];
+
 /* Storage */
 function loadItems(){
   try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e){ return []; }
@@ -467,11 +516,11 @@ function loadVehicles(){
   try{ 
     let raw = localStorage.getItem(VEHICLES_KEY);
     if(!raw) {
-      return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93667 }];
+      return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93671 }];
     }
     return JSON.parse(raw);
   } catch(e){ 
-    return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93667 }]; 
+    return [{ id: "1", nome: "Honda Lead 2010", odoCompra: 93671 }]; 
   }
 }
 function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
@@ -483,7 +532,7 @@ let activeVehicleId = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0].id
 if (!vehicles.some(v => v.id === activeVehicleId)) { activeVehicleId = vehicles[0].id; }
 
 /* Views / Menu */
-const views = ["painel","abastecer","historico","veiculos"];
+const views = ["painel","abastecer","historico","manutencao","veiculos"];
 function showView(name){
   for(const v of views){
     const el = document.getElementById("view-"+v);
@@ -497,6 +546,7 @@ function showView(name){
     painel: ["Painel","Métricas essenciais"],
     abastecer: ["Abastecer","Novo lançamento"],
     historico: ["Histórico","Seus lançamentos"],
+    manutencao: ["Manutenção","Alertas e Histórico de Peças"],
     veiculos: ["Veículos","Gerenciar garagem"]
   };
   $("pageTitle").textContent = titles[name][0];
@@ -562,7 +612,7 @@ function renderAll(){
   renderCards();
   renderTable();
   renderVehiclesList();
-  renderMaintenanceAlerts();
+  renderManutencaoTela();
 }
 
 function updateVehicleSelectors(){
@@ -624,28 +674,62 @@ function renderCards(){
   $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
 }
 
-/* Alertas de Manutenção do Óleo baseados na OS da Pavani */
-function renderMaintenanceAlerts() {
+/* NOVA FUNÇÃO: Renderizar dados dinâmicos na Tela de Manutenção */
+function renderManutencaoTela() {
   const currentVeh = vehicles.find(v => v.id === activeVehicleId);
-  const mBox = $("oilMaintenanceBox");
+  const tbodyAlertas = $("tbodyAlertasManutencao");
+  const tbodyHist = $("tbodyHistoricoNotas");
   
+  tbodyAlertas.innerHTML = "";
+  tbodyHist.innerHTML = "";
+
+  // Descobrir KM Atual real do veículo baseado nos lançamentos de combustível
+  let filteredFuel = items.filter(x => x.veiculoId === activeVehicleId);
+  let kmAtual = filteredFuel.length > 0 ? Number(filteredFuel[filteredFuel.length - 1].odometro) : (Number(currentVeh.odoCompra) || 0);
+
+  // 1. Renderizar Alertas apenas se o veículo selecionado for a Honda Lead
   if (currentVeh && currentVeh.nome.toLowerCase().includes("lead")) {
-    mBox.style.display = "block";
-    
-    let filtered = items.filter(x => x.veiculoId === activeVehicleId);
-    let kmAtual = filtered.length > 0 ? Number(filtered[filtered.length - 1].odometro) : Number(currentVeh.odoCompra);
-    
-    const ultimaTrocaKM = 93290; // Conforme OS 1264 da Pavani Moto Center
-    const limiteTrocaKM = ultimaTrocaKM + 1000; // Trocas controladas a cada 1.000 km
-    const kmRestantes = limiteTrocaKM - kmAtual;
-    
-    if (kmRestantes <= 0) {
-      $("oilStatusText").innerHTML = `⚠️ <span style="color:var(--danger)">ATENÇÃO: Troca de óleo vencida há ${Math.abs(kmRestantes)} km!</span><br>Troque imediatamente com óleo SAE 10W-30.`;
-    } else {
-      $("oilStatusText").innerHTML = `🟢 Óleo do motor está OK. Faltam <strong style="color:var(--ok)">${kmRestantes} km</strong> para a próxima troca (Trocar com ${limiteTrocaKM.toLocaleString("pt-BR")} km).`;
-    }
+    DIRETRIZES_MANUTENCAO.forEach(diretriz => {
+      const trocarComKM = diretriz.ultimaTrocaKM + diretriz.vidaUtilKM;
+      const kmFaltantes = trocarComKM - kmAtual;
+      
+      let badgeHtml = "";
+      if (kmFaltantes <= 0) {
+        badgeHtml = `<span class="badge danger">VENCIDO (${Math.abs(kmFaltantes)} km atrás)</span>`;
+      } else if (kmFaltantes <= 150) {
+        badgeHtml = `<span class="badge warning">ATENÇÃO / PRÓXIMO</span>`;
+      } else {
+        badgeHtml = `<span class="badge ok">OK</span>`;
+      }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${diretriz.item}</strong></td>
+        <td>${diretriz.ultimaTrocaKM.toLocaleString("pt-BR")} km</td>
+        <td>${diretriz.vidaUtilKM.toLocaleString("pt-BR")} km</td>
+        <td><strong style="color:var(--accent)">${trocarComKM.toLocaleString("pt-BR")} km</strong></td>
+        <td>${kmFaltantes > 0 ? `${kmFaltantes.toLocaleString("pt-BR")} km` : `<span style="color:var(--danger)">Trocar já!</span>`}</td>
+        <td>${badgeHtml}</td>
+      `;
+      tbodyAlertas.appendChild(tr);
+    });
+
+    // 2. Renderizar Histórico da Nota Fiscal da Pavani Moto Center
+    NOTAS_PAVANI_HISTORICO.forEach(nota => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${nota.data}</td>
+        <td>${nota.km.toLocaleString("pt-BR")} km</td>
+        <td>${nota.item}</td>
+        <td>R$ ${formatNum(nota.valor, 2)}</td>
+        <td><small style="color:var(--muted)">${nota.obs}</small></td>
+      `;
+      tbodyHist.appendChild(tr);
+    });
   } else {
-    mBox.style.display = "none";
+    // Se for outro veículo cadastrado
+    tbodyAlertas.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted)">Alertas automáticos de fábrica disponíveis apenas para a Honda Lead.</td></tr>`;
+    tbodyHist.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--muted)">Nenhum histórico de nota importado para este veículo.</td></tr>`;
   }
 }
 
@@ -743,7 +827,7 @@ $("btnCadastrarVeiculo").addEventListener("click", ()=>{
   
   if(editId) {
     vehicles = vehicles.map(v => v.id === editId ? { ...v, nome, odoCompra } : v);
-    toast("Veículo updated!");
+    toast("Veículo atualizado!");
   } else {
     if(vehicles.some(v => v.nome.toLowerCase() === nome.toLowerCase())) { 
       toast("Esse carro já está cadastrado."); 
@@ -844,7 +928,7 @@ $("btnSalvar").addEventListener("click", ()=>{
 
   if(idEdicao) {
     items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
-    toast("Registro atualizado!");
+    toast("Registro updated!");
   } else {
     const item = {
       id: `${Date.now()}`,
@@ -888,7 +972,7 @@ $("btnExportarJson").addEventListener("click", ()=>{
   toast("Backup JSON baixado");
 });
 
-/* MODO BACKUP VIA CSV (Novo recurso solicitado) */
+/* Exportação via CSV */
 $("btnExportarCsv").addEventListener("click", () => {
   const currentVeh = vehicles.find(v => v.id === activeVehicleId);
   const veiculoNome = currentVeh ? currentVeh.nome : "Desconhecido";
@@ -899,10 +983,8 @@ $("btnExportarCsv").addEventListener("click", () => {
     return;
   }
 
-  // Cabeçalho estruturado do CSV
   let csvContent = "Veiculo,Data,Odometro(km),Litros,PrecoPorLitro(R$),KmRodados(Delta),Rendimento(Km/L)\n";
 
-  // Montando as linhas com escape básico de string
   filtered.forEach(x => {
     const dataFormatada = x.data.split("-").reverse().join("/");
     const preco = x.precoLitro || 0;
@@ -912,7 +994,6 @@ $("btnExportarCsv").addEventListener("click", () => {
     csvContent += `"${veiculoNome}","${dataFormatada}",${x.odometro},${x.litros},${preco},${delta},${rendimento}\n`;
   });
 
-  // Geração e download do arquivo com encoding correto para aceitar acentos no Excel
   const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
