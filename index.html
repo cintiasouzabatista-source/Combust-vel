@@ -214,7 +214,7 @@
       font-size:12px;
       font-weight:900;
     }
-    input, button{
+    input, select, button{
       width:100%;
       border-radius:14px;
       border:1px solid var(--line);
@@ -226,7 +226,8 @@
       font-size:14px;
     }
     input::placeholder{ color:rgba(234,241,255,.45); font-weight:800; }
-    input:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
+    input:focus, select:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
+    select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23eaf1ff'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
 
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
@@ -249,10 +250,9 @@
     }
     .btn:active{ transform: translateY(1px); }
 
-    .hint{ color:var(--muted); font-size:12px; font-weight:800; margin:0 0 10px; }
     .statusLine{ color:rgba(234,241,255,.78); font-size:12px; font-weight:900; margin-top:10px; }
 
-    /* Table */
+    /* Table & Lists */
     table{
       width:100%;
       border-collapse:collapse;
@@ -272,35 +272,22 @@
     th{ color:rgba(234,241,255,.70); font-weight:900; }
     tr:last-child td{ border-bottom:none; }
 
-    /* Toast */
-    #toast{
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%);
-      background:rgba(0,0,0,.76);
-      color:#fff;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      font-weight:900;
-      font-size:12px;
-      display:none;
-      z-index:4000;
-      max-width:92vw;
-      text-align:center;
-    }
+    .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 10px;}
+    .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; }
+    .v-item span { font-weight: 800; font-size: 14px; }
+    .v-item button { width: auto; padding: 6px 12px; font-size: 12px; }
   </style>
 </head>
 
 <body>
 <div class="app">
+  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="logo">🚗</div>
       <div class="txt">
         <div class="t">Painel Combustível</div>
-        <div class="s">Foco total no simples</div>
+        <div class="s">Garagem multimarcas</div>
       </div>
     </div>
 
@@ -308,11 +295,13 @@
       <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
       <button data-view="abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
       <button data-view="historico"><span class="ic">🧾</span><span>Histórico</span></button>
+      <button data-view="veiculos"><span class="ic">🚘</span><span>Veículos</span></button>
     </nav>
   </aside>
 
   <div class="overlay" id="overlay"></div>
 
+  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="menuBtn" id="menuBtn">☰ Menu</button>
@@ -323,6 +312,13 @@
       <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
     </div>
 
+    <!-- SELETOR GLOBAL DE VEÍCULO -->
+    <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
+      <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
+      <select id="globalVehicle"></select>
+    </div>
+
+    <!-- PAINEL -->
     <section class="section view" id="view-painel">
       <div class="cards">
         <div class="card">
@@ -331,9 +327,9 @@
           <div class="small">Km/L total</div>
         </div>
         <div class="card">
-          <div class="label">Litros Abastecidos</div>
-          <div class="val" id="totalLitros">0 L</div>
-          <div class="small">volume acumulado</div>
+          <div class="label">Último Abastecido</div>
+          <div class="val" id="ultimoAbastecido">—</div>
+          <div class="small">litros colocados</div>
         </div>
         <div class="card">
           <div class="label">Dias Rodados</div>
@@ -341,13 +337,14 @@
           <div class="small">período ativo</div>
         </div>
         <div class="card">
-          <div class="label">Km Rodados</div>
-          <div class="val" id="totalKm">0 km</div>
-          <div class="small">distância total</div>
+          <div class="label">Km Atual</div>
+          <div class="val" id="kmAtual">—</div>
+          <div class="small">último odômetro</div>
         </div>
       </div>
     </section>
 
+    <!-- ABASTECER -->
     <section class="section view" id="view-abastecer" style="display:none">
       <div class="sectionTitle">⛽ Novo lançamento</div>
       
@@ -357,11 +354,11 @@
       <div class="row">
         <div>
           <label for="odometro">Odômetro (km)</label>
-          <input id="odometro" inputmode="numeric" placeholder="Ex: 84092" />
+          <input id="odometro" placeholder="Ex: 84092" />
         </div>
         <div>
-          <label for="litros">Litros</label>
-          <input id="litros" inputmode="decimal" placeholder="Ex: 35,5" />
+          <label for="litros">Litros Abastecidos</label>
+          <input id="litros" placeholder="Ex: 35,5" />
         </div>
       </div>
 
@@ -371,13 +368,14 @@
       </div>
 
       <div class="row" style="margin-top:12px">
-        <button class="btn danger" id="btnApagarTudo" type="button">🧹 Apagar tudo</button>
-        <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Backup (JSON)</button>
+        <button class="btn danger" id="btnApagarTudo" type="button">🧹 Apagar tudo deste carro</button>
+        <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Backup Geral (JSON)</button>
       </div>
 
       <div class="statusLine" id="saveStatus">—</div>
     </section>
 
+    <!-- HISTORICO -->
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
 
@@ -397,13 +395,31 @@
       </div>
       <div class="statusLine" id="histStatus">—</div>
     </section>
+
+    <!-- VEICULOS -->
+    <section class="section view" id="view-veiculos" style="display:none">
+      <div class="sectionTitle">🚘 Cadastrar Veículo</div>
+      
+      <label for="novoVeiculo">Nome do Veículo</label>
+      <input id="novoVeiculo" placeholder="Ex: Onix 1.0, Moto Honda, Civic" />
+      
+      <button class="btn" id="btnCadastrarVeiculo" type="button" style="margin-top:12px">Adicionar à Garagem</button>
+      
+      <div class="divider" style="height:1px; background:var(--line); margin:20px 0;"></div>
+      
+      <div class="sectionTitle">📋 Seus Veículos</div>
+      <div class="v-list" id="listaVeiculos"></div>
+    </section>
   </main>
 </div>
 
 <div id="toast"></div>
 
 <script>
-const STORE_KEY = "cb_abastecimentos_v4";
+const STORE_KEY = "cb_abastecimentos_v5";
+const VEHICLES_KEY = "cb_veiculos_v5";
+const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
+
 const $ = (id)=>document.getElementById(id);
 
 function toast(msg){
@@ -413,29 +429,38 @@ function toast(msg){
   clearTimeout(toast._tm);
   toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
 }
-function setPill(msg){ $("pillStatus").textContent = msg; }
 
 function parseBRNumber(s){
   if(!s) return null;
-  const norm = String(s).trim().replace(/\./g,"").replace(",", ".");
+  const norm = String(s).trim().replace(/\s/g, "").replace(/\./g,"").replace(",", ".");
   const n = Number(norm);
   return Number.isFinite(n) ? n : null;
 }
+
 function formatNum(n, digits=2){
   const v = Number(n);
   return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
 }
 
+/* Storage */
 function loadItems(){
-  try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
-  catch(e){ return []; }
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e){ return []; }
 }
 function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
 
+function loadVehicles(){
+  try{ return JSON.parse(localStorage.getItem(VEHICLES_KEY) || '["Padrão"]'); } catch(e){ return ["Padrão"]; }
+}
+function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
+
 let items = loadItems();
+let vehicles = loadVehicles();
+let activeVehicle = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0];
+
+if (!vehicles.includes(activeVehicle)) { activeVehicle = vehicles[0]; }
 
 /* Views / Menu */
-const views = ["painel","abastecer","historico"];
+const views = ["painel","abastecer","historico","veiculos"];
 function showView(name){
   for(const v of views){
     const el = document.getElementById("view-"+v);
@@ -448,12 +473,19 @@ function showView(name){
   const titles = {
     painel: ["Painel","Métricas essenciais"],
     abastecer: ["Abastecer","Novo lançamento"],
-    historico: ["Histórico","Seus lançamentos"]
+    historico: ["Histórico","Seus lançamentos"],
+    veiculos: ["Veículos","Gerenciar garagem"]
   };
   $("pageTitle").textContent = titles[name][0];
   $("pageSub").textContent = titles[name][1];
+  
+  // Esconde o seletor do topo se estiver na aba de gerenciar carros pra não confundir
+  $("globalVehiclesContainer").style.display = (name === "veiculos") ? "none" : "block";
+  
   closeSidebar();
+  renderAll();
 }
+
 function openSidebar(){ $("sidebar").classList.add("open"); $("overlay").classList.add("show"); }
 function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); }
 
@@ -463,20 +495,30 @@ document.querySelectorAll(".nav button").forEach(b=>{
   b.addEventListener("click", ()=>showView(b.dataset.view));
 });
 
-/* Cálculo das Métricas Principais */
+/* Regras de negócio / Cálculo */
 function sortItems(){
   items.sort((a,b)=> (a.data||"").localeCompare(b.data||"") || (Number(a.odometro)-Number(b.odometro)));
 }
 
 function processMetrics(){
   sortItems();
-  let totalLitros = 0;
+  // Filtra e calcula apenas para o veículo ativo na sessão
+  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
   
   for(let i=0; i<items.length; i++){
-    totalLitros += Number(items[i].litros) || 0;
+    if((items[i].veiculo || "Padrão") !== activeVehicle) continue;
     
-    if(i > 0){
-      const delta = Number(items[i].odometro) - Number(items[i-1].odometro);
+    // Acha o registro anterior específico deste mesmo veículo
+    let prev = null;
+    for(let j = i - 1; j >= 0; j--){
+      if((items[j].veiculo || "Padrão") === activeVehicle){
+        prev = items[j];
+        break;
+      }
+    }
+    
+    if(prev){
+      const delta = Number(items[i].odometro) - Number(prev.odometro);
       items[i].deltaKm = delta > 0 ? delta : null;
       items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
     } else {
@@ -487,71 +529,148 @@ function processMetrics(){
 }
 
 function renderAll(){
+  updateVehicleSelectors();
   processMetrics();
   renderCards();
   renderTable();
+  renderVehiclesList();
 }
 
+function updateVehicleSelectors(){
+  const select = $("globalVehicle");
+  select.innerHTML = "";
+  vehicles.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    if(v === activeVehicle) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+$("globalVehicle").addEventListener("change", (e)=>{
+  activeVehicle = e.target.value;
+  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  renderAll();
+  toast(`Carro ativo: ${activeVehicle}`);
+});
+
 function renderCards(){
-  if(items.length < 2){
+  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
+
+  if(filtered.length === 0){
     $("kmlGeral").textContent = "—";
-    $("totalLitros").textContent = items.length === 1 ? `${formatNum(items[0].litros, 2)} L` : "0 L";
+    $("ultimoAbastecido").textContent = "—";
     $("diasRodados").textContent = "0";
-    $("totalKm").textContent = "0 km";
+    $("kmAtual").textContent = "—";
     return;
   }
 
-  const primeirOdo = Number(items[0].odometro);
-  const ultimoOdo = Number(items[items.length-1].odometro);
+  const ultimoItem = filtered[filtered.length - 1];
+  $("kmAtual").textContent = `${Number(ultimoItem.odometro).toLocaleString("pt-BR")} km`;
+  $("ultimoAbastecido").textContent = `${formatNum(ultimoItem.litros, 2)} L`;
+
+  if(filtered.length < 2){
+    $("kmlGeral").textContent = "—";
+    $("diasRodados").textContent = "0";
+    return;
+  }
+
+  const primeirOdo = Number(filtered[0].odometro);
+  const ultimoOdo = Number(filtered[filtered.length-1].odometro);
   const deltaTotalKm = ultimoOdo - primeirOdo;
 
-  // Litros gastos a partir do primeiro abastecimento cheio para bater com os Km rodados
   let litrosConsiderados = 0;
-  let litrosTotaisAbs = 0;
-  for(let i=0; i<items.length; i++){
-    litrosTotaisAbs += Number(items[i].litros) || 0;
-    if(i > 0) litrosConsiderados += Number(items[i].litros) || 0;
+  for(let i=1; i<filtered.length; i++){
+    litrosConsiderados += Number(filtered[i].litros) || 0;
   }
 
   const mediaGeral = (deltaTotalKm > 0 && litrosConsiderados > 0) ? (deltaTotalKm / litrosConsiderados) : null;
 
-  // Dias rodados
-  const dataIni = new Date(items[0].data);
-  const dataFim = new Date(items[items.length-1].data);
+  const dataIni = new Date(filtered[0].data);
+  const dataFim = new Date(filtered[filtered.length-1].data);
   const diffTime = Math.abs(dataFim - dataIni);
   const diffDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
   $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
-  $("totalLitros").textContent = `${formatNum(litrosTotaisAbs, 2)} L`;
-  $("diasRodados").textContent = items.length > 1 ? diffDias : "0";
-  $("totalKm").textContent = deltaTotalKm > 0 ? `${deltaTotalKm.toLocaleString("pt-BR")} km` : "0 km";
+  $("diasRodados").textContent = diffDias;
 }
 
 function renderTable(){
   const tb = $("tbody");
   tb.innerHTML = "";
   
-  if(items.length===0){
-    $("histStatus").textContent = "Nenhum registro encontrado.";
+  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
+
+  if(filtered.length===0){
+    $("histStatus").textContent = "Nenhum registro para este veículo.";
     return;
   }
 
-  const displayRows = [...items].reverse();
+  const displayRows = [...filtered].reverse();
   for(const x of displayRows){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${x.data.split("-").reverse().join("/")}</td>
       <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
-      <td>${formatNum(x.litros, 3)} L</td>
+      <td>${formatNum(x.litros, 2)} L</td>
       <td>${x.deltaKm ? `${x.deltaKm.toLocaleString("pt-BR")} km` : "—"}</td>
       <td>${x.kml ? `${formatNum(x.kml, 2)} Km/L` : "—"}</td>
     `;
     tb.appendChild(tr);
   }
-  $("histStatus").textContent = `${items.length} lançamento(s).`;
+  $("histStatus").textContent = `${filtered.length} lançamento(s) deste veículo.`;
 }
 
-/* Ações */
+/* Gestão de Veículos */
+$("btnCadastrarVeiculo").addEventListener("click", ()=>{
+  const nome = $("novoVeiculo").value.trim();
+  if(!nome) { toast("Digite o nome do veículo."); return; }
+  if(vehicles.includes(nome)) { toast("Esse carro já está cadastrado."); return; }
+  
+  vehicles.push(nome);
+  saveVehicles(vehicles);
+  activeVehicle = nome;
+  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  
+  $("novoVeiculo").value = "";
+  renderAll();
+  toast(`🚙 ${nome} cadastrado e ativo!`);
+});
+
+function renderVehiclesList(){
+  const list = $("listaVeiculos");
+  list.innerHTML = "";
+  
+  vehicles.forEach(v => {
+    const itemEl = document.createElement("div");
+    itemEl.className = "v-item";
+    
+    const isDefault = vehicles.length === 1;
+    const deleteBtn = isDefault ? "" : `<button class="btn danger" onclick="removerVeiculo('${v}')">Remover</button>`;
+    const activeLabel = v === activeVehicle ? " <small style='color:var(--ok)'>(Ativo)</small>" : "";
+
+    itemEl.innerHTML = `
+      <span>🚗 ${v} ${activeLabel}</span>
+      ${deleteBtn}
+    `;
+    list.appendChild(itemEl);
+  });
+}
+
+window.removerVeiculo = function(nome){
+  if(!confirm(`Apagar o veículo "${nome}"? Isso NÃO deleta os dados do histórico, mas o carro sairá da lista.`)) return;
+  vehicles = vehicles.filter(x => x !== nome);
+  saveVehicles(vehicles);
+  if(activeVehicle === nome){
+    activeVehicle = vehicles[0];
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  }
+  renderAll();
+  toast("Veículo removido.");
+};
+
+/* Lançamentos e Ações */
 $("btnSalvar").addEventListener("click", ()=>{
   const data = $("data").value;
   const odometro = parseBRNumber($("odometro").value);
@@ -563,6 +682,7 @@ $("btnSalvar").addEventListener("click", ()=>{
 
   const item = {
     id: `${Date.now()}`,
+    veiculo: activeVehicle, // Vincula o lançamento ao carro selecionado
     data, odometro, litros
   };
 
@@ -572,7 +692,7 @@ $("btnSalvar").addEventListener("click", ()=>{
 
   $("odometro").value = "";
   $("litros").value = "";
-  $("saveStatus").textContent = "Salvo com sucesso! ✅";
+  $("saveStatus").textContent = `Salvo no veículo: ${activeVehicle} ✅`;
   toast("Salvo ✅");
   showView("painel");
 });
@@ -584,7 +704,28 @@ $("btnLimparForm").addEventListener("click", ()=>{
 });
 
 $("btnApagarTudo").addEventListener("click", ()=>{
-  if(!confirm("Tem certeza que deseja apagar todo o histórico?")) return;
-  items = [];
+  if(!confirm(`Apagar TODO o histórico do veículo "${activeVehicle}"?`)) return;
+  items = items.filter(x => (x.veiculo || "Padrão") !== activeVehicle);
   saveItems(items);
   renderAll();
+  toast("Histórico limpo!");
+});
+
+$("btnExportarJson").addEventListener("click", ()=>{
+  const payload = { veiculos: vehicles, historicoCompleto: items };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `backup_garagem_combustivel.json`;
+  a.click();
+  toast("Backup completo baixado");
+});
+
+// Inicialização
+const hoje = new Date().toISOString().slice(0,10);
+$("data").value = hoje;
+renderAll();
+</script>
+</body>
+</html>
