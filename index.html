@@ -207,7 +207,7 @@
     .btn.secondary { background: var(--bg); color: var(--text); font-size: 11px; padding: 10px; border: 1px solid var(--line); }
     .btn.secondary:hover { background: var(--line); }
 
-    /* Import Zone Corrigida para cliques estáveis no mobile */
+    /* Import Zone */
     .import-zone { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .file-label-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -342,13 +342,13 @@
             </div>
             <div class="input-card">
               <label for="litros">Litros Abastecidos</label>
-              <input id="litros" placeholder="Ex: 3.90" />
+              <input id="litros" placeholder="Ex: 3,90" />
             </div>
           </div>
 
           <div class="input-card">
             <label for="precoLitro">Preço por Litro (R$) <span style="opacity:0.5; font-weight:normal">(Opcional)</span></label>
-            <input id="precoLitro" placeholder="Ex: 5.69" />
+            <input id="precoLitro" placeholder="Ex: 5,69" />
           </div>
         </div>
 
@@ -429,7 +429,7 @@
               </div>
               <div class="input-card">
                 <label for="maintValor">Valor Total (R$)</label>
-                <input id="maintValor" placeholder="Ex: 73.00" />
+                <input id="maintValor" placeholder="Ex: 73,00" />
               </div>
             </div>
           </div>
@@ -541,10 +541,16 @@ function toast(msg){
   toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
 }
 
+// Corrigido para converter corretamente valores com vírgula do padrão PT-BR para decimal interno do JS
 function parseBRNumber(s){
-  if(!s) return null;
-  const norm = String(s).trim().replace(/\s/g, "").replace(/\./g,"").replace(",", ".");
-  const n = Number(norm);
+  if(s === null || s === undefined) return null;
+  let str = String(s).trim().replace(/\s/g, "");
+  if(!str) return null;
+  
+  // Se contiver vírgula, substitui por ponto para o JS aceitar como número válido
+  str = str.replace(",", ".");
+  
+  const n = Number(str);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -841,10 +847,10 @@ $("btnSalvarMaint").addEventListener("click", () => {
   const data = $("maintData").value;
   const odo = $("maintOdometro").value;
   const item = $("maintItem").value;
-  const valor = $("maintValor").value;
+  const valor = parseBRNumber($("maintValor").value);
 
-  if(!data || !odo || !item || !valor) {
-    toast("Preencha todos os campos da manutenção!");
+  if(!data || !odo || !item || valor === null) {
+    toast("Preencha todos os campos da manutenção com valores válidos!");
     return;
   }
 
@@ -871,7 +877,7 @@ window.editarMaint = function(id) {
   $("maintData").value = m.data;
   $("maintOdometro").value = m.odometro;
   $("maintItem").value = m.item;
-  $("maintValor").value = m.valor;
+  $("maintValor").value = String(m.valor).replace(".", ",");
   $("maintFormTitle").textContent = "Editar Manutenção";
 };
 
@@ -910,11 +916,11 @@ $("precoLitro").addEventListener("input", calcularCustoPreview);
 $("btnSalvar").addEventListener("click", () => {
   const data = $("data").value;
   const odo = $("odometro").value;
-  const litros = $("litros").value;
-  const preco = $("precoLitro").value;
+  const litros = parseBRNumber($("litros").value);
+  const preco = parseBRNumber($("precoLitro").value);
 
-  if(!data || !odo || !litros) {
-    toast("Data, Odômetro e Litros são obrigatórios!");
+  if(!data || !odo || litros === null) {
+    toast("Data, Odômetro e Litros (válidos) são obrigatórios!");
     return;
   }
 
@@ -926,8 +932,8 @@ $("btnSalvar").addEventListener("click", () => {
     veiculoId: activeVehicleId,
     data,
     odometro: Number(odo),
-    litros: parseBRNumber(litros),
-    precoLitro: preco ? parseBRNumber(preco) : null
+    litros: litros,
+    precoLitro: preco
   };
 
   if(editId) {
@@ -949,8 +955,8 @@ window.editarAbastecimento = function(id) {
   $("editId").value = x.id;
   $("data").value = x.data;
   $("odometro").value = x.odometro;
-  $("litros").value = x.litros;
-  $("precoLitro").value = x.precoLitro || "";
+  $("litros").value = String(x.litros).replace(".", ",");
+  $("precoLitro").value = x.precoLitro ? String(x.precoLitro).replace(".", ",") : "";
   $("formTitle").textContent = "Editar lançamento";
   calcularCustoPreview();
   showView("abastecer");
@@ -985,160 +991,3 @@ $("btnApagarTudo").addEventListener("click", () => {
 
 
 /* LÓGICA DE GERENCIAMENTO DE VEÍCULOS */
-$("btnCadastrarVeiculo").addEventListener("click", () => {
-  const nome = $("novoVeiculo").value.trim();
-  const odo = $("odometroCompra").value;
-
-  if(!nome || !odo) {
-    toast("Preencha o nome do veículo e o odômetro de compra!");
-    return;
-  }
-
-  const editId = $("editVehId").value;
-  let currentVehicles = loadVehicles();
-
-  if(editId) {
-    currentVehicles = currentVehicles.map(v => v.id === editId ? { id: editId, nome, odoCompra: Number(odo) } : v);
-    toast("Veículo atualizado!");
-  } else {
-    const novoId = "v_" + Date.now();
-    currentVehicles.push({ id: novoId, nome, odoCompra: Number(odo) });
-    activeVehicleId = novoId;
-    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
-    toast("Veículo adicionado!");
-  }
-
-  saveVehicles(currentVehicles);
-  limparVehForm();
-  renderAll();
-});
-
-window.editarVeiculo = function(id) {
-  const v = vehicles.find(x => x.id === id);
-  if(!v) return;
-  $("editVehId").value = v.id;
-  $("novoVeiculo").value = v.nome;
-  $("odometroCompra").value = v.odoCompra;
-  $("vehFormTitle").textContent = "✏️ Editar Veículo";
-  $("btnCadastrarVeiculo").textContent = "Atualizar Veículo";
-  $("btnLimparVehForm").style.display = "inline-flex";
-};
-
-window.deletarVeiculo = function(id) {
-  if(vehicles.length <= 1) {
-    toast("Você precisa ter pelo menos um veículo cadastrado!");
-    return;
-  }
-  if(!confirm("Deseja realmente remover este veículo? Todos os abastecimentos e manutenções dele serão mantidos ou limpos.")) return;
-  
-  const filteredVeh = vehicles.filter(x => x.id !== id);
-  saveVehicles(filteredVeh);
-
-  if(activeVehicleId === id) {
-    activeVehicleId = filteredVeh[0].id;
-    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
-  }
-
-  toast("Veículo removido!");
-  limparVehForm();
-  renderAll();
-};
-
-function limparVehForm() {
-  $("editVehId").value = "";
-  $("novoVeiculo").value = "";
-  $("odometroCompra").value = "";
-  $("vehFormTitle").textContent = "Cadastrar Veículo";
-  $("btnCadastrarVeiculo").textContent = "Adicionar à Garagem";
-  $("btnLimparVehForm").style.display = "none";
-}
-$("btnLimparVehForm").addEventListener("click", limparVehForm);
-
-
-/* EXPORTAÇÃO E IMPORTAÇÃO DE DADOS */
-$("btnExportarJson").addEventListener("click", () => {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
-  const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute("href", dataStr);
-  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.json`);
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
-  toast("JSON Exportado com sucesso!");
-});
-
-$("btnExportarCsv").addEventListener("click", () => {
-  let csvContent = "data:text/csv;charset=utf-8,id;veiculoId;data;odometro;litros;precoLitro\n";
-  items.forEach(x => {
-    csvContent += `${x.id};${x.veiculoId};${x.data};${x.odometro};${x.litros};${x.precoLitro || ''}\n`;
-  });
-  const encodedUri = encodeURI(csvContent);
-  const downloadAnchor = document.createElement('a');
-  downloadAnchor.setAttribute("href", encodedUri);
-  downloadAnchor.setAttribute("download", `abastecimentos_backup_${activeVehicleId}.csv`);
-  document.body.appendChild(downloadAnchor);
-  downloadAnchor.click();
-  downloadAnchor.remove();
-  toast("CSV Exportado com sucesso!");
-});
-
-$("importJsonFile").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const parsed = JSON.parse(evt.target.result);
-      if(Array.isArray(parsed)) {
-        const merged = [...loadItems(), ...parsed.map(x => ({...x, veiculoId: x.veiculoId || activeVehicleId}))];
-        saveItems(merged);
-        toast("JSON importado e mesclado!");
-        renderAll();
-      } else {
-        toast("Formato JSON inválido. Deve ser uma lista.");
-      }
-    } catch(err) {
-      toast("Erro ao ler o arquivo JSON.");
-    }
-  };
-  reader.readAsText(file);
-});
-
-$("importCsvFile").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const lines = evt.target.result.split('\n');
-      const currentItems = loadItems();
-      for(let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if(!line) continue;
-        const cols = line.split(';');
-        if(cols.length >= 5) {
-          currentItems.push({
-            id: cols[0] || "f_" + Date.now() + "_" + i,
-            veiculoId: cols[1] || activeVehicleId,
-            data: cols[2],
-            odometro: Number(cols[3]),
-            litros: Number(cols[4]),
-            precoLitro: cols[5] ? Number(cols[5]) : null
-          });
-        }
-      }
-      saveItems(currentItems);
-      toast("CSV importado com sucesso!");
-      renderAll();
-    } catch(err) {
-      toast("Erro ao processar o arquivo CSV.");
-    }
-  };
-  reader.readAsText(file);
-});
-
-// Inicialização Inicial
-showView("painel");
-</script>
-</body>
-</html>
