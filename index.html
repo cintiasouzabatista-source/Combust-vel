@@ -207,9 +207,16 @@
     .btn.secondary { background: var(--bg); color: var(--text); font-size: 11px; padding: 10px; border: 1px solid var(--line); }
     .btn.secondary:hover { background: var(--line); }
 
+    /* Import Zone Corrigida para cliques estáveis no mobile */
     .import-zone { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .file-input-wrapper { position: relative; width: 100%; }
-    .file-input-wrapper input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+    .file-label-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; background: var(--bg); color: var(--text); font-size: 11px; padding: 10px; 
+      border: 1px solid var(--line); border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s;
+      font-weight: 500; text-align: center;
+    }
+    .file-label-btn:hover { background: var(--line); }
+    .file-label-btn input[type="file"] { display: none; }
 
     .danger-zone { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); text-align: center; }
     .btn.danger-text { background: transparent; color: var(--muted); font-size: 12px; padding: 6px; width: auto; display: inline-block; }
@@ -357,14 +364,14 @@
         </div>
 
         <div class="import-zone">
-          <div class="file-input-wrapper">
-            <button class="btn secondary" type="button">📥 Importar JSON</button>
+          <label class="file-label-btn">
+            📥 Importar JSON
             <input type="file" id="importJsonFile" accept=".json" />
-          </div>
-          <div class="file-input-wrapper">
-            <button class="btn secondary" type="button">📥 Importar CSV</button>
+          </label>
+          <label class="file-label-btn">
+            📥 Importar CSV
             <input type="file" id="importCsvFile" accept=".csv" />
-          </div>
+          </label>
         </div>
 
         <div class="danger-zone">
@@ -925,7 +932,7 @@ $("btnSalvar").addEventListener("click", () => {
 
   if(editId) {
     currentItems = currentItems.map(x => x.id === editId ? novoRegistro : x);
-    toast("Registro updated!");
+    toast("Registro atualizado!");
   } else {
     currentItems.push(novoRegistro);
     toast("Registro salvo!");
