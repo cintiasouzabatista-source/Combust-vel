@@ -21,23 +21,18 @@
       --radius: 18px;
       --line: rgba(255,255,255,.08);
       --sideW: 280px;
-      --gradient-bg: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
     }
 
+    /* Regras do Modo Claro */
     [data-theme="light"] {
       --bg: #f4f7fc;
       --panel: #ffffff;
-      --card: #f8fafc;
-      --stroke: rgba(0,0,0,.08);
-      --text: #1e293b;
-      --muted: #64748b;
-      --accent: #2b6dff;
-      --accent2: #1f55cc;
-      --danger: #ef4444;
-      --ok: #10b981;
-      --shadow: 0 10px 25px rgba(0,0,0,.05);
+      --card: #e2e8f0;
+      --stroke: rgba(0,0,0,.10);
+      --text: #0f172a;
+      --muted: #475569;
       --line: rgba(0,0,0,.08);
-      --gradient-bg: #f4f7fc;
+      --shadow: 0 10px 25px rgba(0,0,0,.05);
     }
 
     *{box-sizing:border-box}
@@ -46,10 +41,15 @@
       margin:0;
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: var(--gradient-bg);
+      background: var(--bg);
       overflow-x:hidden;
       transition: background 0.2s, color 0.2s;
     }
+    
+    [data-theme="dark"] body {
+      background: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
+    }
+
     .app{
       min-height:100vh;
       display:flex;
@@ -58,7 +58,7 @@
     /* Sidebar */
     .sidebar{
       width:var(--sideW);
-      background: rgba(5,12,23,.86);
+      background:rgba(5,12,23,.86);
       border-right:1px solid var(--line);
       padding:14px 12px;
       position:fixed;
@@ -72,7 +72,7 @@
       justify-content: space-between;
     }
     [data-theme="light"] .sidebar {
-      background: rgba(255,255,255,.95);
+      background: rgba(255, 255, 255, 0.9);
     }
     .sidebar.open{ transform: translateX(0); }
     .sidebar .brand{
@@ -91,7 +91,6 @@
       flex-direction:column;
       gap:8px;
       padding:10px 6px;
-      flex-grow: 1;
     }
     .nav button{
       width:100%;
@@ -109,7 +108,7 @@
       gap:10px;
     }
     [data-theme="light"] .nav button {
-      background: rgba(0,0,0,.02);
+      background: rgba(0,0,0,.03);
     }
     .nav button.active{
       background:rgba(43,109,255,.16);
@@ -118,7 +117,7 @@
     }
     .nav .ic{width:22px; display:inline-flex; justify-content:center}
 
-    .theme-toggle-container {
+    .theme-toggle-box {
       padding: 10px 6px;
       border-top: 1px solid var(--line);
     }
@@ -264,10 +263,8 @@
       font-weight:900;
       font-size:14px;
     }
-    [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] .nav button:not(.active){
-      background: #ffffff;
-    }
-    input::placeholder{ color:var(--muted); opacity: 0.6; font-weight:800; }
+    [data-theme="light"] input, [data-theme="light"] select { background: #ffffff; }
+    input::placeholder{ color:var(--muted); opacity: 0.5; font-weight:800; }
     input:focus, select:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
     select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
 
@@ -317,8 +314,16 @@
     th{ color:var(--muted); font-weight:900; }
     tr:last-child td{ border-bottom:none; }
 
-    .action-btns { display: flex; gap: 6px; }
-    .action-btns button { width: auto; padding: 6px 10px; font-size: 11px; border-radius: 8px; }
+    .action-cell {
+      display: flex;
+      gap: 6px;
+    }
+    .action-cell button {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 11px;
+      border-radius: 8px;
+    }
 
     .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 10px;}
     .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; }
@@ -326,13 +331,12 @@
     .v-item span { font-weight: 800; font-size: 14px; }
     .v-item button { width: auto; padding: 6px 12px; font-size: 12px; }
 
-    /* Toast Minimalista */
     #toast {
       position: fixed;
       bottom: 20px;
       right: 20px;
       background: #1e293b;
-      color: #ffffff;
+      color: #fff;
       padding: 12px 20px;
       border-radius: 12px;
       font-size: 13px;
@@ -341,12 +345,12 @@
       display: none;
       z-index: 9999;
     }
-    [data-theme="light"] #toast { background: #0f172a; }
   </style>
 </head>
 
 <body>
 <div class="app">
+  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div>
       <div class="brand">
@@ -365,13 +369,15 @@
       </nav>
     </div>
 
-    <div class="theme-toggle-container">
-      <button id="btnThemeToggle" class="btn secondary">🌓 Mudar Tema</button>
+    <!-- Alternador de Tema Minimalista -->
+    <div class="theme-toggle-box">
+      <button class="btn secondary" id="btnThemeToggle" type="button">🌓 Mudar Tema</button>
     </div>
   </aside>
 
   <div class="overlay" id="overlay"></div>
 
+  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="menuBtn" id="menuBtn">☰ Menu</button>
@@ -382,11 +388,13 @@
       <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
     </div>
 
+    <!-- SELETOR GLOBAL DE VEÍCULO -->
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
       <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
+    <!-- PAINEL -->
     <section class="section view" id="view-painel">
       <div class="cards">
         <div class="card">
@@ -400,9 +408,9 @@
           <div class="small">litros colocados</div>
         </div>
         <div class="card">
-          <div class="label">Total Gasto</div>
+          <div class="label">Total Investido</div>
           <div class="val" id="totalGasto">—</div>
-          <div class="small">acumulado em combustível</div>
+          <div class="small">gasto acumulado</div>
         </div>
         <div class="card">
           <div class="label">Km Atual</div>
@@ -412,8 +420,11 @@
       </div>
     </section>
 
+    <!-- ABASTECER -->
     <section class="section view" id="view-abastecer" style="display:none">
       <div class="sectionTitle" id="formTitle">⛽ Novo lançamento</div>
+      
+      <!-- Input oculto para controlar se estamos editando um item específico -->
       <input type="hidden" id="editId" />
       
       <label for="data">Data</label>
@@ -430,19 +441,20 @@
         </div>
       </div>
 
+      <!-- Melhoria de Consumo: Controle Financeiro Opcional -->
       <div class="row" style="margin-top: 10px;">
         <div>
-          <label for="precoLitro">Preço por Litro (R$) <small style="opacity:0.6">(Opcional)</small></label>
-          <input id="precoLitro" placeholder="Ex: 5,49" />
+          <label for="precoLitro">Preço por Litro (R$) <small style="opacity: 0.6">(Opcional)</small></label>
+          <input id="precoLitro" placeholder="Ex: 5,69" />
         </div>
-        <div style="display: flex; align-items: flex-end; font-size: 13px; font-weight: 900; color: var(--ok); padding-bottom: 12px;" id="calcTotalAbastecimento">
-          Custo: R$ 0,00
+        <div style="display: flex; align-items: flex-end; font-size: 13px; font-weight: 900; color: var(--ok); padding-bottom: 12px;" id="previewCusto">
+          Custo Total: R$ 0,00
         </div>
       </div>
 
       <div class="row" style="margin-top:16px">
         <button class="btn" id="btnSalvar" type="button">Salvar</button>
-        <button class="btn secondary" id="btnLimparForm" type="button">Cancelar / Limpar</button>
+        <button class="btn secondary" id="btnLimparForm" type="button">Limpar / Cancelar</button>
       </div>
 
       <div class="row" style="margin-top:12px">
@@ -453,6 +465,7 @@
       <div class="statusLine" id="saveStatus">—</div>
     </section>
 
+    <!-- HISTORICO -->
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
 
@@ -466,7 +479,7 @@
               <th>Custo</th>
               <th>Km Rodados (Δ)</th>
               <th>Rendimento</th>
-              <th style="width: 130px; text-align: center;">Ações</th>
+              <th style="width: 120px; text-align: center;">Ações</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -475,6 +488,7 @@
       <div class="statusLine" id="histStatus">—</div>
     </section>
 
+    <!-- VEICULOS -->
     <section class="section view" id="view-veiculos" style="display:none">
       <div class="sectionTitle">🚘 Cadastrar Veículo</div>
       
@@ -521,7 +535,7 @@ function formatNum(n, digits=2){
   return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
 }
 
-/* Gerenciamento de Tema */
+/* Gerenciamento de Tema Claro / Escuro */
 let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
 document.documentElement.setAttribute("data-theme", currentTheme);
 
@@ -580,7 +594,7 @@ function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").cla
 $("menuBtn").addEventListener("click", openSidebar);
 $("overlay").addEventListener("click", closeSidebar);
 document.querySelectorAll(".nav button").forEach(b=>{
-  b.addEventListener("click", ()=> {
+  b.addEventListener("click", ()=>{
     if(b.dataset.view === "abastecer" && !$("editId").value) {
       limparFormulario();
     }
@@ -661,13 +675,14 @@ function renderCards(){
   $("kmAtual").textContent = `${Number(ultimoItem.odometro).toLocaleString("pt-BR")} km`;
   $("ultimoAbastecido").textContent = `${formatNum(ultimoItem.litros, 2)} L`;
 
-  // Gasto total acumulado
-  const totalDinheiro = filtered.reduce((acc, curr) => {
-    const l = Number(curr.litros) || 0;
-    const p = Number(curr.precoLitro) || 0;
-    return acc + (l * p);
-  }, 0);
-  $("totalGasto").textContent = totalDinheiro > 0 ? `R$ ${formatNum(totalDinheiro, 2)}` : "—";
+  // Calcula o valor total financeiro investido
+  let custoAcumulado = 0;
+  filtered.forEach(x => {
+    if(x.litros && x.precoLitro) {
+      custoAcumulado += (Number(x.litros) * Number(x.precoLitro));
+    }
+  });
+  $("totalGasto").textContent = custoAcumulado > 0 ? `R$ ${formatNum(custoAcumulado, 2)}` : "—";
 
   if(filtered.length < 2){
     $("kmlGeral").textContent = "—";
@@ -685,7 +700,7 @@ function renderCards(){
 
   const mediaGeral = (deltaTotalKm > 0 && litrosConsiderados > 0) ? (deltaTotalKm / litrosConsiderados) : null;
 
-  $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)} Km/L` : "—";
+  $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
 }
 
 function renderTable(){
@@ -699,24 +714,23 @@ function renderTable(){
     return;
   }
 
-  // Clona e inverte para exibir o mais recente no topo da tabela
   const displayRows = [...filtered].reverse();
   for(const x of displayRows){
     const tr = document.createElement("tr");
     
-    const custoTotal = (Number(x.litros) && Number(x.precoLitro)) ? `R$ ${formatNum(Number(x.litros) * Number(x.precoLitro), 2)}` : "—";
+    const custoCalculado = (x.litros && x.precoLitro) ? `R$ ${formatNum(Number(x.litros) * Number(x.precoLitro), 2)}` : "—";
 
     tr.innerHTML = `
       <td>${x.data.split("-").reverse().join("/")}</td>
       <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
       <td>${formatNum(x.litros, 2)} L</td>
-      <td>${custoTotal}</td>
+      <td>${custoCalculado}</td>
       <td>${x.deltaKm ? `${x.deltaKm.toLocaleString("pt-BR")} km` : "—"}</td>
       <td>${x.kml ? `${formatNum(x.kml, 2)} Km/L` : "—"}</td>
       <td>
-        <div class="action-btns">
-          <button class="btn secondary" onclick="prepararEdicao('${x.id}')">✏️</button>
-          <button class="btn danger" onclick="excluirRegistro('${x.id}')">🗑️</button>
+        <div class="action-cell">
+          <button class="btn secondary" onclick="entrarModoEdicao('${x.id}')">✏️</button>
+          <button class="btn danger" onclick="removerRegistro('${x.id}')">🗑️</button>
         </div>
       </td>
     `;
@@ -725,8 +739,8 @@ function renderTable(){
   $("histStatus").textContent = `${filtered.length} lançamento(s) deste veículo.`;
 }
 
-/* Edição e Exclusão */
-window.prepararEdicao = function(id) {
+/* Ações de Editar e Deletar Itens */
+window.entrarModoEdicao = function(id) {
   const item = items.find(x => x.id === id);
   if(!item) return;
 
@@ -737,18 +751,18 @@ window.prepararEdicao = function(id) {
   $("precoLitro").value = item.precoLitro || "";
   
   $("formTitle").textContent = "✏️ Editar lançamento";
-  $("btnSalvar").textContent = "Atualizar Registro";
+  $("btnSalvar").textContent = "Atualizar";
   
-  atualizarPreviewCusto();
+  calcularPreviewCusto();
   showView("abastecer");
 };
 
-window.excluirRegistro = function(id) {
-  if(!confirm("Tem certeza que deseja apagar este registro permanentemente?")) return;
+window.removerRegistro = function(id) {
+  if(!confirm("Deseja mesmo excluir de forma permanente esse registro?")) return;
   items = items.filter(x => x.id !== id);
   saveItems(items);
   renderAll();
-  toast("Registro removido com sucesso!");
+  toast("Registro deletado com sucesso!");
 };
 
 function limparFormulario() {
@@ -759,21 +773,21 @@ function limparFormulario() {
   $("data").value = new Date().toISOString().slice(0,10);
   $("formTitle").textContent = "⛽ Novo lançamento";
   $("btnSalvar").textContent = "Salvar";
-  $("calcTotalAbastecimento").textContent = "Custo: R$ 0,00";
+  $("previewCusto").textContent = "Custo Total: R$ 0,00";
 }
 
-/* Eventos de cálculo em tempo real no formulário */
-function atualizarPreviewCusto() {
+/* Eventos dinâmicos do formulário */
+function calcularPreviewCusto() {
   const l = parseBRNumber($("litros").value);
   const p = parseBRNumber($("precoLitro").value);
   if(l && p) {
-    $("calcTotalAbastecimento").textContent = `Custo: R$ ${formatNum(l * p, 2)}`;
+    $("previewCusto").textContent = `Custo Total: R$ ${formatNum(l * p, 2)}`;
   } else {
-    $("calcTotalAbastecimento").textContent = "Custo: R$ 0,00";
+    $("previewCusto").textContent = "Custo Total: R$ 0,00";
   }
 }
-$("litros").addEventListener("input", atualizarPreviewCusto);
-$("precoLitro").addEventListener("input", atualizarPreviewCusto);
+$("litros").addEventListener("input", calcularPreviewCusto);
+$("precoLitro").addEventListener("input", calcularPreviewCusto);
 
 /* Gestão de Veículos */
 $("btnCadastrarVeiculo").addEventListener("click", ()=>{
@@ -835,28 +849,28 @@ $("btnSalvar").addEventListener("click", ()=>{
   if(!odometro || odometro <= 0){ toast("Odômetro inválido."); return; }
   if(!litros || litros <= 0){ toast("Volume de litros inválido."); return; }
 
-  // [Negócio/Validação]: Impede odômetro retrocedido para novos itens
+  // Melhoria de Negócio: Impede odômetros inconsistentes em inserções
   if(!idEdicao) {
     let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
     if(filtered.length > 0 && odometro <= filtered[filtered.length - 1].odometro) {
-      toast(`Erro: O Km atual deve ser maior que o último (${filtered[filtered.length - 1].odometro} km)`);
+      toast(`Erro: Odômetro deve ser maior que o último (${filtered[filtered.length - 1].odometro} km)`);
       return;
     }
   }
 
   if(idEdicao) {
-    // Atualiza registro existente
+    // Modo Edição: Altera o elemento existente mapeando o ID
     items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
-    toast("Registro atualizado ✅");
+    toast("Registro atualizado com sucesso!");
   } else {
-    // Cria novo registro
+    // Modo Inserção: Cria um novo objeto
     const item = {
       id: `${Date.now()}`,
-      veiculo: activeVehicle,
+      veiculo: activeVehicle, 
       data, odometro, litros, precoLitro
     };
     items.push(item);
-    toast("Salvo com sucesso ✅");
+    toast("Salvo ✅");
   }
 
   saveItems(items);
@@ -867,7 +881,7 @@ $("btnSalvar").addEventListener("click", ()=>{
 
 $("btnLimparForm").addEventListener("click", ()=>{
   limparFormulario();
-  toast("Campos limpos");
+  toast("Formulário redefinido");
 });
 
 $("btnApagarTudo").addEventListener("click", ()=>{
