@@ -611,7 +611,12 @@ function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v));
 function loadMaintenances(){
   try {
     let raw = localStorage.getItem(MAINT_KEY);
-    if(!raw || raw === "[]") {
+    let vRaw = localStorage.getItem(VEHICLES_KEY);
+    let vLista = vRaw ? JSON.parse(vRaw) : [];
+    
+    // CORREÇÃO: Se você limpou os veículos e a garagem está vazia,
+    // força o retorno e o reset para o histórico da Pavani
+    if(!raw || raw === "[]" || vLista.length === 0) {
       localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
       return [...historicoInicialPavani];
     }
