@@ -1,67 +1,460 @@
-<!-- Container Principal de Abastecimento -->
-<div class="form-container">
-    <div class="form-header">
-        <h2>Abastecer</h2>
-        <p class="form-subtitle">Registre os dados para calcular o consumo da sua Honda Lead</p>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Day Pro & Moto Control</title>
+    <style>
+        /* Estilos Globais e Reset */
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* Espaço para o menu inferior no mobile */
+        }
 
-    <!-- Seletor de Veículo Minimalista -->
-    <div class="input-group full-width">
-        <label for="select-veiculo">Veículo Ativo</label>
-        <select id="select-veiculo" class="custom-select">
-            <option value="1">Honda Lead 2010</option>
-        </select>
-    </div>
+        /* Container Principal de Abastecimento */
+        .form-container {
+            background-color: #0f172a;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 700px;
+            margin: 20px auto;
+            border: 1px solid #1e293b;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            box-sizing: border-box;
+        }
 
-    <hr class="form-divider">
+        /* Tipografia Clean */
+        .form-header h2 {
+            color: #f8fafc;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+        .form-subtitle {
+            color: #94a3b8;
+            font-size: 13.5px;
+            margin: 0 0 20px 0;
+        }
 
-    <!-- Formulário de Entrada -->
-    <form id="form-abastecimento" class="modern-form">
+        .form-divider {
+            border: 0;
+            border-top: 1px solid #1e293b;
+            margin: 20px 0;
+        }
+
+        /* Estrutura de Inputs */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            color: #94a3b8;
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .full-width { width: 100%; }
+
+        .form-row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            .form-row-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Inputs e Selects Estilizados */
+        .form-container input, 
+        .form-container select {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #f1f5f9;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-container input:focus, 
+        .form-container select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .form-container input::placeholder {
+            color: #475569;
+        }
+
+        /* Caixa de Custo Total Lateral */
+        .custo-total-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background-color: #1e293b;
+            border-radius: 8px;
+            padding: 10px 16px;
+            height: 48px;
+            box-sizing: border-box;
+            border: 1px dashed #334155;
+        }
+        .custo-label {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .custo-valor {
+            color: #10b981;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Botões Principais */
+        .form-actions-main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover { background-color: #1d4ed8; }
+
+        .btn-secondary {
+            background-color: #334155;
+            color: #cbd5e1;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover { background-color: #475569; }
+
+        /* Botões Utilitários e Zona de Perigo */
+        .form-actions-danger {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-outline-danger {
+            background: transparent;
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-outline-danger:hover {
+            background-color: rgba(248, 113, 113, 0.1);
+            border-color: #f87171;
+        }
+
+        .btn-outline-secondary {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #1e293b;
+            color: #f1f5f9;
+        }
+
+        /* Histórico / Tabela de Manutenções */
+        .maint-section {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .maint-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            background-color: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e293b;
+        }
+        th {
+            color: #94a3b8;
+            font-weight: 500;
+            background-color: #1e293b;
+        }
+        tr:last-child td { border-bottom: none; }
+        .row-km { font-weight: 600; color: #cbd5e1; }
+        .row-val { font-weight: 600; color: #f8fafc; }
+
+        /* Menu de Navegação Fixo Inferior (Mobile/Clean) */
+        .footer-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #0f172a;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-item.active {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Container do Formulário de Abastecimento -->
+    <div class="form-container">
+        <div class="form-header">
+            <h2>Abastecer</h2>
+            <p class="form-subtitle">Registre os dados para calcular o consumo da sua Honda Lead</p>
+        </div>
+
         <div class="input-group full-width">
-            <label for="input-data">Data do Abastecimento</label>
-            <input type="date" id="input-data" value="2026-06-18">
+            <label for="select-veiculo">Veículo Ativo</label>
+            <select id="select-veiculo" class="custom-select">
+                <option value="1">Honda Lead 2010</option>
+            </select>
         </div>
 
-        <div class="form-row-2col">
-            <div class="input-group">
-                <label for="input-odometro">Odômetro atual (km)</label>
-                <input type="number" id="input-odometro" placeholder="Ex: 93450">
+        <hr class="form-divider">
+
+        <form id="form-abastecimento">
+            <div class="input-group full-width">
+                <label for="input-data">Data do Abastecimento</label>
+                <input type="date" id="input-data" value="2026-06-18">
             </div>
-            <div class="input-group">
-                <label for="input-litros">Litros abastecidos</label>
-                <input type="number" step="0.01" id="input-litros" placeholder="Ex: 4.5">
+
+            <div class="form-row-2col">
+                <div class="input-group">
+                    <label for="input-odometro">Odômetro atual (km)</label>
+                    <input type="number" id="input-odometro" placeholder="Ex: 93450">
+                </div>
+                <div class="input-group">
+                    <label for="input-litros">Litros abastecidos</label>
+                    <input type="number" step="0.01" id="input-litros" placeholder="Ex: 4.5">
+                </div>
             </div>
+
+            <div class="form-row-2col">
+                <div class="input-group">
+                    <label for="input-preco">Preço por Litro (R$)</label>
+                    <input type="number" step="0.01" id="input-preco" placeholder="Ex: 5.69">
+                </div>
+                <div class="custo-total-box">
+                    <span class="custo-label">Custo Total estimado</span>
+                    <span id="label-custo-total" class="custo-valor">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="form-actions-main">
+                <button type="submit" class="btn-primary">Salvar Registro</button>
+                <button type="button" class="btn-secondary" id="btn-limpar">Limpar</button>
+            </div>
+        </form>
+
+        <hr class="form-divider">
+
+        <div class="form-actions-danger">
+            <button type="button" class="btn-outline-danger" id="btn-reset">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Apagar dados deste carro
+            </button>
+            <button type="button" class="btn-outline-secondary" id="btn-backup">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+                Backup Geral (JSON)
+            </button>
         </div>
-
-        <div class="form-row-2col align-center">
-            <div class="input-group">
-                <label for="input-preco">Preço por Litro (R$)</label>
-                <input type="number" step="0.01" id="input-preco" placeholder="Ex: 5.69">
-            </div>
-            <div class="custo-total-box">
-                <span class="custo-label">Custo Total estimado</span>
-                <span id="label-custo-total" class="custo-valor">R$ 0,00</span>
-            </div>
-        </div>
-
-        <!-- Ações Principais -->
-        <div class="form-actions-main">
-            <button type="submit" class="btn-primary">Salvar Registro</button>
-            <button type="button" class="btn-secondary">Limpar / Cancelar</button>
-        </div>
-    </form>
-
-    <hr class="form-divider">
-
-    <!-- Utilitários Secundários Afastados/Discretos -->
-    <div class="form-actions-danger">
-        <button type="button" class="btn-outline-danger">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            Apagar dados deste carro
-        </button>
-        <button type="button" class="btn-outline-secondary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-            Backup Geral (JSON)
-        </button>
     </div>
-</div>
+
+    <!-- Tabela Conectada de Histórico de Manutenções -->
+    <div class="maint-section">
+        <div class="maint-title">🔧 Histórico de Manutenções Detalhado</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Odômetro</th>
+                        <th>Descrição da Peça / Serviço</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="maint-table-body">
+                    <!-- Gerado Dinamicamente via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Barra de Navegação Clean Footer -->
+    <nav class="footer-nav">
+        <button class="nav-item">📊 <span>Painel</span></button>
+        <button class="nav-item active">⛽ <span>Abastecer</span></button>
+        <button class="nav-item">🔧 <span>Serviços</span></button>
+    </nav>
+
+    <script>
+        // Configuração das chaves do LocalStorage
+        const MAINT_KEY = "cb_manutencoes_v5";
+        const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
+        const VEHICLES_KEY = "cb_veiculos_v6";
+
+        // Carga inicial do banco de dados com histórico completo desmembrado da Pavani Moto Center
+        const historicoInicialPavani = [
+            // --- OS 1068 (24/10/2025)
+            { id: "m_1068_1", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 480.00, descricao: "Revisão Scooter (OS 1068)" },
+            { id: "m_1068_2", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 250.00, descricao: "M.O. Troca da Caixa de Direção" },
+            { id: "m_1068_3", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 370.00, descricao: "Correia de Transmissão CVT" },
+            { id: "m_1068_4", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 124.00, descricao: "Vela de Ignição" },
+            { id: "m_1068_5", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 73.00,  descricao: "Troca de Óleo de Motor 5000 20W50" },
+            { id: "m_1068_6", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 70.00,  descricao: "Óleo de Transmissão Transoil SAE 10W40" },
+            { id: "m_1068_7", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 145.00, descricao: "Caixa de Direção (Peça)" },
+            { id: "m_1068_8", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 370.00, descricao: "Pneu Traseiro Kenda" },
+            { id: "m_1068_9", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 110.00, descricao: "Junta do CVT" },
+            // --- OS 1264 (10/04/2026)
+            { id: "m_1264_1",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 570.00, descricao: "Revisão Scooter até 450cc (OS 1264)" },
+            { id: "m_1264_2",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 69.94,  descricao: "Rolamento 6201 (2 unidades)" },
+            { id: "m_1264_3",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 168.00, descricao: "Placa de Partida" },
+            { id: "m_1264_4",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 114.00, descricao: "Roletes do CVT" },
+            { id: "m_1264_5",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 47.10,  descricao: "Rolamento 6301" },
+            { id: "m_1264_6",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 73.00,  descricao: "Troca de Óleo de Motor 5000 20W50" },
+            { id: "m_1264_7",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 48.80,  descricao: "Lona de Freio Traseira" },
+            { id: "m_1264_8",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 67.50,  descricao: "Retentor de Óleo" },
+            { id: "m_1264_9",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 120.00, descricao: "Óleo de Transmissão Transoil SAE 10W40" },
+            { id: "m_1264_10", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 70.00,  descricao: "Pastilha de Freio Dianteira" },
+            { id: "m_1264_11", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 51.19,  descricao: "Rolamento 6204" },
+            { id: "m_1264_12", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 49.86,  descricao: "Rolamento 6004" },
+            { id: "m_1264_13", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 80.00,  descricao: "Fluido de Freio DOT 3 & 4" },
+            { id: "m_1264_14", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 358.00, descricao: "Bateria (Gar. 12 Meses)" },
+            { id: "m_1264_15", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 70.00,  descricao: "Carvão e Escovas do Motor de Arranque" },
+            { id: "m_1264_16", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 765.34, descricao: "Sapata da Transmissão (Embreagem CVT)" },
+            { id: "m_1264_17", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 131.50, descricao: "Retentor de Óleo 27X42X7" },
+            { id: "m_1264_18", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 67.50,  descricao: "Retentor de Óleo 20X32X6" },
+            { id: "m_1264_19", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 103.00, descricao: "Slider do CVT" },
+            { id: "m_1264_20", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 40.00,  descricao: "Rolamento 6202" },
+            { id: "m_1264_21", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 83.20,  descricao: "Rolamento 6201 Blindado Roda (2 un)" }
+        ];
+
+        // Inicialização do Banco de Dados Local
+        function inicializarBanco() {
+            if (!localStorage.getItem(ACTIVE_VEHICLE_KEY)) {
+                localStorage.setItem(ACTIVE_VEHICLE_KEY, "1");
+            }
+            
+            let manutencoesAtuais = [];
+            try {
+                manutencoesAtuais = JSON.parse(localStorage.getItem(MAINT_KEY) || "[]");
+            } catch(e) {}
+
+            // Se estiver vazio, popula automaticamente com a lista detalhada
+            if (manutencoesAtuais.length === 0) {
+                localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
+                manutencoesAtuais = historicoInicialPavani;
+            }
+            renderizarTabela(manutencoesAtuais);
+        }
+
+        // Renderiza as linhas na tabela
+        function renderizarTabela(dados) {
+            const tbody = document.getElementById("maint-table-body");
+            tbody.innerHTML = "";
+            
+            // Exibe de forma decrescente (mais recente primeiro)
+            const dadosOrdenados = [...dados].reverse();
+
+            dadosOrdenados.forEach(item => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${item.data}</td>
+                    <td class="row-km">${item.odometro} km</td>
+                    <td>${item.descricao}</td>
+                    <td class="row-val">R$ ${item.custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Eventos de Cálculo de Custo em tempo real no formulário
+        const inputLitros = document.getElementById("input-litros");
+        const inputPreco = document.getElementById("input-preco");
+        const labelCusto = document.getElementById("label-custo-total");
+
+        function calcularCustoTotal() {
+            const litros = parseFloat(inputLitros.value) || 0;
+            const preco = parseFloat(inputPreco.value) || 0;
+            const total = litros * preco;
+            labelCusto.textContent = `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        }
+
+        inputLitros.addEventListener("input", calcularCustoTotal);
+        inputPreco.addEventListener("input", calcularCustoTotal);
+
+        // Executa na carga da página
+        window.onload = inicializarBanco;
+    </script>
+</body>
+</html>
