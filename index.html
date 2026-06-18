@@ -276,6 +276,22 @@
     .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; }
     .v-item span { font-weight: 800; font-size: 14px; }
     .v-item button { width: auto; padding: 6px 12px; font-size: 12px; }
+
+    /* Toast styling */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 14px;
+      display: none;
+      z-index: 3000;
+      box-shadow: var(--shadow);
+    }
   </style>
 </head>
 
@@ -496,13 +512,11 @@ function sortItems(){
 function processMetrics(){
   sortItems();
   
-  // Limpa métricas antigas para recalcular de forma limpa
   for(let i=0; i<items.length; i++){
     items[i].deltaKm = null;
     items[i].kml = null;
   }
   
-  // Mapeia o último item processado de cada veículo para calcular a diferença (delta)
   const lastMap = {};
   
   for(let i=0; i<items.length; i++){
@@ -669,8 +683,63 @@ window.removerVeiculo = function(nome){
 
 /* Lançamentos e Ações */
 $("btnSalvar").addEventListener("click", ()=>{
-  const data = $("data").value;
-  const odometro = parseBRNumber($("odometro").value);
-  const litros = parseBRNumber($("litros").value);
+  const dataVal = $("data").value;
+  const odoVal = parseBRNumber($("odometro").value);
+  const litVal = parseBRNumber($("litros").value);
 
-  if
+  if(!dataVal || odoVal === null || litVal === null){
+    toast("Preencha todos os campos corretamente.");
+    return;
+  }
+
+  const novoLancamento = {
+    data: dataVal,
+    odometro: odoVal,
+    litros: litVal,
+    veiculo: activeVehicle
+  };
+
+  items.push(novoLancamento);
+  saveItems(items);
+  
+  $("odometro").value = "";
+  $("litros").value = "";
+  
+  renderAll();
+  toast("Combustível registrado!");
+});
+
+$("btnLimparForm").addEventListener("click", ()=>{
+  $("data").value = "";
+  $("odometro").value = "";
+  $("litros").value = "";
+  $("saveStatus").textContent = "Formulário limpo.";
+});
+
+$("btnApagarTudo").addEventListener("click", ()=>{
+  if(!confirm(`Tem certeza que deseja apagar TODOS os registros do veículo "${activeVehicle}"?`)) return;
+  items = items.filter(x => (x.veiculo || "Padrão") !== activeVehicle);
+  saveItems(items);
+  renderAll();
+  toast("Dados apagados.");
+});
+
+$("btnExportarJson").addEventListener("click", () => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `backup_combustivel_${activeVehicle}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+});
+
+// Inicialização da Página
+window.onload = function() {
+  const hoje = new Date().toISOString().split('T')[0];
+  $("data").value = hoje;
+  renderAll();
+};
+</script>
+</body>
+</html>
