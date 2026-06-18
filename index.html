@@ -287,7 +287,7 @@
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="logo" id="brand-logo"></div>
+      <div class="logo" id="brand-logo">⚙️</div>
       <div class="txt">
         <div class="t">Moto Control</div>
         <div class="s">Meus Veículos</div>
@@ -344,7 +344,7 @@
         </div>
       </div>
 
-      <div id="containerVidaUtilHome" style="margin-top: 24px;">
+      <div id="containerVidaUtilHome" style="margin-top: 24px; display: none;">
         <h3 style="margin: 0 0 4px 0; font-size: 16px;">⏱️ Previsão de Desgaste de Peças</h3>
         <p class="subtitle" style="margin-bottom: 12px;">Seguindo estritamente os lançamentos do histórico de manutenção:</p>
         <div class="grid-pecas" id="gridPecasHome"></div>
@@ -371,7 +371,7 @@
         </div>
         <div>
           <label>Custo Total Previsto</label>
-          <span style="color:var(--ok); font-weight:700;" id="custoTotalCalc">R$ 0,00</span>
+          <span style="color:var(--ok); font-weight:700; display:block; margin-top:8px;" id="custoTotalCalc">R$ 0,00</span>
         </div>
       </div>
       <button class="btn" id="btnSalvar" type="button" style="margin-top:20px">Salvar Registro</button>
@@ -410,7 +410,7 @@
 
     <section class="section view" id="view-veiculos" style="display:none">
       <label for="novoVeiculo">Nome / Identificação</label>
-      <input id="novoVeiculo" placeholder="Ex: Honda Lead 110" />
+      <input id="novoVeiculo" placeholder="Ex: Honda Lead 2010" />
       
       <div class="row">
         <div>
@@ -538,21 +538,17 @@
 
 <script>
 const STORE_KEY = "cb_abastecimentos_v5";
-const VEHICLES_KEY = "cb_veiculos_v5_complex"; // Chave atualizada para o novo padrão com objetos completos
+const VEHICLES_KEY = "cb_veiculos_v5_complex"; 
 const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
 const MAINT_KEY = "cb_manutencoes_v5";
 const THEME_KEY = "cb_theme_v5";
 
 const $ = (id)=>document.getElementById(id);
 
-const abastecimentosIniciais = [
-  { id: "init_abast_1", data: "2026-06-08", odometro: 93682, litros: 6.5, preco: 0.00, veiculo: "Honda Lead 2010" }
-];
-
 const historicoInicialPavani = [
   { id:"p0", veiculo:"Honda Lead 2010", data:"2026-06-03", odometro:93667, custo:0.00,   descricao:"Aquisição da Moto / Venda em Cartório (KM de Partida)" },
   { id:"p1", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:480.00, descricao:"Revisão Geral Scooter (OS 1068)" },
-  { id:"p2", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:250.00, custo:250.00, descricao:"M.O. Troca da Caixa de Direção" },
+  { id:"p2", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:250.00, descricao:"M.O. Troca da Caixa de Direção" },
   { id:"p3", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:370.00, descricao:"Correia de Transmissão CVT" },
   { id:"p4", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:124.00, descricao:"Vela de Ignição" },
   { id:"p5", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:73.00,  descricao:"Troca de Óleo de Motor 5000 20W50" },
@@ -565,8 +561,13 @@ const historicoInicialPavani = [
   { id:"p12", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:765.34, descricao:"Sapata da Embreagem CVT Completa" }
 ];
 
+let items = [];
+let vehicles = [];
+let mainteances = [];
+let activeVehicle = "";
+
 function toast(msg){
-  const t = $("toast"); if(!t) return;
+  const t = "toast" ? $( "toast" ) : null; if(!t) return;
   t.textContent = msg; t.style.display="block";
   clearTimeout(toast._tm); toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
 }
@@ -582,55 +583,36 @@ function formatNum(n, digits=2){
   return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
 }
 
-function loadItems(){
+function loadAllData(){
   try{
-    let raw = localStorage.getItem(STORE_KEY);
-    if(!raw || raw === "[]") {
-      localStorage.setItem(STORE_KEY, JSON.stringify(abastecimentosIniciais));
-      return [...abastecimentosIniciais];
-    }
-    return JSON.parse(raw);
-  } catch(e){ return [...abastecimentosIniciais]; }
-}
-function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+    let rawItems = localStorage.getItem(STORE_KEY);
+    items = rawItems ? JSON.parse(rawItems) : [];
+  } catch(e){ items = []; }
 
-function loadVehicles(){ 
-  try{ 
-    let raw = localStorage.getItem(VEHICLES_KEY);
-    if(!raw || raw === "[]") {
-      // Criação inicial estruturada com os campos extras padrão
-      const padrao = [{ id: "v1", nome: "Honda Lead 2010", modelo: "Lead", ano: "2010", kmCompra: 93667, dataCompra: "2026-06-03" }];
-      localStorage.setItem(VEHICLES_KEY, JSON.stringify(padrao));
-      return padrao;
-    }
-    return JSON.parse(raw); 
-  } catch(e){ return [{ id: "v1", nome: "Honda Lead 2010", modelo: "Lead", ano: "2010", kmCompra: 93667, dataCompra: "2026-06-03" }]; } 
-}
-function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
+  try{
+    let rawV = localStorage.getItem(VEHICLES_KEY);
+    vehicles = rawV ? JSON.parse(rawV) : [];
+  } catch(e){ vehicles = []; }
 
-function loadMaintenances(){
-  try {
-    let raw = localStorage.getItem(MAINT_KEY);
-    let vRaw = localStorage.getItem(VEHICLES_KEY);
-    let vLista = vRaw ? JSON.parse(vRaw) : [];
-    
-    // CORREÇÃO: Se você limpou os veículos e a garagem está vazia,
-    // força o retorno e o reset para o histórico da Pavani
-    if(!raw || raw === "[]" || vLista.length === 0) {
+  try{
+    let rawM = localStorage.getItem(MAINT_KEY);
+    if(!rawM || rawM === "[]") {
       localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
-      return [...historicoInicialPavani];
+      mainteances = [...historicoInicialPavani];
+    } else {
+      mainteances = JSON.parse(rawM);
     }
-    return JSON.parse(raw);
-  } catch(e) { return [...historicoInicialPavani]; }
+  } catch(e){ mainteances = [...historicoInicialPavani]; }
+
+  activeVehicle = localStorage.getItem(ACTIVE_VEHICLE_KEY) || (vehicles[0] ? vehicles[0].nome : "");
+  if (activeVehicle && !vehicles.some(v => v.nome === activeVehicle) && vehicles.length > 0) {
+    activeVehicle = vehicles[0].nome;
+  }
 }
-function saveMaintenances(m){ localStorage.setItem(MAINT_KEY, JSON.stringify(m)); }
 
-let items = loadItems();
-let vehicles = loadVehicles();
-let mainteances = loadMaintenances();
-let activeVehicle = localStorage.getItem(ACTIVE_VEHICLE_KEY) || (vehicles[0] ? vehicles[0].nome : "Honda Lead 2010");
-
-if (!vehicles.some(v => v.nome === activeVehicle) && vehicles.length > 0) { activeVehicle = vehicles[0].nome; }
+function saveItems(arr){ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
+function saveVehicles(arr){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(arr)); }
+function saveMaintenances(arr){ localStorage.setItem(MAINT_KEY, JSON.stringify(arr)); }
 
 const views = ["painel","abastecer","historico","manutencao","veiculos","backup"];
 function showView(name){
@@ -641,19 +623,16 @@ function showView(name){
   document.querySelectorAll(".nav button").forEach(b=>{
     b.classList.toggle("active", b.getAttribute('data-view')===name);
   });
-  $("globalVehiclesContainer").style.display = (name === "veiculos" || name === "backup") ? "none" : "block";
+  
+  const gContainer = $("globalVehiclesContainer");
+  if(gContainer) gContainer.style.display = (name === "veiculos" || name === "backup") ? "none" : "block";
+  
   closeSidebar();
   renderAll();
 }
 
 function openSidebar(){ $("sidebar").classList.add("open"); $("overlay").classList.add("show"); }
 function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); }
-
-$("menuBtn").addEventListener("click", openSidebar);
-$("overlay").addEventListener("click", closeSidebar);
-document.querySelectorAll(".nav button").forEach(b=>{
-  b.addEventListener("click", ()=>showView(b.getAttribute('data-view')));
-});
 
 function renderAll(){
   updateVehicleSelectors();
@@ -665,19 +644,30 @@ function renderAll(){
   
   const logoEl = $("brand-logo");
   if (logoEl) {
-    const nomeMinusculo = activeVehicle.toLowerCase();
-    const termosCarro = ["carro", "civic", "toyota", "corolla", "fiat", "chevrolet", "ford", "volkswagen", "gol", "uno", "pampa", "corsa", "palio"];
-    const ehCarro = termosCarro.some(termo => nomeMinusculo.includes(termo));
-    logoEl.textContent = ehCarro ? "🚗" : "🏍️";
+    if (!activeVehicle) {
+      logoEl.textContent = "⚙️";
+    } else {
+      const nomeMinusculo = activeVehicle.toLowerCase();
+      const termosCarro = ["carro", "civic", "toyota", "corolla", "fiat", "chevrolet", "ford", "volkswagen", "gol", "uno", "pampa", "corsa", "palio"];
+      const ehCarro = termosCarro.some(termo => nomeMinusculo.includes(termo));
+      logoEl.textContent = ehCarro ? "🚗" : "🏍️";
+    }
   }
 
   const btnAbast = $("btnApagarTudo");
-  if(btnAbast) btnAbast.textContent = `🧹 Limpar Abastecimentos (${activeVehicle})`;
+  if(btnAbast) btnAbast.textContent = `🧹 Limpar Abastecimentos (${activeVehicle || 'Nenhum'})`;
 }
 
 function updateVehicleSelectors(){
   const select = $("globalVehicle"); if(!select) return;
   select.innerHTML = "";
+  
+  if(vehicles.length === 0) {
+    const opt = document.createElement("option"); opt.textContent = "Nenhum veículo cadastrado";
+    select.appendChild(opt);
+    return;
+  }
+
   vehicles.forEach(v => {
     const opt = document.createElement("option"); opt.value = v.nome; opt.textContent = v.nome;
     if(v.nome === activeVehicle) opt.selected = true;
@@ -685,13 +675,8 @@ function updateVehicleSelectors(){
   });
 }
 
-$("globalVehicle").addEventListener("change", (e)=>{
-  activeVehicle = e.target.value;
-  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
-  renderAll();
-});
-
-function obterKmAtualGeral() {
+function obtenerKmAtualGeral() {
+  if (!activeVehicle) return 0;
   let listMaint = mainteances.filter(m => m.veiculo === activeVehicle).map(m => Number(m.odometro));
   let listAbast = items.filter(x => x.veiculo === activeVehicle).map(x => Number(x.odometro));
   
@@ -709,14 +694,14 @@ function normalizarTexto(txt) {
 function renderVidaUtilPecas() {
   const container = $("containerVidaUtilHome");
   const grid = $("gridPecasHome");
-  if(!grid) return;
+  if(!grid || !container) return;
   
-  if(!activeVehicle.toLowerCase().includes("lead") && !activeVehicle.toLowerCase().includes("moto")) {
+  if(!activeVehicle || (!activeVehicle.toLowerCase().includes("lead") && !activeVehicle.toLowerCase().includes("moto"))) {
     container.style.display = "none"; return;
   }
   container.style.display = "block"; grid.innerHTML = "";
 
-  const kmAtual = obterKmAtualGeral();
+  const kmAtual = obtenerKmAtualGeral();
   const planosPecas = [
     { nome: "🛢️ Óleo do Motor", termo: ["oleo"], intervalo: 1000 },
     { nome: "⚙️ Roletes do CVT", termo: ["rolete"], intervalo: 10000 },
@@ -731,7 +716,7 @@ function renderVidaUtilPecas() {
       .sort((a,b) => Number(b.odometro) - Number(a.odometro));
 
     let objVeiculo = vehicles.find(v => v.nome === activeVehicle);
-    let kmBase = objVeiculo && objVeiculo.kmCompra ? Number(objVeiculo.kmCompra) : 93667;
+    let kmBase = objVeiculo && objVeiculo.kmCompra ? Number(objVeiculo.kmCompra) : 0;
 
     let kmUltimaTroca = historicoPeça.length > 0 ? Number(historicoPeça[0].odometro) : kmBase;
     let kmRodados = kmAtual - kmUltimaTroca;
@@ -762,11 +747,17 @@ function renderVidaUtilPecas() {
 }
 
 function renderCards(){
-  let filtered = items.filter(x => (x.veiculo || "Honda Lead 2010") === activeVehicle);
+  if (!activeVehicle) {
+    $("totalGasto").textContent = "R$ 0,00"; $("kmAtual").textContent = "0 km";
+    $("kmlGeral").textContent = "—"; $("ultimoAbastecido").textContent = "—";
+    return;
+  }
+
+  let filtered = items.filter(x => x.veiculo === activeVehicle);
   let totalDinheiro = filtered.reduce((acc, current) => acc + ((Number(current.litros)||0) * (Number(current.preco)||0)), 0);
   $("totalGasto").textContent = `R$ ${formatNum(totalDinheiro, 2)}`;
 
-  const kmFinal = obterKmAtualGeral();
+  const kmFinal = obtenerKmAtualGeral();
   $("kmAtual").textContent = kmFinal > 0 ? `${kmFinal.toLocaleString("pt-BR")} km` : "0 km";
 
   if(filtered.length === 0){
@@ -788,7 +779,9 @@ function renderCards(){
 
 function renderTable(){
   const tb = $("tbody"); if(!tb) return; tb.innerHTML = "";
-  let filtered = items.filter(x => (x.veiculo || "Honda Lead 2010") === activeVehicle);
+  if (!activeVehicle) { $("histStatus").textContent = "Nenhum veículo ativo."; return; }
+
+  let filtered = items.filter(x => x.veiculo === activeVehicle);
   if(filtered.length===0){ $("histStatus").textContent = "Nenhum abastecimento."; return; }
 
   [...filtered].reverse().forEach((x, idx, arr) => {
@@ -870,8 +863,15 @@ window.excluirAbastecimento = function(id) {
 
 function renderMaintenanceTable(){
   const tb = $("tbody-maint"); if(!tb) return; tb.innerHTML = "";
-  let filtered = mainteances.filter(m => m.veiculo === activeVehicle).sort((a,b) => Number(b.odometro) - Number(a.odometro));
-  if(filtered.length === 0){ tb.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhuma manutenção.</td></tr>`; return; }
+
+  let filtered = mainteances;
+  if (activeVehicle) {
+    filtered = mainteances.filter(m => m.veiculo === activeVehicle);
+  }
+
+  filtered = [...filtered].sort((a,b) => Number(b.odometro) - Number(a.odometro));
+  
+  if(filtered.length === 0){ tb.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhuma manutenção lançada.</td></tr>`; return; }
 
   filtered.forEach(m => {
     const tr = document.createElement("tr");
@@ -880,90 +880,9 @@ function renderMaintenanceTable(){
   });
 }
 
-$("btnSalvarMaint").addEventListener("click", ()=>{
-  const mData = $("maint-data").value; const mOdo = parseBRNumber($("maint-odo").value);
-  const mDesc = $("maint-desc").value.trim(); const mCusto = parseBRNumber($("maint-custo").value) || 0;
-  if(!mData || mOdo === null || !mDesc){ toast("Preencha os campos!"); return; }
-
-  mainteances.push({ id: "m_"+Date.now(), veiculo: activeVehicle, data: mData, odometro: mOdo, descricao: mDesc, custo: mCusto });
-  saveMaintenances(mainteances);
-  $("maint-odo").value = ""; $("maint-desc").value = ""; $("maint-custo").value = "";
-  renderAll(); toast("Salvo!");
-});
-
-$("btnSalvar").addEventListener("click", ()=>{
-  const d = $("data").value; const o = parseBRNumber($("odometro").value); const l = parseBRNumber($("litros").value); const p = parseBRNumber($("precoLitro").value) || 0;
-  if(!d || o === null || l === null){ toast("Preencha os campos!"); return; }
-
-  items.push({ id: "abast_" + Date.now(), data: d, odometro: o, litros: l, preco: p, veiculo: activeVehicle });
-  items.sort((a,b)=> a.data.localeCompare(b.data) || (a.odometro - b.odometro));
-  saveItems(items);
-  $("odometro").value = ""; $("litros").value = ""; $("precoLitro").value = "";
-  renderAll(); toast("Abastecimento Salvo!");
-});
-
-$("btnApagarTudo").addEventListener("click", ()=>{
-  if(!confirm(`Deseja limpar abastecimentos de "${activeVehicle}"? O histórico de peças será mantido.`)) return;
-  items = items.filter(x => x.veiculo !== activeVehicle);
-  saveItems(items);
-  
-  if(activeVehicle === "Honda Lead 2010") {
-    mainteances = [...historicoInicialPavani];
-    saveMaintenances(mainteances);
-  }
-  renderAll(); toast("Abastecimentos resetados!");
-});
-
-$("btnResetTotal").addEventListener("click", () => {
-  if(!confirm("⚠️ ATENÇÃO: Isso apagará TODOS os veículos da garagem, históricos de combustível, manutenções e preferências do aplicativo de forma definitiva! Tem certeza?")) return;
-  if(!confirm("Confirmação final: Deseja mesmo restaurar o app para os padrões de fábrica?")) return;
-  
-  localStorage.removeItem(STORE_KEY);
-  localStorage.removeItem(VEHICLES_KEY);
-  localStorage.removeItem(ACTIVE_VEHICLE_KEY);
-  localStorage.removeItem(MAINT_KEY);
-  localStorage.removeItem(THEME_KEY);
-  
-  window.location.reload();
-});
-
-// AÇÃO DE CADASTRO DO VEÍCULO COM NOVOS CAMPOS
-$("btnCadastrarVeiculo").addEventListener("click", ()=>{
-  const nome = $("novoVeiculo").value.trim();
-  const modelo = $("novoModelo").value.trim();
-  const ano = $("novoAno").value.trim();
-  const kmComp = parseBRNumber($("novoKmComp").value) || 0;
-  const dataComp = $("novaDataComp").value;
-
-  if(!nome) { toast("Digite um nome válido."); return; }
-  if(vehicles.some(v => v.nome === nome)) { toast("Esse veículo já existe."); return; }
-  
-  const novoObj = {
-    id: "v_" + Date.now(),
-    nome: nome,
-    modelo: modelo || "—",
-    ano: ano || "—",
-    kmCompra: kmComp,
-    dataCompra: dataComp || ""
-  };
-
-  vehicles.push(novoObj); 
-  saveVehicles(vehicles); 
-  activeVehicle = nome;
-  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
-
-  $("novoVeiculo").value = ""; 
-  $("novoModelo").value = ""; 
-  $("novoAno").value = "";
-  $("novoKmComp").value = "";
-  $("novaDataComp").value = "";
-
-  renderAll(); 
-  toast("Veículo adicionado!");
-});
-
 function renderVehiclesList(){
   const list = $("listaVeiculos"); if(!list) return; list.innerHTML = "";
+  if(vehicles.length === 0) { list.innerHTML = `<p class="subtitle">Nenhum veículo na garagem. Cadastre um acima.</p>`; return; }
   
   vehicles.forEach(v => {
     const itemEl = document.createElement("div"); itemEl.className = "v-item";
@@ -993,7 +912,6 @@ function renderVehiclesList(){
   });
 }
 
-// CORREÇÃO: ABRE MODAL FLUTUANTE DE VERDADE PARA EDITAR VEÍCULOS
 window.editarVeiculo = function(id) {
   let target = vehicles.find(v => String(v.id) === String(id));
   if(!target) { toast("Veículo não encontrado!"); return; }
@@ -1033,7 +951,6 @@ window.salvarModalVeiculo = function() {
 
   const antigoNome = target.nome;
 
-  // Atualiza objeto
   target.nome = novoNome;
   target.modelo = novoModelo || "—";
   target.ano = novoAno || "—";
@@ -1042,7 +959,6 @@ window.salvarModalVeiculo = function() {
 
   saveVehicles(vehicles);
 
-  // Cascata nos abastecimentos e manutenções se o nome mudou
   if(novoNome !== antigoNome) {
     items = items.map(x => x.veiculo === antigoNome ? {...x, veiculo: novoNome} : x);
     saveItems(items);
@@ -1058,14 +974,13 @@ window.salvarModalVeiculo = function() {
 
   fecharModalVeiculo();
   renderAll();
-  toast("Dados do veículo atualizados!");
+  toast("Dados alterados!");
 };
 
 window.removerVeiculo = function(id){
   let target = vehicles.find(v => String(v.id) === String(id));
   if(!target) return;
   
-  if(vehicles.length === 1) { toast("Você precisa manter pelo menos um veículo cadastrado."); return; }
   if(!confirm(`Excluir permanentemente "${target.nome}"? Isso apagará também TODOS os abastecimentos e manutenções dele.`)) return;
   
   const nomeRemovido = target.nome;
@@ -1078,69 +993,178 @@ window.removerVeiculo = function(id){
   saveMaintenances(mainteances);
   
   if(activeVehicle === nomeRemovido){
-    activeVehicle = vehicles[0].nome;
+    activeVehicle = vehicles[0] ? vehicles[0].nome : "";
     localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
   }
   
   renderAll();
-  toast("Veículo e registros removidos.");
+  toast("Veículo removido.");
 };
 
-$("btnExportarJson").addEventListener("click", () => {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({veiculos: vehicles, abastecimentos: items, manutencoes: mainteances}, null, 2));
-  const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `backup_total.json`); dl.click();
-});
-
-$("btnCopiarTexto").addEventListener("click", () => {
-  const dados = { veiculos: vehicles, abastecimentos: items, manutencoes: mainteances };
-  try {
-    const stringDados = JSON.stringify(dados);
-    const hashBackup = btoa(unescape(encodeURIComponent(stringDados)));
-    navigator.clipboard.writeText(hashBackup).then(() => {
-      toast("📋 Código de backup copiado!");
-    }).catch(() => {
-      toast("Erro ao copiar automaticamente.");
-    });
-  } catch(e) { toast("Erro ao processar o backup."); }
-});
-
-$("btnRestaurarTexto").addEventListener("click", () => {
-  const hash = $("txtRestaurar").value.trim();
-  if(!hash) { toast("Cole o código antes!"); return; }
-  if(!confirm("⚠️ Isso irá substituir os dados atuais. Continuar?")) return;
-  
-  try {
-    const stringDados = decodeURIComponent(escape(atob(hash)));
-    const dados = JSON.parse(stringDados);
-    if(dados.veiculos && dados.abastecimentos && dados.manutencoes) {
-      vehicles = dados.veiculos; items = dados.abastecimentos; mainteances = dados.manutencoes; 
-      activeVehicle = vehicles[0] ? (vehicles[0].nome || vehicles[0]) : "Honda Lead 2010";
-      
-      // Sanitização rápida caso venha de backups antigos em formato string pura
-      vehicles = vehicles.map((v, i) => typeof v === 'string' ? { id:"v_"+i+"_"+Date.now(), nome: v, modelo:"—", ano:"—", kmCompra:0, dataCompra:"" } : v);
-      
-      saveVehicles(vehicles); saveItems(items); saveMaintenances(mainteances);
-      localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
-      $("txtRestaurar").value = ""; renderAll(); toast("📥 Restaurado!");
-    } else { toast("Formato de backup inválido."); }
-  } catch(e) { toast("Erro ao ler o código."); }
-});
-
 window.onload = function() {
+  loadAllData();
+
   const hoje = new Date().toISOString().split('T')[0];
-  $("data").value = hoje; $("maint-data").value = hoje;
-  $("odometro").value = ""; $("maint-odo").value = "";
+  if($("data")) $("data").value = hoje;
+  if($("maint-data")) $("maint-data").value = hoje;
+
+  // Ouvintes de clique e menus
+  if($("menuBtn")) $("menuBtn").addEventListener("click", openSidebar);
+  if($("overlay")) $("overlay").addEventListener("click", closeSidebar);
   
-  if(localStorage.getItem(MAINT_KEY) === null || JSON.parse(localStorage.getItem(MAINT_KEY)).length === 0) {
-    localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
-    mainteances = [...historicoInicialPavani];
-  }
-  
-  if (localStorage.getItem(THEME_KEY) === "light") document.body.classList.add("light-mode");
-  $("themeBtn").addEventListener("click", () => {
-    const isLight = document.body.classList.toggle("light-mode");
-    localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
+  document.querySelectorAll(".nav button").forEach(b=>{
+    b.addEventListener("click", ()=>showView(b.getAttribute('data-view')));
   });
+
+  const selectElement = $("globalVehicle");
+  if(selectElement) {
+    selectElement.addEventListener("change", (e)=>{
+      if(vehicles.length === 0) return;
+      activeVehicle = e.target.value;
+      localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+      renderAll();
+    });
+  }
+
+  if($("btnSalvarMaint")) {
+    $("btnSalvarMaint").addEventListener("click", ()=>{
+      if(!activeVehicle) { toast("Cadastre e selecione um veículo primeiro!"); return; }
+      const mData = $("maint-data").value; const mOdo = parseBRNumber($("maint-odo").value);
+      const mDesc = $("maint-desc").value.trim(); const mCusto = parseBRNumber($("maint-custo").value) || 0;
+      if(!mData || mOdo === null || !mDesc){ toast("Preencha os campos!"); return; }
+
+      mainteances.push({ id: "m_"+Date.now(), veiculo: activeVehicle, data: mData, odometro: mOdo, descricao: mDesc, custo: mCusto });
+      saveMaintenances(mainteances);
+      $("maint-odo").value = ""; $("maint-desc").value = ""; $("maint-custo").value = "";
+      renderAll(); toast("Salvo!");
+    });
+  }
+
+  if($("btnSalvar")) {
+    $("btnSalvar").addEventListener("click", ()=>{
+      if(!activeVehicle) { toast("Cadastre e selecione um veículo primeiro!"); return; }
+      const d = $("data").value; const o = parseBRNumber($("odometro").value); const l = parseBRNumber($("litros").value); const p = parseBRNumber($("precoLitro").value) || 0;
+      if(!d || o === null || l === null){ toast("Preencha os campos!"); return; }
+
+      items.push({ id: "abast_" + Date.now(), data: d, odometro: o, litros: l, preco: p, veiculo: activeVehicle });
+      items.sort((a,b)=> a.data.localeCompare(b.data) || (a.odometro - b.odometro));
+      saveItems(items);
+      $("odometro").value = ""; $("litros").value = ""; $("precoLitro").value = "";
+      renderAll(); toast("Abastecimento Salvo!");
+    });
+  }
+
+  // Monitoramento de cálculo dinâmico de custo de combustível
+  const inputsCusto = ["litros", "precoLitro"];
+  inputsCusto.forEach(id => {
+    if($(id)) {
+      $(id).addEventListener("input", () => {
+        const l = parseBRNumber($("litros").value) || 0;
+        const p = parseBRNumber($("precoLitro").value) || 0;
+        if($("custoTotalCalc")) $("custoTotalCalc").textContent = `R$ ${formatNum(l * p, 2)}`;
+      });
+    }
+  });
+
+  if($("btnApagarTudo")) {
+    $("btnApagarTudo").addEventListener("click", ()=>{
+      if(!activeVehicle) return;
+      if(!confirm(`Deseja limpar abastecimentos de "${activeVehicle}"? O histórico de peças será mantido.`)) return;
+      items = items.filter(x => x.veiculo !== activeVehicle);
+      saveItems(items);
+      renderAll(); toast("Abastecimentos resetados!");
+    });
+  }
+
+  if($("btnResetTotal")) {
+    $("btnResetTotal").addEventListener("click", () => {
+      if(!confirm("⚠️ ATENÇÃO: Isso apagará DEFINITIVAMENTE todos os registros! Tem certeza?")) return;
+      localStorage.clear();
+      window.location.reload();
+    });
+  }
+
+  if($("btnCadastrarVeiculo")) {
+    $("btnCadastrarVeiculo").addEventListener("click", ()=>{
+      const nome = $("novoVeiculo").value.trim();
+      const modelo = $("novoModelo").value.trim();
+      const ano = $("novoAno").value.trim();
+      const kmComp = parseBRNumber($("novoKmComp").value) || 0;
+      const dataComp = $("novaDataComp").value;
+
+      if(!nome) { toast("Digite um nome válido."); return; }
+      if(vehicles.some(v => v.nome === nome)) { toast("Esse veículo já existe."); return; }
+      
+      const novoObj = {
+        id: "v_" + Date.now(),
+        nome: nome,
+        modelo: modelo || "—",
+        ano: ano || "—",
+        kmCompra: kmComp,
+        dataCompra: dataComp || ""
+      };
+
+      vehicles.push(novoObj); 
+      saveVehicles(vehicles); 
+      activeVehicle = nome;
+      localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+
+      $("novoVeiculo").value = ""; $("novoModelo").value = ""; $("novoAno").value = "";
+      $("novoKmComp").value = ""; $("novaDataComp").value = "";
+
+      renderAll(); toast("Veículo adicionado!");
+    });
+  }
+
+  if($("btnExportarJson")) {
+    $("btnExportarJson").addEventListener("click", () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({veiculos: vehicles, abastecimentos: items, manutencoes: mainteances}, null, 2));
+      const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `backup_total.json`); dl.click();
+    });
+  }
+
+  if($("btnCopiarTexto")) {
+    $("btnCopiarTexto").addEventListener("click", () => {
+      const dados = { veiculos: vehicles, abastecimentos: items, manutencoes: mainteances };
+      try {
+        const stringDados = JSON.stringify(dados);
+        const hashBackup = btoa(unescape(encodeURIComponent(stringDados)));
+        navigator.clipboard.writeText(hashBackup).then(() => { toast("📋 Código de backup copiado!"); })
+        .catch(() => { toast("Erro ao copiar automaticamente."); });
+      } catch(e) { toast("Erro ao processar o backup."); }
+    });
+  }
+
+  if($("btnRestaurarTexto")) {
+    $("btnRestaurarTexto").addEventListener("click", () => {
+      const hash = $("txtRestaurar").value.trim();
+      if(!hash) { toast("Cole o código antes!"); return; }
+      if(!confirm("⚠️ Isso irá substituir os dados atuais. Continuar?")) return;
+      
+      try {
+        const stringDados = decodeURIComponent(escape(atob(hash)));
+        const dados = JSON.parse(stringDados);
+        if(dados.veiculos && dados.abastecimentos && dados.manutencoes) {
+          vehicles = dados.veiculos; items = dados.abastecimentos; mainteances = dados.manutencoes; 
+          activeVehicle = vehicles[0] ? (vehicles[0].nome || vehicles[0]) : "";
+          vehicles = vehicles.map((v, i) => typeof v === 'string' ? { id:"v_"+i+"_"+Date.now(), nome: v, modelo:"—", ano:"—", kmCompra:0, dataCompra:"" } : v);
+          
+          saveVehicles(vehicles); saveItems(items); saveMaintenances(mainteances);
+          localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+          $("txtRestaurar").value = ""; renderAll(); toast("📥 Restaurado!");
+        } else { toast("Formato de backup inválido."); }
+      } catch(e) { toast("Erro ao ler o código."); }
+    });
+  }
+
+  if (localStorage.getItem(THEME_KEY) === "light") document.body.classList.add("light-mode");
+  if($("themeBtn")) {
+    $("themeBtn").addEventListener("click", () => {
+      const isLight = document.body.classList.toggle("light-mode");
+      localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
+    });
+  }
+
   renderAll();
 };
 </script>
