@@ -281,7 +281,6 @@
 
 <body>
 <div class="app">
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="logo">🚗</div>
@@ -301,7 +300,6 @@
 
   <div class="overlay" id="overlay"></div>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="menuBtn" id="menuBtn">☰ Menu</button>
@@ -312,13 +310,11 @@
       <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
     </div>
 
-    <!-- SELETOR GLOBAL DE VEÍCULO -->
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
       <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
-    <!-- PAINEL -->
     <section class="section view" id="view-painel">
       <div class="cards">
         <div class="card">
@@ -344,7 +340,6 @@
       </div>
     </section>
 
-    <!-- ABASTECER -->
     <section class="section view" id="view-abastecer" style="display:none">
       <div class="sectionTitle">⛽ Novo lançamento</div>
       
@@ -375,7 +370,6 @@
       <div class="statusLine" id="saveStatus">—</div>
     </section>
 
-    <!-- HISTORICO -->
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Consumo</div>
 
@@ -396,7 +390,6 @@
       <div class="statusLine" id="histStatus">—</div>
     </section>
 
-    <!-- VEICULOS -->
     <section class="section view" id="view-veiculos" style="display:none">
       <div class="sectionTitle">🚘 Cadastrar Veículo</div>
       
@@ -405,7 +398,7 @@
       
       <button class="btn" id="btnCadastrarVeiculo" type="button" style="margin-top:12px">Adicionar à Garagem</button>
       
-      <div class="divider" style="height:1px; background:var(--line); margin:20px 0;"></div>
+      <div style="height:1px; background:var(--line); margin:20px 0;"></div>
       
       <div class="sectionTitle">📋 Seus Veículos</div>
       <div class="v-list" id="listaVeiculos"></div>
@@ -424,6 +417,7 @@ const $ = (id)=>document.getElementById(id);
 
 function toast(msg){
   const t = $("toast");
+  if(!t) return;
   t.textContent = msg;
   t.style.display="block";
   clearTimeout(toast._tm);
@@ -479,7 +473,6 @@ function showView(name){
   $("pageTitle").textContent = titles[name][0];
   $("pageSub").textContent = titles[name][1];
   
-  // Esconde o seletor do topo se estiver na aba de gerenciar carros pra não confundir
   $("globalVehiclesContainer").style.display = (name === "veiculos") ? "none" : "block";
   
   closeSidebar();
@@ -502,29 +495,30 @@ function sortItems(){
 
 function processMetrics(){
   sortItems();
-  // Filtra e calcula apenas para o veículo ativo na sessão
-  let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
+  
+  // Limpa métricas antigas para recalcular de forma limpa
+  for(let i=0; i<items.length; i++){
+    items[i].deltaKm = null;
+    items[i].kml = null;
+  }
+  
+  // Mapeia o último item processado de cada veículo para calcular a diferença (delta)
+  const lastMap = {};
   
   for(let i=0; i<items.length; i++){
-    if((items[i].veiculo || "Padrão") !== activeVehicle) continue;
-    
-    // Acha o registro anterior específico deste mesmo veículo
-    let prev = null;
-    for(let j = i - 1; j >= 0; j--){
-      if((items[j].veiculo || "Padrão") === activeVehicle){
-        prev = items[j];
-        break;
-      }
-    }
+    const vName = items[i].veiculo || "Padrão";
+    const prev = lastMap[vName];
     
     if(prev){
       const delta = Number(items[i].odometro) - Number(prev.odometro);
-      items[i].deltaKm = delta > 0 ? delta : null;
-      items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
-    } else {
-      items[i].deltaKm = null;
-      items[i].kml = null;
+      if(delta > 0) {
+        items[i].deltaKm = delta;
+        if(Number(items[i].litros) > 0) {
+          items[i].kml = delta / Number(items[i].litros);
+        }
+      }
     }
+    lastMap[vName] = items[i];
   }
 }
 
@@ -538,6 +532,7 @@ function renderAll(){
 
 function updateVehicleSelectors(){
   const select = $("globalVehicle");
+  if(!select) return;
   select.innerHTML = "";
   vehicles.forEach(v => {
     const opt = document.createElement("option");
@@ -598,6 +593,7 @@ function renderCards(){
 
 function renderTable(){
   const tb = $("tbody");
+  if(!tb) return;
   tb.innerHTML = "";
   
   let filtered = items.filter(x => (x.veiculo || "Padrão") === activeVehicle);
@@ -640,6 +636,7 @@ $("btnCadastrarVeiculo").addEventListener("click", ()=>{
 
 function renderVehiclesList(){
   const list = $("listaVeiculos");
+  if(!list) return;
   list.innerHTML = "";
   
   vehicles.forEach(v => {
@@ -676,56 +673,4 @@ $("btnSalvar").addEventListener("click", ()=>{
   const odometro = parseBRNumber($("odometro").value);
   const litros = parseBRNumber($("litros").value);
 
-  if(!data){ toast("Selecione a data."); return; }
-  if(!odometro || odometro <= 0){ toast("Odômetro inválido."); return; }
-  if(!litros || litros <= 0){ toast("Volume de litros inválido."); return; }
-
-  const item = {
-    id: `${Date.now()}`,
-    veiculo: activeVehicle, // Vincula o lançamento ao carro selecionado
-    data, odometro, litros
-  };
-
-  items.push(item);
-  saveItems(items);
-  renderAll();
-
-  $("odometro").value = "";
-  $("litros").value = "";
-  $("saveStatus").textContent = `Salvo no veículo: ${activeVehicle} ✅`;
-  toast("Salvo ✅");
-  showView("painel");
-});
-
-$("btnLimparForm").addEventListener("click", ()=>{
-  $("odometro").value = "";
-  $("litros").value = "";
-  toast("Campos limpos");
-});
-
-$("btnApagarTudo").addEventListener("click", ()=>{
-  if(!confirm(`Apagar TODO o histórico do veículo "${activeVehicle}"?`)) return;
-  items = items.filter(x => (x.veiculo || "Padrão") !== activeVehicle);
-  saveItems(items);
-  renderAll();
-  toast("Histórico limpo!");
-});
-
-$("btnExportarJson").addEventListener("click", ()=>{
-  const payload = { veiculos: vehicles, historicoCompleto: items };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `backup_garagem_combustivel.json`;
-  a.click();
-  toast("Backup completo baixado");
-});
-
-// Inicialização
-const hoje = new Date().toISOString().slice(0,10);
-$("data").value = hoje;
-renderAll();
-</script>
-</body>
-</html>
+  if
