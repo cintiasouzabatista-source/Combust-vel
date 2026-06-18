@@ -1,1 +1,1143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Moto Control</title>
 
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --panel:#131a26;
+      --card:#1c2533;
+      --stroke:rgba(255,255,255,.08);
+      --text:#eaf1ff;
+      --muted:rgba(234,241,255,.65);
+      --accent:#2b6dff;
+      --accent2:#1f55cc;
+      --danger:#ff476f;
+      --ok:#29d17c;
+      --warning:#ffb84d;
+      --shadow:0 12px 28px rgba(0,0,0,.45);
+      --radius:18px;
+      --line:rgba(255,255,255,.08);
+      --sideW: 280px;
+    }
+
+    body.light-mode {
+      --bg: #f4f7fc;
+      --panel: #ffffff;
+      --card: #eef2f7;
+      --stroke: rgba(0, 0, 0, .08);
+      --text: #0f172a;
+      --muted: #475569;
+      --line: rgba(0, 0, 0, .08);
+      --shadow: 0 10px 25px rgba(0, 0, 0, .05);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      overflow-x:hidden;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .app{
+      min-height:100vh;
+      display:flex;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      width:var(--sideW);
+      background:#0f1420;
+      border-right:1px solid var(--line);
+      padding:14px 12px;
+      position:fixed;
+      top:0; bottom:0; left:0;
+      transform: translateX(-102%);
+      transition: transform .22s ease, background .2s ease;
+      z-index:2500;
+    }
+    body.light-mode .sidebar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(14px);
+    }
+    .sidebar.open{ transform: translateX(0); }
+    .sidebar .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 10px 14px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:10px;
+    }
+    .brand .logo{font-size:22px}
+    .brand .txt{display:flex; flex-direction:column}
+    .brand .txt .t{font-size:14px; font-weight:700}
+    .brand .txt .s{font-size:12px; color:var(--muted); font-weight:400}
+
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding:10px 6px;
+    }
+    .nav button{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--muted);
+      padding:12px 12px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .nav button.active{
+      background:rgba(43,109,255,.16);
+      border-color:rgba(43,109,255,.35);
+      color:var(--text);
+      font-weight:700;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      display:none;
+      z-index:2400;
+    }
+    .overlay.show{display:block}
+
+    /* Main */
+    .main{
+      width:100%;
+      padding:16px 14px 28px;
+    }
+    @media (min-width: 980px){
+      .sidebar{ transform: translateX(0); position:sticky; z-index:1; }
+      .overlay{display:none !important;}
+      .main{ margin-left:0; padding-left:18px; }
+      .topbar .menuBtn{ display:none; }
+      .app{ gap:0; }
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .menuBtn{
+      width:auto;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--text);
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    
+    .theme-toggle-btn {
+      background: var(--accent);
+      color: #ffffff !important;
+      border: none;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    h1{ margin:0; font-size:24px; font-weight:700; }
+    .subtitle{ margin:6px 0 0; color:var(--muted); font-size:12px; }
+
+    .section{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin:14px 0;
+    }
+
+    .cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (min-width: 980px){ .cards{ grid-template-columns:repeat(4, 1fr); } }
+    
+    .card{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      min-height:92px;
+    }
+    .card .label{ margin:0; color:var(--muted); font-size:12px; font-weight:500; }
+    .card .val{ margin-top:10px; font-size:22px; font-weight:700; }
+    .small{ margin-top:6px; color:var(--muted); opacity: 0.8; font-size:12px; }
+
+    /* Grid de Vida Útil */
+    .grid-pecas { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+    @media (min-width: 600px) { .grid-pecas { grid-template-columns: 1fr 1fr; } }
+
+    .card-peca { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+    .peca-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .peca-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    
+    .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700; }
+    .status-badge.perigo { background: rgba(255,71,111,0.15); color: var(--danger); }
+    .status-badge.atencao { background: rgba(255,184,77,0.15); color: var(--warning); }
+    .status-badge.bom { background: rgba(41,209,124,0.15); color: var(--ok); }
+
+    .progress-bg { background: rgba(0,0,0,0.15); height: 6px; border-radius: 99px; overflow: hidden; margin: 6px 0; }
+    body:not(.light-mode) .progress-bg { background: rgba(255,255,255,0.06); }
+    .progress-bar { height: 100%; width: 0%; transition: width 0.3s; }
+
+    /* Inputs e Form */
+    label{ display:block; margin:12px 0 6px; color:var(--text); font-size:12px; font-weight:600; }
+    input, select, textarea{
+      width:100%; border-radius:14px; border:1px solid var(--line); background:var(--card);
+      color:var(--text); padding:12px; outline:none; font-size:14px;
+    }
+    
+    select{ 
+      appearance: none; background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; 
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23eaf1ff'><path d='M0 3h12L6 10z'/></svg>");
+    }
+    body.light-mode select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23475569'><path d='M0 3h12L6 10z'/></svg>");
+    }
+
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
+
+    .btn{
+      width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.14); padding:12px;
+      font-size:14px; background:linear-gradient(180deg, var(--accent), var(--accent2)); color: #fff !important; cursor:pointer; font-weight:600;
+    }
+    .btn.secondary{ background:var(--card); border:1px solid var(--line); color:var(--text) !important; }
+    .btn.danger{ background:rgba(255,71,111,.12); border-color:rgba(255,71,111,.30); color:var(--danger) !important; }
+    .btn.danger-solid { background: var(--danger); border: none; color: #fff !important; }
+    .btn.mini { width: auto; padding: 6px 12px; font-size: 12px; border-radius: 10px; }
+    .btn.action-group { padding: 6px 10px; font-size: 12px; margin-right: 4px; display: inline-block; }
+    .btn:active{ transform: translateY(1px); }
+
+    .statusLine{ color:var(--muted); font-size:12px; margin-top:10px; }
+    
+    table{ width:100%; border-collapse:collapse; overflow:hidden; border-radius:16px; border:1px solid var(--line); background:var(--panel); }
+    th, td{ padding:12px 10px; text-align:left; font-size:13px; border-bottom:1px solid var(--line); }
+    th{ color:var(--muted); font-weight:600; background: rgba(0,0,0,0.02); }
+
+    .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 18px;}
+    .v-item{ display: flex; flex-direction: column; gap: 6px; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+    .v-header-row { display: flex; justify-content: space-between; align-items: center; }
+    .v-meta-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    #toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: none; z-index: 3000; }
+
+    /* MODAL DE EDIÇÃO FLUTUANTE */
+    .modal-box {
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%) scale(0.9);
+      background: var(--panel); 
+      border: 1px solid var(--line); 
+      border-radius: var(--radius);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
+      padding: 22px; 
+      width: 90%; 
+      max-width: 440px;
+      z-index: 2900; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box.show { 
+      opacity: 1; 
+      pointer-events: auto; 
+      transform: translate(-50%, -50%) scale(1); 
+    }
+    .modal-backdrop { 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.6); 
+      backdrop-filter: blur(4px); 
+      z-index: 2800; 
+      display: none; 
+    }
+    .modal-backdrop.show { 
+      display: block; 
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo" id="brand-logo"></div>
+      <div class="txt">
+        <div class="t">Moto Control</div>
+        <div class="s">Meus Veículos</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="active" data-view="painel">🏠 Painel</button>
+      <button data-view="abastecer">⛽ Abastecer</button>
+      <button data-view="historico">🧾 Histórico Consumo</button>
+      <button data-view="manutencao">🔧 Manutenção & Peças</button>
+      <button data-view="veiculos">🚘 Veículos</button>
+      <button data-view="backup">💾 Backup & Reset</button>
+    </nav>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menuBtn" id="menuBtn">☰ Menu</button>
+      <div>
+        <h1 id="pageTitle">Painel</h1>
+        <div class="subtitle" id="pageSub">Métricas essenciais</div>
+      </div>
+      <button id="themeBtn" class="theme-toggle-btn">🌓 Tema</button>
+    </div>
+    
+    <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
+      <label for="globalVehicle" style="margin-top: 0;">Selecionar Veículo Ativo:</label>
+      <select id="globalVehicle"></select>
+    </div>
+
+    <section class="section view" id="view-painel">
+      <div class="cards">
+        <div class="card">
+          <div class="label">Média Geral</div>
+          <div class="val" id="kmlGeral">—</div>
+          <div class="small">Km/L total</div>
+        </div>
+        <div class="card">
+          <div class="label">Último Abastecido</div>
+          <div class="val" id="ultimoAbastecido">—</div>
+          <div class="small">litros colocados</div>
+        </div>
+        <div class="card">
+          <div class="label">Total Gasto</div>
+          <div class="val" id="totalGasto">R$ 0,00</div>
+          <div class="small">em combustível</div>
+        </div>
+        <div class="card">
+          <div class="label">Km Ativa / Atual</div>
+          <div class="val" id="kmAtual">0 km</div>
+          <div class="small">com base nos registros</div>
+        </div>
+      </div>
+
+      <div id="containerVidaUtilHome" style="margin-top: 24px;">
+        <h3 style="margin: 0 0 4px 0; font-size: 16px;">⏱️ Previsão de Desgaste de Peças</h3>
+        <p class="subtitle" style="margin-bottom: 12px;">Seguindo estritamente os lançamentos do histórico de manutenção:</p>
+        <div class="grid-pecas" id="gridPecasHome"></div>
+      </div>
+    </section>
+
+    <section class="section view" id="view-abastecer" style="display:none">
+      <label for="data">Data</label>
+      <input id="data" type="date" />
+      <div class="row">
+        <div>
+          <label for="odometro">Odômetro (km)</label>
+          <input id="odometro" placeholder="Ex: 93843" />
+        </div>
+        <div>
+          <label for="litros">Litros Abastecidos</label>
+          <input id="litros" placeholder="Ex: 4,5" />
+        </div>
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <div>
+          <label for="precoLitro">Preço por Litro (R$)</label>
+          <input id="precoLitro" placeholder="Ex: 5,69" />
+        </div>
+        <div>
+          <label>Custo Total Previsto</label>
+          <span style="color:var(--ok); font-weight:700;" id="custoTotalCalc">R$ 0,00</span>
+        </div>
+      </div>
+      <button class="btn" id="btnSalvar" type="button" style="margin-top:20px">Salvar Registro</button>
+    </section>
+
+    <section class="section view" id="view-historico" style="display:none">
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr><th>Data</th><th>Odômetro</th><th>Litros</th><th>Preço/L</th><th>Total</th><th>Km Rodados</th><th>Rendimento</th><th style="min-width: 140px;">Ações</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="statusLine" id="histStatus">—</div>
+    </section>
+
+    <section class="section view" id="view-manutencao" style="display:none">
+      <div class="row">
+        <div><label for="maint-data">Data</label><input id="maint-data" type="date" /></div>
+        <div><label for="maint-odo">Odômetro da Revisão (km)</label><input id="maint-odo" placeholder="Ex: 93843" /></div>
+      </div>
+      <label for="maint-desc">Descrição do Serviço / Peça</label>
+      <input id="maint-desc" placeholder="Ex: Troca de Óleo de Motor" />
+      <div class="row" style="margin-top: 10px; align-items: flex-end;">
+        <div><label for="maint-custo">Valor (R$)</label><input id="maint-custo" placeholder="Ex: 73,00" /></div>
+        <button class="btn" id="btnSalvarMaint" type="button">Salvar Manutenção</button>
+      </div>
+      <div style="overflow:auto; margin-top:20px;">
+        <table>
+          <thead><tr><th>Data</th><th>Odômetro</th><th>Serviço / Peça Realizada</th><th>Custo</th></tr></thead>
+          <tbody id="tbody-maint"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section view" id="view-veiculos" style="display:none">
+      <label for="novoVeiculo">Nome / Identificação</label>
+      <input id="novoVeiculo" placeholder="Ex: Honda Lead 110" />
+      
+      <div class="row">
+        <div>
+          <label for="novoModelo">Modelo</label>
+          <input id="novoModelo" placeholder="Ex: Lead" />
+        </div>
+        <div>
+          <label for="novoAno">Ano</label>
+          <input id="novoAno" placeholder="Ex: 2010" />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label for="novoKmComp">Km de Compra / Inicial</label>
+          <input id="novoKmComp" placeholder="Ex: 93667" />
+        </div>
+        <div>
+          <label for="novaDataComp">Data da Compra</label>
+          <input id="novaDataComp" type="date" />
+        </div>
+      </div>
+      
+      <button class="btn" id="btnCadastrarVeiculo" type="button" style="margin-top:16px">Adicionar à Garagem</button>
+      
+      <h3 style="margin: 28px 0 8px 0; font-size:16px;">Veículos Cadastrados</h3>
+      <div class="v-list" id="listaVeiculos"></div>
+    </section>
+
+    <section class="section view" id="view-backup" style="display:none">
+      <h3>Gerenciamento de Dados</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+        <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Exportar Arquivo (JSON)</button>
+        <button class="btn secondary" id="btnCopiarTexto" type="button">📋 Copiar Código de Backup (Texto)</button>
+      </div>
+
+      <div style="background: var(--card); padding: 14px; border-radius: 14px; border: 1px solid var(--line); margin-bottom: 20px;">
+        <label for="txtRestaurar" style="margin-top: 0;">Restaurar via Código de Texto:</label>
+        <textarea id="txtRestaurar" placeholder="Cole aqui o código de backup copiado anteriormente..." style="width:100%; height: 80px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text); padding:10px; font-family:monospace; font-size:11px; resize: none; outline: none;"></textarea>
+        <button class="btn mini" id="btnRestaurarTexto" type="button" style="margin-top: 10px; width: 100%;">📥 Restaurar Dados colados</button>
+      </div>
+      
+      <hr style="border:0; border-top:1px solid var(--line); margin: 20px 0;" />
+      
+      <h3 style="color: var(--danger)">Zona de Perigo</h3>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <button class="btn danger" id="btnApagarTudo" type="button">🧹 Limpar Abastecimentos</button>
+          <p class="subtitle" style="margin-top:6px;">Apaga apenas as entradas de combustível do veículo atual.</p>
+        </div>
+        <div>
+          <button class="btn danger-solid" id="btnResetTotal" type="button">🚨 Resetar Aplicativo (Fábrica)</button>
+          <p class="subtitle" style="margin-top:6px;">Apaga TUDO (Veículos, Peças, Históricos) e reinicia o app do zero.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop"></div>
+
+<div class="modal-box" id="modalEditAbastecimento">
+  <h3 style="margin-top: 0; font-size: 16px;">✏️ Editar Abastecimento</h3>
+  <input type="hidden" id="edit-id" />
+  
+  <label for="edit-data">Data</label>
+  <input id="edit-data" type="date" />
+  
+  <div class="row">
+    <div>
+      <label for="edit-odometro">Odômetro (km)</label>
+      <input id="edit-odometro" />
+    </div>
+    <div>
+      <label for="edit-litros">Litros</label>
+      <input id="edit-litros" />
+    </div>
+  </div>
+  
+  <label for="edit-preco">Preço por Litro (R$)</label>
+  <input id="edit-preco" />
+  
+  <div class="row" style="margin-top: 20px;">
+    <button class="btn secondary" type="button" onclick="fecharModalEditar()">Cancelar</button>
+    <button class="btn" type="button" onclick="salvarModalEditar()">Salvar Alterações</button>
+  </div>
+</div>
+
+<div class="modal-box" id="modalEditVeiculo">
+  <h3 style="margin-top: 0; font-size: 16px;">✏️ Detalhes e Edição do Veículo</h3>
+  <input type="hidden" id="edit-v-antigo-id" />
+  
+  <label for="edit-v-nome">Nome / Identificação</label>
+  <input id="edit-v-nome" />
+  
+  <div class="row">
+    <div>
+      <label for="edit-v-modelo">Modelo</label>
+      <input id="edit-v-modelo" />
+    </div>
+    <div>
+      <label for="edit-v-ano">Ano</label>
+      <input id="edit-v-ano" />
+    </div>
+  </div>
+  
+  <div class="row">
+    <div>
+      <label for="edit-v-km">Km Compra / Inicial</label>
+      <input id="edit-v-km" />
+    </div>
+    <div>
+      <label for="edit-v-datacomp">Data Compra</label>
+      <input id="edit-v-datacomp" type="date" />
+    </div>
+  </div>
+  
+  <div class="row" style="margin-top: 24px;">
+    <button class="btn secondary" type="button" onclick="fecharModalVeiculo()">Cancelar</button>
+    <button class="btn" type="button" onclick="salvarModalVeiculo()">Salvar Dados</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const STORE_KEY = "cb_abastecimentos_v5";
+const VEHICLES_KEY = "cb_veiculos_v5_complex"; // Chave atualizada para o novo padrão com objetos completos
+const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
+const MAINT_KEY = "cb_manutencoes_v5";
+const THEME_KEY = "cb_theme_v5";
+
+const $ = (id)=>document.getElementById(id);
+
+const abastecimentosIniciais = [
+  { id: "init_abast_1", data: "2026-06-08", odometro: 93682, litros: 6.5, preco: 0.00, veiculo: "Honda Lead 2010" }
+];
+
+const historicoInicialPavani = [
+  { id:"p0", veiculo:"Honda Lead 2010", data:"2026-06-03", odometro:93667, custo:0.00,   descricao:"Aquisição da Moto / Venda em Cartório (KM de Partida)" },
+  { id:"p1", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:480.00, descricao:"Revisão Geral Scooter (OS 1068)" },
+  { id:"p2", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:250.00, custo:250.00, descricao:"M.O. Troca da Caixa de Direção" },
+  { id:"p3", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:370.00, descricao:"Correia de Transmissão CVT" },
+  { id:"p4", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:124.00, descricao:"Vela de Ignição" },
+  { id:"p5", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:73.00,  descricao:"Troca de Óleo de Motor 5000 20W50" },
+  { id:"p6", veiculo:"Honda Lead 2010", data:"2025-10-24", odometro:90000, custo:370.00, descricao:"Pneu Traseiro Kenda" },
+  { id:"p7", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:570.00, descricao:"Revisão de Motor e Chassi (OS 1264)" },
+  { id:"p8", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:168.00, descricao:"Placa de Partida" },
+  { id:"p9", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:114.00, descricao:"Roletes do CVT" },
+  { id:"p10", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:73.00,  descricao:"Troca de Óleo de Motor 5000 20W50" },
+  { id:"p11", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:358.00, descricao:"Bateria Nova" },
+  { id:"p12", veiculo:"Honda Lead 2010", data:"2026-04-10", odometro:93290, custo:765.34, descricao:"Sapata da Embreagem CVT Completa" }
+];
+
+function toast(msg){
+  const t = $("toast"); if(!t) return;
+  t.textContent = msg; t.style.display="block";
+  clearTimeout(toast._tm); toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
+}
+
+function parseBRNumber(s){
+  if(!s) return null;
+  const norm = String(s).trim().replace(/\s/g, "").replace(/\./g,"").replace(",", ".");
+  const n = Number(norm); return Number.isFinite(n) ? n : null;
+}
+
+function formatNum(n, digits=2){
+  const v = Number(n);
+  return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
+}
+
+function loadItems(){
+  try{
+    let raw = localStorage.getItem(STORE_KEY);
+    if(!raw || raw === "[]") {
+      localStorage.setItem(STORE_KEY, JSON.stringify(abastecimentosIniciais));
+      return [...abastecimentosIniciais];
+    }
+    return JSON.parse(raw);
+  } catch(e){ return [...abastecimentosIniciais]; }
+}
+function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+
+function loadVehicles(){ 
+  try{ 
+    let raw = localStorage.getItem(VEHICLES_KEY);
+    if(!raw || raw === "[]") {
+      // Criação inicial estruturada com os campos extras padrão
+      const padrao = [{ id: "v1", nome: "Honda Lead 2010", modelo: "Lead", ano: "2010", kmCompra: 93667, dataCompra: "2026-06-03" }];
+      localStorage.setItem(VEHICLES_KEY, JSON.stringify(padrao));
+      return padrao;
+    }
+    return JSON.parse(raw); 
+  } catch(e){ return [{ id: "v1", nome: "Honda Lead 2010", modelo: "Lead", ano: "2010", kmCompra: 93667, dataCompra: "2026-06-03" }]; } 
+}
+function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
+
+function loadMaintenances(){
+  try {
+    let raw = localStorage.getItem(MAINT_KEY);
+    if(!raw || raw === "[]") {
+      localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
+      return [...historicoInicialPavani];
+    }
+    return JSON.parse(raw);
+  } catch(e) { return [...historicoInicialPavani]; }
+}
+function saveMaintenances(m){ localStorage.setItem(MAINT_KEY, JSON.stringify(m)); }
+
+let items = loadItems();
+let vehicles = loadVehicles();
+let mainteances = loadMaintenances();
+let activeVehicle = localStorage.getItem(ACTIVE_VEHICLE_KEY) || (vehicles[0] ? vehicles[0].nome : "Honda Lead 2010");
+
+if (!vehicles.some(v => v.nome === activeVehicle) && vehicles.length > 0) { activeVehicle = vehicles[0].nome; }
+
+const views = ["painel","abastecer","historico","manutencao","veiculos","backup"];
+function showView(name){
+  for(const v of views){
+    const el = document.getElementById("view-"+v);
+    if(el) el.style.display = (v===name) ? "block" : "none";
+  }
+  document.querySelectorAll(".nav button").forEach(b=>{
+    b.classList.toggle("active", b.getAttribute('data-view')===name);
+  });
+  $("globalVehiclesContainer").style.display = (name === "veiculos" || name === "backup") ? "none" : "block";
+  closeSidebar();
+  renderAll();
+}
+
+function openSidebar(){ $("sidebar").classList.add("open"); $("overlay").classList.add("show"); }
+function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); }
+
+$("menuBtn").addEventListener("click", openSidebar);
+$("overlay").addEventListener("click", closeSidebar);
+document.querySelectorAll(".nav button").forEach(b=>{
+  b.addEventListener("click", ()=>showView(b.getAttribute('data-view')));
+});
+
+function renderAll(){
+  updateVehicleSelectors();
+  renderCards();
+  renderTable();
+  renderMaintenanceTable();
+  renderVehiclesList();
+  renderVidaUtilPecas();
+  
+  const logoEl = $("brand-logo");
+  if (logoEl) {
+    const nomeMinusculo = activeVehicle.toLowerCase();
+    const termosCarro = ["carro", "civic", "toyota", "corolla", "fiat", "chevrolet", "ford", "volkswagen", "gol", "uno", "pampa", "corsa", "palio"];
+    const ehCarro = termosCarro.some(termo => nomeMinusculo.includes(termo));
+    logoEl.textContent = ehCarro ? "🚗" : "🏍️";
+  }
+
+  const btnAbast = $("btnApagarTudo");
+  if(btnAbast) btnAbast.textContent = `🧹 Limpar Abastecimentos (${activeVehicle})`;
+}
+
+function updateVehicleSelectors(){
+  const select = $("globalVehicle"); if(!select) return;
+  select.innerHTML = "";
+  vehicles.forEach(v => {
+    const opt = document.createElement("option"); opt.value = v.nome; opt.textContent = v.nome;
+    if(v.nome === activeVehicle) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+$("globalVehicle").addEventListener("change", (e)=>{
+  activeVehicle = e.target.value;
+  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  renderAll();
+});
+
+function obterKmAtualGeral() {
+  let listMaint = mainteances.filter(m => m.veiculo === activeVehicle).map(m => Number(m.odometro));
+  let listAbast = items.filter(x => x.veiculo === activeVehicle).map(x => Number(x.odometro));
+  
+  let objVeiculo = vehicles.find(v => v.nome === activeVehicle);
+  let kmBase = objVeiculo && objVeiculo.kmCompra ? Number(objVeiculo.kmCompra) : 0;
+  
+  let todosKms = [...listMaint, ...listAbast, kmBase].filter(n => !isNaN(n));
+  return todosKms.length > 0 ? Math.max(...todosKms) : 0;
+}
+
+function normalizarTexto(txt) {
+  return txt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function renderVidaUtilPecas() {
+  const container = $("containerVidaUtilHome");
+  const grid = $("gridPecasHome");
+  if(!grid) return;
+  
+  if(!activeVehicle.toLowerCase().includes("lead") && !activeVehicle.toLowerCase().includes("moto")) {
+    container.style.display = "none"; return;
+  }
+  container.style.display = "block"; grid.innerHTML = "";
+
+  const kmAtual = obterKmAtualGeral();
+  const planosPecas = [
+    { nome: "🛢️ Óleo do Motor", termo: ["oleo"], intervalo: 1000 },
+    { nome: "⚙️ Roletes do CVT", termo: ["rolete"], intervalo: 10000 },
+    { nome: "🎗️ Correia do CVT", termo: ["correia"], intervalo: 20000 },
+    { nome: "⚡ Vela de Ignição", termo: ["vela"], intervalo: 8000 },
+    { nome: "⭕ Pneu Traseiro", termo: ["pneu"], intervalo: 12000 }
+  ];
+
+  planosPecas.forEach(plano => {
+    const historicoPeça = mainteances
+      .filter(m => m.veiculo === activeVehicle && plano.termo.some(t => normalizarTexto(m.descricao).includes(t)))
+      .sort((a,b) => Number(b.odometro) - Number(a.odometro));
+
+    let objVeiculo = vehicles.find(v => v.nome === activeVehicle);
+    let kmBase = objVeiculo && objVeiculo.kmCompra ? Number(objVeiculo.kmCompra) : 93667;
+
+    let kmUltimaTroca = historicoPeça.length > 0 ? Number(historicoPeça[0].odometro) : kmBase;
+    let kmRodados = kmAtual - kmUltimaTroca;
+    
+    if(kmAtual === 0) { kmRodados = 0; }
+
+    let kmRestantes = plano.intervalo - kmRodados;
+    let pctRestante = Math.max(0, Math.min(100, (kmRestantes / plano.intervalo) * 100));
+    let classeStatus = "bom"; let textoStatus = "OK"; let corBarra = "var(--ok)";
+
+    if (kmAtual === 0) {
+      textoStatus = "AGUARD. KM"; corBarra = "var(--line)"; classeStatus = "atencao";
+    } else if (kmRestantes <= 0) {
+      classeStatus = "perigo"; textoStatus = "TROCAR"; corBarra = "var(--danger)";
+    } else if (kmRestantes <= plano.intervalo * 0.25) {
+      classeStatus = "atencao"; textoStatus = "ALERTA"; corBarra = "var(--warning)";
+    }
+
+    const card = document.createElement("div");
+    card.className = "card-peca";
+    card.innerHTML = `
+      <div class="peca-info"><span>${plano.nome}</span><span class="status-badge ${classeStatus}">${textoStatus}</span></div>
+      <div class="progress-bg"><div class="progress-bar" style="width: ${pctRestante}%; background: ${corBarra};"></div></div>
+      <div class="peca-meta"><span>Rodou: ${kmRodados.toLocaleString("pt-BR")} km</span><span>${kmAtual === 0 ? 'Insira a Km atual' : (kmRestantes <= 0 ? `Vencido` : `Restam ${kmRestantes.toLocaleString("pt-BR")} km`)}</span></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderCards(){
+  let filtered = items.filter(x => (x.veiculo || "Honda Lead 2010") === activeVehicle);
+  let totalDinheiro = filtered.reduce((acc, current) => acc + ((Number(current.litros)||0) * (Number(current.preco)||0)), 0);
+  $("totalGasto").textContent = `R$ ${formatNum(totalDinheiro, 2)}`;
+
+  const kmFinal = obterKmAtualGeral();
+  $("kmAtual").textContent = kmFinal > 0 ? `${kmFinal.toLocaleString("pt-BR")} km` : "0 km";
+
+  if(filtered.length === 0){
+    $("kmlGeral").textContent = "—"; $("ultimoAbastecido").textContent = "—"; return;
+  }
+
+  const ultimoItem = filtered[filtered.length - 1];
+  $("ultimoAbastecido").textContent = `${formatNum(ultimoItem.litros, 2)} L`;
+
+  if(filtered.length < 2){ $("kmlGeral").textContent = "—"; return; }
+
+  let objVeiculo = vehicles.find(v => v.nome === activeVehicle);
+  let kmInicialCalculo = objVeiculo && objVeiculo.kmCompra ? Number(objVeiculo.kmCompra) : Number(filtered[0].odometro);
+
+  const deltaTotalKm = Number(filtered[filtered.length-1].odometro) - kmInicialCalculo;
+  let litresConsiderados = filtered.reduce((acc, c) => acc + (Number(c.litros) || 0), 0);
+  $("kmlGeral").textContent = (deltaTotalKm > 0 && litresConsiderados > 0) ? formatNum(deltaTotalKm / litresConsiderados, 2) : "—";
+}
+
+function renderTable(){
+  const tb = $("tbody"); if(!tb) return; tb.innerHTML = "";
+  let filtered = items.filter(x => (x.veiculo || "Honda Lead 2010") === activeVehicle);
+  if(filtered.length===0){ $("histStatus").textContent = "Nenhum abastecimento."; return; }
+
+  [...filtered].reverse().forEach((x, idx, arr) => {
+    let nextOdo = arr[idx+1] ? Number(arr[idx+1].odometro) : null;
+    let delta = nextOdo ? (Number(x.odometro) - nextOdo) : null;
+    let kml = (delta > 0 && Number(x.litros) > 0) ? (delta / Number(x.litros)) : null;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${x.data.split("-").reverse().join("/")}</td>
+      <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
+      <td>${formatNum(x.litros, 2)} L</td>
+      <td>R$ ${formatNum(x.preco, 2)}</td>
+      <td>R$ ${formatNum(x.litros * x.preco, 2)}</td>
+      <td>${delta ? `${delta} km` : "—"}</td>
+      <td>${kml ? `${formatNum(kml, 2)} Km/L` : "—"}</td>
+      <td>
+        <button class="btn mini secondary action-group" onclick="editarAbastecimento('${x.id}')">✏️</button>
+        <button class="btn mini danger action-group" onclick="excluirAbastecimento('${x.id}')">🗑️</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+  $("histStatus").textContent = `${filtered.length} abastecimento(s).`;
+}
+
+window.editarAbastecimento = function(id) {
+  let target = items.find(item => String(item.id) === String(id));
+  if(!target) { toast("Registro não encontrado!"); return; }
+
+  $("edit-id").value = target.id;
+  $("edit-data").value = target.data;
+  $("edit-odometro").value = target.odometro;
+  $("edit-litros").value = String(target.litros).replace(".", ",");
+  $("edit-preco").value = String(target.preco).replace(".", ",");
+
+  $("modalBackdrop").classList.add("show");
+  $("modalEditAbastecimento").classList.add("show");
+};
+
+window.fecharModalEditar = function() {
+  $("modalBackdrop").classList.remove("show");
+  $("modalEditAbastecimento").classList.remove("show");
+};
+
+window.salvarModalEditar = function() {
+  const id = $("edit-id").value;
+  let target = items.find(item => String(item.id) === String(id));
+  if(!target) return;
+
+  const dataInput = $("edit-data").value;
+  const odoInput = parseBRNumber($("edit-odometro").value);
+  const litrosInput = parseBRNumber($("edit-litros").value);
+  const precoInput = parseBRNumber($("edit-preco").value);
+
+  if(!dataInput || odoInput === null || litrosInput === null || precoInput === null) {
+    toast("Por favor, digite valores válidos!"); return;
+  }
+
+  target.data = dataInput;
+  target.odometro = odoInput;
+  target.litros = litrosInput;
+  target.preco = precoInput;
+
+  items.sort((a,b)=> a.data.localeCompare(b.data) || (a.odometro - b.odometro));
+  saveItems(items);
+  fecharModalEditar();
+  renderAll();
+  toast("Abastecimento alterado com sucesso!");
+};
+
+window.excluirAbastecimento = function(id) {
+  if(!confirm("Tem certeza que deseja remover este registro de abastecimento?")) return;
+  items = items.filter(item => String(item.id) !== String(id));
+  saveItems(items);
+  renderAll();
+  toast("Abastecimento removido com sucesso!");
+};
+
+function renderMaintenanceTable(){
+  const tb = $("tbody-maint"); if(!tb) return; tb.innerHTML = "";
+  let filtered = mainteances.filter(m => m.veiculo === activeVehicle).sort((a,b) => Number(b.odometro) - Number(a.odometro));
+  if(filtered.length === 0){ tb.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhuma manutenção.</td></tr>`; return; }
+
+  filtered.forEach(m => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${m.data.split("-").reverse().join("/")}</td><td>${Number(m.odometro).toLocaleString("pt-BR")} km</td><td>${m.descricao}</td><td style="color:var(--ok)">${m.custo > 0 ? `R$ ${formatNum(m.custo, 2)}` : '—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+$("btnSalvarMaint").addEventListener("click", ()=>{
+  const mData = $("maint-data").value; const mOdo = parseBRNumber($("maint-odo").value);
+  const mDesc = $("maint-desc").value.trim(); const mCusto = parseBRNumber($("maint-custo").value) || 0;
+  if(!mData || mOdo === null || !mDesc){ toast("Preencha os campos!"); return; }
+
+  mainteances.push({ id: "m_"+Date.now(), veiculo: activeVehicle, data: mData, odometro: mOdo, descricao: mDesc, custo: mCusto });
+  saveMaintenances(mainteances);
+  $("maint-odo").value = ""; $("maint-desc").value = ""; $("maint-custo").value = "";
+  renderAll(); toast("Salvo!");
+});
+
+$("btnSalvar").addEventListener("click", ()=>{
+  const d = $("data").value; const o = parseBRNumber($("odometro").value); const l = parseBRNumber($("litros").value); const p = parseBRNumber($("precoLitro").value) || 0;
+  if(!d || o === null || l === null){ toast("Preencha os campos!"); return; }
+
+  items.push({ id: "abast_" + Date.now(), data: d, odometro: o, litros: l, preco: p, veiculo: activeVehicle });
+  items.sort((a,b)=> a.data.localeCompare(b.data) || (a.odometro - b.odometro));
+  saveItems(items);
+  $("odometro").value = ""; $("litros").value = ""; $("precoLitro").value = "";
+  renderAll(); toast("Abastecimento Salvo!");
+});
+
+$("btnApagarTudo").addEventListener("click", ()=>{
+  if(!confirm(`Deseja limpar abastecimentos de "${activeVehicle}"? O histórico de peças será mantido.`)) return;
+  items = items.filter(x => x.veiculo !== activeVehicle);
+  saveItems(items);
+  
+  if(activeVehicle === "Honda Lead 2010") {
+    mainteances = [...historicoInicialPavani];
+    saveMaintenances(mainteances);
+  }
+  renderAll(); toast("Abastecimentos resetados!");
+});
+
+$("btnResetTotal").addEventListener("click", () => {
+  if(!confirm("⚠️ ATENÇÃO: Isso apagará TODOS os veículos da garagem, históricos de combustível, manutenções e preferências do aplicativo de forma definitiva! Tem certeza?")) return;
+  if(!confirm("Confirmação final: Deseja mesmo restaurar o app para os padrões de fábrica?")) return;
+  
+  localStorage.removeItem(STORE_KEY);
+  localStorage.removeItem(VEHICLES_KEY);
+  localStorage.removeItem(ACTIVE_VEHICLE_KEY);
+  localStorage.removeItem(MAINT_KEY);
+  localStorage.removeItem(THEME_KEY);
+  
+  window.location.reload();
+});
+
+// AÇÃO DE CADASTRO DO VEÍCULO COM NOVOS CAMPOS
+$("btnCadastrarVeiculo").addEventListener("click", ()=>{
+  const nome = $("novoVeiculo").value.trim();
+  const modelo = $("novoModelo").value.trim();
+  const ano = $("novoAno").value.trim();
+  const kmComp = parseBRNumber($("novoKmComp").value) || 0;
+  const dataComp = $("novaDataComp").value;
+
+  if(!nome) { toast("Digite um nome válido."); return; }
+  if(vehicles.some(v => v.nome === nome)) { toast("Esse veículo já existe."); return; }
+  
+  const novoObj = {
+    id: "v_" + Date.now(),
+    nome: nome,
+    modelo: modelo || "—",
+    ano: ano || "—",
+    kmCompra: kmComp,
+    dataCompra: dataComp || ""
+  };
+
+  vehicles.push(novoObj); 
+  saveVehicles(vehicles); 
+  activeVehicle = nome;
+  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+
+  $("novoVeiculo").value = ""; 
+  $("novoModelo").value = ""; 
+  $("novoAno").value = "";
+  $("novoKmComp").value = "";
+  $("novaDataComp").value = "";
+
+  renderAll(); 
+  toast("Veículo adicionado!");
+});
+
+function renderVehiclesList(){
+  const list = $("listaVeiculos"); if(!list) return; list.innerHTML = "";
+  
+  vehicles.forEach(v => {
+    const itemEl = document.createElement("div"); itemEl.className = "v-item";
+    const isActive = v.nome === activeVehicle;
+    
+    const termosCarro = ["carro", "civic", "toyota", "corolla", "fiat", "chevrolet", "ford", "volkswagen", "gol", "uno", "pampa", "corsa", "palio"];
+    const emoji = termosCarro.some(t => v.nome.toLowerCase().includes(t)) ? "🚗" : "🏍️";
+
+    let dataFormatada = v.dataCompra ? v.dataCompra.split("-").reverse().join("/") : "—";
+
+    itemEl.innerHTML = `
+      <div class="v-header-row">
+        <span style="font-weight:700;">${emoji} ${v.nome} ${isActive ? "<small style='color:var(--ok)'>(Ativo)</small>" : ""}</span>
+        <div class="v-actions">
+          <button class="btn mini secondary" onclick="editarVeiculo('${v.id}')">✏️ Editar</button>
+          <button class="btn mini danger" onclick="removerVeiculo('${v.id}')">🗑️ Excluir</button>
+        </div>
+      </div>
+      <div class="v-meta-row">
+        <span><strong>Mod:</strong> ${v.modelo || "—"}</span>
+        <span><strong>Ano:</strong> ${v.ano || "—"}</span>
+        <span><strong>Km Inicial:</strong> ${Number(v.kmCompra || 0).toLocaleString("pt-BR")} km</span>
+        <span><strong>Compra:</strong> ${dataFormatada}</span>
+      </div>
+    `;
+    list.appendChild(itemEl);
+  });
+}
+
+// CORREÇÃO: ABRE MODAL FLUTUANTE DE VERDADE PARA EDITAR VEÍCULOS
+window.editarVeiculo = function(id) {
+  let target = vehicles.find(v => String(v.id) === String(id));
+  if(!target) { toast("Veículo não encontrado!"); return; }
+
+  $("edit-v-antigo-id").value = target.id;
+  $("edit-v-nome").value = target.nome;
+  $("edit-v-modelo").value = target.modelo || "";
+  $("edit-v-ano").value = target.ano || "";
+  $("edit-v-km").value = target.kmCompra || 0;
+  $("edit-v-datacomp").value = target.dataCompra || "";
+
+  $("modalBackdrop").classList.add("show");
+  $("modalEditVeiculo").classList.add("show");
+};
+
+window.fecharModalVeiculo = function() {
+  $("modalBackdrop").classList.remove("show");
+  $("modalEditVeiculo").classList.remove("show");
+};
+
+window.salvarModalVeiculo = function() {
+  const id = $("edit-v-antigo-id").value;
+  let target = vehicles.find(v => String(v.id) === String(id));
+  if(!target) return;
+
+  const novoNome = $("edit-v-nome").value.trim();
+  const novoModelo = $("edit-v-modelo").value.trim();
+  const novoAno = $("edit-v-ano").value.trim();
+  const novoKm = parseBRNumber($("edit-v-km").value) || 0;
+  const novaData = $("edit-v-datacomp").value;
+
+  if(!novoNome) { toast("Nome do veículo não pode ficar vazio!"); return; }
+  
+  if(novoNome !== target.nome && vehicles.some(v => v.nome === novoNome)) {
+    toast("Já existe outro veículo cadastrado com este nome."); return;
+  }
+
+  const antigoNome = target.nome;
+
+  // Atualiza objeto
+  target.nome = novoNome;
+  target.modelo = novoModelo || "—";
+  target.ano = novoAno || "—";
+  target.kmCompra = novoKm;
+  target.dataCompra = novaData || "";
+
+  saveVehicles(vehicles);
+
+  // Cascata nos abastecimentos e manutenções se o nome mudou
+  if(novoNome !== antigoNome) {
+    items = items.map(x => x.veiculo === antigoNome ? {...x, veiculo: novoNome} : x);
+    saveItems(items);
+
+    mainteances = mainteances.map(m => m.veiculo === antigoNome ? {...m, veiculo: novoNome} : m);
+    saveMaintenances(mainteances);
+
+    if (activeVehicle === antigoNome) {
+      activeVehicle = novoNome;
+      localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+    }
+  }
+
+  fecharModalVeiculo();
+  renderAll();
+  toast("Dados do veículo atualizados!");
+};
+
+window.removerVeiculo = function(id){
+  let target = vehicles.find(v => String(v.id) === String(id));
+  if(!target) return;
+  
+  if(vehicles.length === 1) { toast("Você precisa manter pelo menos um veículo cadastrado."); return; }
+  if(!confirm(`Excluir permanentemente "${target.nome}"? Isso apagará também TODOS os abastecimentos e manutenções dele.`)) return;
+  
+  const nomeRemovido = target.nome;
+  vehicles = vehicles.filter(x => String(x.id) !== String(id));
+  saveVehicles(vehicles);
+  
+  items = items.filter(x => x.veiculo !== nomeRemovido);
+  saveItems(items);
+  mainteances = mainteances.filter(m => m.veiculo !== nomeRemovido);
+  saveMaintenances(mainteances);
+  
+  if(activeVehicle === nomeRemovido){
+    activeVehicle = vehicles[0].nome;
+    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+  }
+  
+  renderAll();
+  toast("Veículo e registros removidos.");
+};
+
+$("btnExportarJson").addEventListener("click", () => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({veiculos: vehicles, abastecimentos: items, manutencoes: mainteances}, null, 2));
+  const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `backup_total.json`); dl.click();
+});
+
+$("btnCopiarTexto").addEventListener("click", () => {
+  const dados = { veiculos: vehicles, abastecimentos: items, manutencoes: mainteances };
+  try {
+    const stringDados = JSON.stringify(dados);
+    const hashBackup = btoa(unescape(encodeURIComponent(stringDados)));
+    navigator.clipboard.writeText(hashBackup).then(() => {
+      toast("📋 Código de backup copiado!");
+    }).catch(() => {
+      toast("Erro ao copiar automaticamente.");
+    });
+  } catch(e) { toast("Erro ao processar o backup."); }
+});
+
+$("btnRestaurarTexto").addEventListener("click", () => {
+  const hash = $("txtRestaurar").value.trim();
+  if(!hash) { toast("Cole o código antes!"); return; }
+  if(!confirm("⚠️ Isso irá substituir os dados atuais. Continuar?")) return;
+  
+  try {
+    const stringDados = decodeURIComponent(escape(atob(hash)));
+    const dados = JSON.parse(stringDados);
+    if(dados.veiculos && dados.abastecimentos && dados.manutencoes) {
+      vehicles = dados.veiculos; items = dados.abastecimentos; mainteances = dados.manutencoes; 
+      activeVehicle = vehicles[0] ? (vehicles[0].nome || vehicles[0]) : "Honda Lead 2010";
+      
+      // Sanitização rápida caso venha de backups antigos em formato string pura
+      vehicles = vehicles.map((v, i) => typeof v === 'string' ? { id:"v_"+i+"_"+Date.now(), nome: v, modelo:"—", ano:"—", kmCompra:0, dataCompra:"" } : v);
+      
+      saveVehicles(vehicles); saveItems(items); saveMaintenances(mainteances);
+      localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicle);
+      $("txtRestaurar").value = ""; renderAll(); toast("📥 Restaurado!");
+    } else { toast("Formato de backup inválido."); }
+  } catch(e) { toast("Erro ao ler o código."); }
+});
+
+window.onload = function() {
+  const hoje = new Date().toISOString().split('T')[0];
+  $("data").value = hoje; $("maint-data").value = hoje;
+  $("odometro").value = ""; $("maint-odo").value = "";
+  
+  if(localStorage.getItem(MAINT_KEY) === null || JSON.parse(localStorage.getItem(MAINT_KEY)).length === 0) {
+    localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
+    mainteances = [...historicoInicialPavani];
+  }
+  
+  if (localStorage.getItem(THEME_KEY) === "light") document.body.classList.add("light-mode");
+  $("themeBtn").addEventListener("click", () => {
+    const isLight = document.body.classList.toggle("light-mode");
+    localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
+  });
+  renderAll();
+};
+</script>
+</body>
+</html>
