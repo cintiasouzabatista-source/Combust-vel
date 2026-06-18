@@ -7,6 +7,7 @@
 
   <style>
     :root{
+      /* Modo Escuro (Padrão) */
       --bg:#06101f;
       --panel:rgba(255,255,255,.04);
       --card:rgba(255,255,255,.06);
@@ -23,15 +24,34 @@
       --line:rgba(255,255,255,.08);
       --sideW: 280px;
     }
+
+    body.light-mode {
+      /* Modo Claro */
+      --bg: #f4f7fc;
+      --panel: #ffffff;
+      --card: #eef2f7;
+      --stroke: rgba(0, 0, 0, .08);
+      --text: #0f172a;
+      --muted: #475569;
+      --line: rgba(0, 0, 0, .08);
+      --shadow: 0 10px 25px rgba(0, 0, 0, .05);
+    }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
+      background: var(--bg);
       overflow-x:hidden;
     }
+    
+    /* Mantém o degradê apenas se NÃO estiver no modo claro */
+    body:not(.light-mode) {
+      background: radial-gradient(1200px 900px at 10% 0%, #0a1c38 0%, var(--bg) 45%, #050c17 100%);
+    }
+
     .app{
       min-height:100vh;
       display:flex;
@@ -49,6 +69,9 @@
       transition: transform .22s ease;
       z-index:2500;
       backdrop-filter: blur(14px);
+    }
+    body.light-mode .sidebar {
+      background: rgba(255, 255, 255, 0.92);
     }
     .sidebar.open{ transform: translateX(0); }
     .sidebar .brand{
@@ -72,7 +95,7 @@
       width:100%;
       border-radius:14px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
+      background:var(--panel);
       color:var(--muted);
       padding:12px 12px;
       cursor:pointer;
@@ -126,7 +149,7 @@
       width:auto;
       border-radius:14px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
+      background:var(--panel);
       color:var(--text);
       padding:10px 12px;
       cursor:pointer;
@@ -139,7 +162,7 @@
       padding:10px 12px;
       border-radius:999px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
+      background:var(--panel);
       color:var(--muted);
       font-weight:600;
       font-size:12px;
@@ -187,11 +210,14 @@
       .cards{ grid-template-columns:repeat(4, 1fr); }
     }
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      background: var(--card);
       border:1px solid var(--line);
       border-radius:18px;
       padding:14px 14px;
       min-height:92px;
+    }
+    body:not(.light-mode) .card {
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
     }
     .card .label{
       margin:0;
@@ -206,7 +232,8 @@
     }
     .small{
       margin-top:6px;
-      color:rgba(234,241,255,.55);
+      color:var(--muted);
+      opacity: 0.8;
       font-size:12px;
       font-weight:400;
     }
@@ -228,7 +255,8 @@
     .oleo-title { font-weight: 700; font-size: 14px; color: var(--warning); display: flex; align-items: center; gap: 6px;}
     .oleo-status { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: rgba(255,184,77,0.15); color: var(--warning); }
     .oleo-status.ok { background: rgba(41,209,124,0.15); color: var(--ok); }
-    .oleo-progress-bg { background: rgba(255,255,255,0.05); height: 8px; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    .oleo-progress-bg { background: rgba(0,0,0,0.06); height: 8px; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    body:not(.light-mode) .oleo-progress-bg { background: rgba(255,255,255,0.05); }
     .oleo-progress-bar { background: linear-gradient(90deg, var(--warning), #ff9400); height: 100%; width: 0%; transition: width 0.3s ease; }
     .oleo-progress-bar.ok { background: linear-gradient(90deg, var(--ok), #10b981); }
     .oleo-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 6px; }
@@ -237,7 +265,8 @@
     label{
       display:block;
       margin:10px 0 6px;
-      color:rgba(234,241,255,.78);
+      color:var(--text);
+      opacity: 0.9;
       font-size:12px;
       font-weight:600;
     }
@@ -245,16 +274,31 @@
       width:100%;
       border-radius:14px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.06);
+      background:var(--card);
       color:var(--text);
       padding:12px 12px;
       outline:none;
       font-weight:500;
       font-size:14px;
     }
-    input::placeholder{ color:rgba(234,241,255,.45); font-weight:400; }
+    body:not(.light-mode) input, body:not(.light-mode) select, body:not(.light-mode) button {
+      background: rgba(255,255,255,.06);
+    }
+    input::placeholder{ color:var(--muted); opacity:0.6; font-weight:400; }
     input:focus, select:focus{ border-color:rgba(43,109,255,.55); box-shadow:0 0 0 4px rgba(43,109,255,.12); }
-    select{ appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23eaf1ff'><path d='M0 3h12L6 10z'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 32px; }
+    
+    select{ 
+      appearance: none; 
+      background-repeat: no-repeat; 
+      background-position: right 14px center; 
+      padding-right: 32px; 
+    }
+    body.light-mode select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23475569'><path d='M0 3h12L6 10z'/></svg>");
+    }
+    body:not(.light-mode) select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23eaf1ff'><path d='M0 3h12L6 10z'/></svg>");
+    }
 
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
@@ -262,22 +306,24 @@
     .btn{
       background:linear-gradient(180deg, var(--accent), var(--accent2));
       border:1px solid rgba(255,255,255,.14);
+      color: #fff !important;
       cursor:pointer;
       font-weight:600;
     }
     .btn.secondary{
-      background:rgba(255,255,255,.06);
+      background:var(--card);
       border:1px solid var(--line);
-      color:var(--text);
+      color:var(--text) !important;
     }
     .btn.danger{
       background:rgba(255,71,111,.12);
       border-color:rgba(255,71,111,.30);
-      color:#ffd7e0;
+      color:var(--danger) !important;
     }
+    body:not(.light-mode) .btn.danger { color:#ffd7e0 !important; }
     .btn:active{ transform: translateY(1px); }
 
-    .statusLine{ color:rgba(234,241,255,.78); font-size:12px; font-weight:400; margin-top:10px; }
+    .statusLine{ color:var(--muted); font-size:12px; font-weight:400; margin-top:10px; }
 
     /* Table & Lists */
     table{
@@ -286,21 +332,22 @@
       overflow:hidden;
       border-radius:16px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
+      background:var(--panel);
     }
     th, td{
       padding:12px 10px;
       text-align:left;
       font-size:13px;
-      border-bottom:1px solid rgba(255,255,255,.07);
+      border-bottom:1px solid var(--line);
       vertical-align:middle;
       font-weight:400;
     }
-    th{ color:rgba(234,241,255,.70); font-weight:600; background: rgba(255,255,255,0.02); }
+    th{ color:var(--muted); font-weight:600; background: rgba(0,0,0,0.02); }
+    body:not(.light-mode) th { background: rgba(255,255,255,0.02); }
     tr:last-child td{ border-bottom:none; }
 
     .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 10px;}
-    .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; }
+    .v-item{ display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
     .v-item span { font-weight: 500; font-size: 14px; }
     .v-item button { width: auto; padding: 6px 12px; font-size: 12px; }
 
@@ -309,7 +356,7 @@
       bottom: 20px;
       right: 20px;
       background: var(--accent);
-      color: var(--text);
+      color: #fff;
       padding: 12px 24px;
       border-radius: 12px;
       font-weight: 600;
@@ -325,15 +372,15 @@
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="logo"></div>
+      <div class="logo">🚗</div>
       <div class="txt">
         <div class="t">Painel Combustível</div>
-        <div class="s">Meus Veiculos</div>
+        <div class="s">Meus Veículos</div>
       </div>
     </div>
 
     <nav class="nav" aria-label="Menu">
-      <button class="active" data-view="painel"><span class="ic"></span><span>Painel</span></button>
+      <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
       <button data-view="abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
       <button data-view="historico"><span class="ic">🧾</span><span>Histórico Consumo</span></button>
       <button data-view="manutencao"><span class="ic">🔧</span><span>Manutenção & Óleo</span></button>
@@ -344,21 +391,23 @@
   <div class="overlay" id="overlay"></div>
 
   <main class="main">
-   <div class="topbar">
-  <button class="menuBtn" id="menuBtn">☰ Menu</button>
-  <div>
-    <h1 id="pageTitle">Painel</h1>
-    <div class="subtitle" id="pageSub">Métricas essenciais</div>
-  </div>
-  <div style="display: flex; gap: 8px; align-items: center;">
-    <button id="themeBtn" class="menuBtn" style="padding: 10px 12px;">🌓 Tema</button>
+    <div class="topbar">
+      <button class="menuBtn" id="menuBtn">☰ Menu</button>
+      <div>
+        <h1 id="pageTitle">Painel</h1>
+        <div class="subtitle" id="pageSub">Métricas essenciais</div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="themeBtn" class="menuBtn" style="padding: 10px 12px;">🌓 Tema</button>
+        <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
+      </div>
     </div>
-<div style="margin-bottom: 14px;" id="globalVehiclesContainer">
+    
+    <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
       <label for="globalVehicle" style="margin-top: 0;">Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
-    <!-- ABA 1: PAINEL -->
     <section class="section view" id="view-painel">
       <div class="oleo-widget" id="oleoWidgetContainer" style="display:none;">
         <div class="oleo-header">
@@ -398,7 +447,6 @@
       </div>
     </section>
 
-    <!-- ABA 2: ABASTECER -->
     <section class="section view" id="view-abastecer" style="display:none">
       <div class="sectionTitle">⛽ Novo lançamento de combustível</div>
       <label for="data">Data</label>
@@ -424,7 +472,6 @@
       <div class="statusLine" id="saveStatus">—</div>
     </section>
 
-    <!-- ABA 3: HISTÓRICO CONSUMO -->
     <section class="section view" id="view-historico" style="display:none">
       <div class="sectionTitle">🧾 Histórico de Abastecimentos</div>
       <div style="overflow:auto">
@@ -444,7 +491,6 @@
       <div class="statusLine" id="histStatus">—</div>
     </section>
 
-    <!-- ABA 4: MANUTENÇÃO -->
     <section class="section view" id="view-manutencao" style="display:none">
       <div class="sectionTitle">🔧 Registrar Nova Manutenção / Troca de Óleo</div>
       <div class="row">
@@ -485,7 +531,6 @@
       </div>
     </section>
 
-    <!-- ABA 5: VEÍCULOS -->
     <section class="section view" id="view-veiculos" style="display:none">
       <div class="sectionTitle">Cadastrar Veículo</div>
       <label for="novoVeiculo">Nome do Veículo</label>
@@ -505,6 +550,7 @@ const STORE_KEY = "cb_abastecimentos_v5";
 const VEHICLES_KEY = "cb_veiculos_v5";
 const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
 const MAINT_KEY = "cb_manutencoes_v5";
+const THEME_KEY = "cb_theme_v5";
 
 const $ = (id)=>document.getElementById(id);
 
@@ -872,7 +918,7 @@ $("btnLimparForm").addEventListener("click", ()=>{
 });
 
 $("btnApagarTudo").addEventListener("click", ()=>{
-  if(!confirm(`Tem certeza que deseja apagar TODOS os registros de combustível de "${activeVehicle}"?`)) return;
+  if(!confirm(`Tem certeza que deseja limpar os registros de combustível de "${activeVehicle}"?`)) return;
   items = items.filter(x => (x.veiculo || "Honda Lead 2010") !== activeVehicle);
   saveItems(items);
   renderAll();
@@ -936,10 +982,28 @@ window.removerVeiculo = function(nome){
   toast("Veículo removido.");
 };
 
+/* LÓGICA DO TEMA (CLARO / ESCURO) */
+function inicializarTema() {
+  const themeBtn = $("themeBtn");
+  if (!themeBtn) return;
+
+  const temaSalvo = localStorage.getItem(THEME_KEY) || "dark";
+  if (temaSalvo === "light") {
+    document.body.classList.add("light-mode");
+  }
+
+  themeBtn.addEventListener("click", () => {
+    const isLight = document.body.classList.toggle("light-mode");
+    localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
+    toast(`Modo ${isLight ? "Claro" : "Escuro"} ativo`);
+  });
+}
+
 window.onload = function() {
   const hoje = new Date().toISOString().split('T')[0];
   $("data").value = hoje;
   $("maint-data").value = hoje;
+  inicializarTema();
   renderAll();
 };
 </script>
