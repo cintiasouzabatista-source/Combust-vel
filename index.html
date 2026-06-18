@@ -235,7 +235,7 @@
         .row-km { font-weight: 600; color: #cbd5e1; }
         .row-val { font-weight: 600; color: #f8fafc; }
 
-        /* Menu de Navegação Fixo Inferior (Mobile/Clean) */
+        /* Menu de Navegação Fixo Inferior */
         .footer-nav {
             position: fixed;
             bottom: 0;
@@ -408,31 +408,37 @@
             let manutencoesAtuais = [];
             try {
                 manutencoesAtuais = JSON.parse(localStorage.getItem(MAINT_KEY) || "[]");
-            } catch(e) {}
+            } catch(e) {
+                console.error("Erro ao ler localStorage:", e);
+            }
 
             // Se estiver vazio, popula automaticamente com a lista detalhada
-            if (manutencoesAtuais.length === 0) {
+            if (!Array.isArray(manutencoesAtuais) || manutencoesAtuais.length === 0) {
                 localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
                 manutencoesAtuais = historicoInicialPavani;
             }
             renderizarTabela(manutencoesAtuais);
         }
 
-        // Renderiza as linhas na tabela
+        // Renderiza as linhas na tabela com proteção de Fallback para itens corrompidos
         function renderizarTabela(dados) {
             const tbody = document.getElementById("maint-table-body");
+            if (!tbody) return;
             tbody.innerHTML = "";
             
-            // Exibe de forma decrescente (mais recente primeiro)
             const dadosOrdenados = [...dados].reverse();
 
             dadosOrdenados.forEach(item => {
                 const tr = document.createElement("tr");
+                
+                // Proteção: Garante que o custo seja um número válido antes de formatar
+                const valorCusto = typeof item.custo === 'number' ? item.custo : parseFloat(item.custo) || 0;
+
                 tr.innerHTML = `
-                    <td>${item.data}</td>
-                    <td class="row-km">${item.odometro} km</td>
-                    <td>${item.descricao}</td>
-                    <td class="row-val">R$ ${item.custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td>${item.data || ''}</td>
+                    <td class="row-km">${item.odometro || '0'} km</td>
+                    <td>${item.descricao || ''}</td>
+                    <td class="row-val">R$ ${valorCusto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -442,16 +448,35 @@
         const inputLitros = document.getElementById("input-litros");
         const inputPreco = document.getElementById("input-preco");
         const labelCusto = document.getElementById("label-custo-total");
+        const formAbastecimento = document.getElementById("form-abastecimento");
 
         function calcularCustoTotal() {
+            if (!inputLitros || !inputPreco || !labelCusto) return;
             const litros = parseFloat(inputLitros.value) || 0;
             const preco = parseFloat(inputPreco.value) || 0;
             const total = litros * preco;
             labelCusto.textContent = `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
         }
 
-        inputLitros.addEventListener("input", calcularCustoTotal);
-        inputPreco.addEventListener("input", calcularCustoTotal);
+        if (inputLitros) inputLitros.addEventListener("input", calcularCustoTotal);
+        if (inputPreco) inputPreco.addEventListener("input", calcularCustoTotal);
+
+        // Evita que o clique em "Salvar" quebre ou atualize a página antes de implementar a lógica de Push
+        if (formAbastecimento) {
+            formAbastecimento.addEventListener("submit", function(e) {
+                e.preventDefault();
+                alert("Formulário interceptado! Implemente aqui o push para o LocalStorage.");
+            });
+        }
+
+        // Limpar Formulário
+        const btnLimpar = document.getElementById("btn-limpar");
+        if (btnLimpar && formAbastecimento) {
+            btnLimpar.addEventListener("click", () => {
+                formAbastecimento.reset();
+                if (labelCusto) labelCusto.textContent = "R$ 0,00";
+            });
+        }
 
         // Executa na carga da página
         window.onload = inicializarBanco;
