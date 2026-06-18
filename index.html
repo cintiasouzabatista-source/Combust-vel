@@ -17,6 +17,7 @@
       --accent2: #1f55cc;
       --danger: #ff476f;
       --ok: #29d17c;
+      --warn: #ff9f43;
       --shadow: 0 14px 34px rgba(0,0,0,.28);
       --radius: 18px;
       --line: rgba(255,255,255,.08);
@@ -149,16 +150,16 @@
     }
     .sectionTitle{ margin:0 0 14px; font-size:14px; font-weight:950; }
 
-    /* Cards */
+    /* Cards Grid */
     .cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media (min-width: 980px){ .cards{ grid-template-columns:repeat(4, 1fr); } }
+    @media (min-width: 980px){ .cards{ grid-template-columns:repeat(3, 1fr); } }
     .card{
       background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
       border:1px solid var(--line); border-radius:18px; padding:14px; min-height:92px;
     }
     [data-theme="light"] .card { background: #ffffff; }
     .card .label{ margin:0; color:var(--muted); font-size:12px; font-weight:800; }
-    .card .val{ margin-top:8px; font-size:20px; font-weight:950; }
+    .card .val{ margin-top:8px; font-size:20px; font-weight:950; line-height: 1.2; }
     .small{ margin-top:6px; color:var(--muted); font-size:12px; font-weight:800; }
 
     /* Form Inputs */
@@ -234,10 +235,10 @@
   <aside class="sidebar" id="sidebar">
     <div>
       <div class="brand">
-        <div class="logo"></div>
+        <div class="logo">🚗</div>
         <div class="txt">
           <div class="t">Painel Combustível</div>
-          <div class="s">Garagem</div>
+          <div class="s">Garagem multimarcas</div>
         </div>
       </div>
 
@@ -264,11 +265,11 @@
         <h1 id="pageTitle">Painel</h1>
         <div class="subtitle" id="pageSub">Métricas essenciais</div>
       </div>
-    
+      <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
     </div>
 
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
-      <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo:</label>
+      <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
@@ -282,10 +283,10 @@
         <div class="card">
           <div class="label">Último Abastecido</div>
           <div class="val" id="ultimoAbastecido">—</div>
-          <div class="small">litros colocados</div>
+          <div class="small" id="subUltimoAbastecido">litros colocados</div>
         </div>
         <div class="card">
-          <div class="label">Total Gasto (Filtros)</div>
+          <div class="label">Total Gasto</div>
           <div class="val" id="totalGasto">—</div>
           <div class="small">combustível acumulado</div>
         </div>
@@ -293,6 +294,11 @@
           <div class="label">Km Atual</div>
           <div class="val" id="kmAtual">—</div>
           <div class="small">último odômetro</div>
+        </div>
+        <div class="card" style="grid-column: span 2; max-width: 100%;">
+          <div class="label">Próxima Troca de Óleo</div>
+          <div class="val" id="cardOleo">—</div>
+          <div class="small" id="subCardOleo">Nenhum serviço mapeado</div>
         </div>
       </div>
     </section>
@@ -375,8 +381,8 @@
         </div>
       </div>
 
-      <label for="mDescricao">Descrição do Serviço</label>
-      <textarea id="mDescricao" rows="2" placeholder="Ex: Troca de óleo, pastilhas de freio, alinhamento..."></textarea>
+      <label for="mDescricao">Descrição do Serviço (Ex: Troca de óleo)</label>
+      <textarea id="mDescricao" rows="2" placeholder="Escreva aqui o que foi feito. Use a palavra 'óleo' para atualizar o painel principal."></textarea>
 
       <div class="row" style="margin-top:16px">
         <button class="btn primary" id="btnSalvarManutencao" type="button">Salvar Serviço</button>
@@ -443,8 +449,7 @@ const $ = (id)=>document.getElementById(id);
 
 function toast(msg){
   const t = $("toast");
-  t.textContent = msg;
-  t.style.display="block";
+  t.textContent = msg; t.style.display="block";
   clearTimeout(toast._tm);
   toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
 }
@@ -486,13 +491,13 @@ function loadVehicles(){
 function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
 
 let items = loadItems();
-let maintenances = loadMaintenances();
+let CakeMaint = loadMaintenances(); // Variável global de trabalho das manutenções
 let vehicles = loadVehicles();
 let activeVehicleId = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0].id;
 
 if (!vehicles.some(v => v.id === activeVehicleId)) { activeVehicleId = vehicles[0].id; }
 
-/* Views / Naves */
+/* Navegação entre Views */
 const views = ["painel","abastecer","historico","manutencao","veiculos"];
 function showView(name){
   for(const v of views){
@@ -508,373 +513,4 @@ function showView(name){
     abastecer: ["Abastecer","Novo lançamento"],
     historico: ["Histórico","Seus lançamentos"],
     manutencao: ["Manutenção","Controle de revisões"],
-    veiculos: ["Veículos","Gerenciar garagem"]
-  };
-  $("pageTitle").textContent = titles[name][0];
-  $("pageSub").textContent = titles[name][1];
-  $("globalVehiclesContainer").style.display = (name === "veiculos") ? "none" : "block";
-  
-  closeSidebar();
-  renderAll();
-}
-
-function openSidebar(){ $("sidebar").classList.add("open"); $("overlay").classList.add("show"); }
-function closeSidebar(){ $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); }
-$("menuBtn").addEventListener("click", openSidebar);
-$("overlay").addEventListener("click", closeSidebar);
-
-document.querySelectorAll(".nav button").forEach(b=>{
-  b.addEventListener("click", ()=>{
-    showView(b.dataset.view);
-  });
-});
-
-/* Logica de Negocio */
-function sortItems(){
-  items.sort((a,b)=> (a.data||"").localeCompare(b.data||"") || (Number(a.odometro)-Number(b.odometro)));
-  maintenances.sort((a,b)=> (a.data||"").localeCompare(b.data||"") || (Number(a.odometro)-Number(b.odometro)));
-}
-
-function processMetrics(){
-  sortItems();
-  const currentVeh = vehicles.find(v => v.id === activeVehicleId) || { odoCompra: 0 };
-  const initialOdo = Number(currentVeh.odoCompra) || 0;
-  
-  for(let i=0; i<items.length; i++){
-    if(items[i].veiculoId !== activeVehicleId) continue;
-    
-    let prev = null;
-    for(let j = i - 1; j >= 0; j--){
-      if(items[j].veiculoId === activeVehicleId){ prev = items[j]; break; }
-    }
-    
-    if(prev){
-      const delta = Number(items[i].odometro) - Number(prev.odometro);
-      items[i].deltaKm = delta > 0 ? delta : null;
-      items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
-    } else {
-      const delta = Number(items[i].odometro) - initialOdo;
-      items[i].deltaKm = delta > 0 ? delta : null;
-      items[i].kml = (delta > 0 && Number(items[i].litros) > 0) ? (delta / Number(items[i].litros)) : null;
-    }
-  }
-}
-
-function renderAll(){
-  updateVehicleSelectors();
-  processMetrics();
-  renderCards();
-  renderTable();
-  renderMaintenanceTable();
-  renderVehiclesList();
-}
-
-function updateVehicleSelectors(){
-  const select = $("globalVehicle");
-  select.innerHTML = "";
-  vehicles.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v.id; opt.textContent = v.nome;
-    if(v.id === activeVehicleId) opt.selected = true;
-    select.appendChild(opt);
-  });
-}
-
-$("globalVehicle").addEventListener("change", (e)=>{
-  activeVehicleId = e.target.value;
-  localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
-  limparFormulario();
-  limparMaintForm();
-  renderAll();
-  const target = vehicles.find(v => v.id === activeVehicleId);
-  toast(`Carro ativo: ${target ? target.nome : ""}`);
-});
-
-function renderCards(){
-  let filtered = items.filter(x => x.veiculoId === activeVehicleId);
-  const currentVeh = vehicles.find(v => v.id === activeVehicleId) || { odoCompra: 0 };
-
-  if(filtered.length === 0){
-    $("kmlGeral").textContent = "—";
-    $("ultimoAbastecido").textContent = "—";
-    $("totalGasto").textContent = "—";
-    $("kmAtual").textContent = `${(Number(currentVeh.odoCompra)||0).toLocaleString("pt-BR")} km`;
-    return;
-  }
-
-  const ultimoItem = filtered[filtered.length - 1];
-  $("kmAtual").textContent = `${Number(ultimoItem.odometro).toLocaleString("pt-BR")} km`;
-  $("ultimoAbastecido").textContent = `${formatNum(ultimoItem.litros, 2)} L`;
-
-  let custoAcumulado = 0;
-  filtered.forEach(x => {
-    if(x.litros && x.precoLitro) custoAcumulado += (Number(x.litros) * Number(x.precoLitro));
-  });
-  $("totalGasto").textContent = custoAcumulado > 0 ? `R$ ${formatNum(custoAcumulado, 2)}` : "—";
-
-  const primeirOdo = Number(currentVeh.odoCompra) || Number(filtered[0].odometro);
-  const ultimoOdo = Number(ultimoItem.odometro);
-  const deltaTotalKm = ultimoOdo - primeirOdo;
-
-  let litrosConsiderados = 0;
-  const startIndex = (Number(currentVeh.odoCompra) > 0) ? 0 : 1;
-  for(let i = startIndex; i < filtered.length; i++){
-    litrosConsiderados += Number(filtered[i].litros) || 0;
-  }
-
-  const mediaGeral = (deltaTotalKm > 0 && litrosConsiderados > 0) ? (deltaTotalKm / litrosConsiderados) : null;
-  $("kmlGeral").textContent = mediaGeral ? `${formatNum(mediaGeral, 2)}` : "—";
-}
-
-function renderTable(){
-  const tb = $("tbody"); tb.innerHTML = "";
-  let filtered = items.filter(x => x.veiculoId === activeVehicleId);
-
-  if(filtered.length===0){
-    $("histStatus").textContent = "Nenhum registro para este veículo.";
-    return;
-  }
-
-  const displayRows = [...filtered].reverse();
-  for(const x of displayRows){
-    const tr = document.createElement("tr");
-    const custoCalculado = (x.litros && x.precoLitro) ? `R$ ${formatNum(Number(x.litros) * Number(x.precoLitro), 2)}` : "—";
-
-    tr.innerHTML = `
-      <td>${x.data.split("-").reverse().join("/")}</td>
-      <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
-      <td>${formatNum(x.litros, 2)} L</td>
-      <td>${custoCalculado}</td>
-      <td>${x.deltaKm ? `${x.deltaKm.toLocaleString("pt-BR")} km` : "—"}</td>
-      <td>${x.kml ? `${formatNum(x.kml, 2)} Km/L` : "—"}</td>
-      <td>
-        <div class="action-cell">
-          <button class="btn secondary mini" onclick="entrarModoEdicao('${x.id}')">✏️</button>
-          <button class="btn danger mini" onclick="removerRegistro('${x.id}')">🗑️</button>
-        </div>
-      </td>
-    `;
-    tb.appendChild(tr);
-  }
-  $("histStatus").textContent = `${filtered.length} lançamento(s) deste veículo.`;
-}
-
-/* CRUD Abastecimentos */
-window.entrarModoEdicao = function(id) {
-  const item = items.find(x => x.id === id);
-  if(!item) return;
-  $("editId").value = item.id;
-  $("data").value = item.data;
-  $("odometro").value = item.odometro;
-  $("litros").value = item.litros;
-  $("precoLitro").value = item.precoLitro || "";
-  $("formTitle").textContent = "✏️ Editar lançamento";
-  $("btnSalvar").textContent = "Atualizar";
-  calcularPreviewCusto();
-  showView("abastecer");
-};
-
-window.removerRegistro = function(id) {
-  if(!confirm("Deseja mesmo excluir esse registro?")) return;
-  items = items.filter(x => x.id !== id);
-  saveItems(items); renderAll();
-  toast("Registro deletado!");
-};
-
-function limparFormulario() {
-  $("editId").value = ""; $("odometro").value = ""; $("litros").value = ""; $("precoLitro").value = "";
-  $("data").value = new Date().toISOString().slice(0,10);
-  $("formTitle").textContent = "⛽ Novo lançamento"; $("btnSalvar").textContent = "Salvar";
-  $("previewCusto").textContent = "Custo Total: R$ 0,00";
-}
-
-function calcularPreviewCusto() {
-  const l = parseBRNumber($("litros").value);
-  const p = parseBRNumber($("precoLitro").value);
-  $("previewCusto").textContent = (l && p) ? `Custo Total: R$ ${formatNum(l * p, 2)}` : "Custo Total: R$ 0,00";
-}
-$("litros").addEventListener("input", calcularPreviewCusto);
-$("precoLitro").addEventListener("input", calcularPreviewCusto);
-
-$("btnSalvar").addEventListener("click", ()=>{
-  const idEdicao = $("editId").value;
-  const data = $("data").value;
-  const odometro = parseBRNumber($("odometro").value);
-  const litros = parseBRNumber($("litros").value);
-  const precoLitro = parseBRNumber($("precoLitro").value);
-
-  if(!data || !odometro || !litros){ toast("Preencha todos os campos obrigatórios."); return; }
-
-  if(idEdicao) {
-    items = items.map(x => x.id === idEdicao ? { ...x, data, odometro, litros, precoLitro } : x);
-    toast("Registro atualizado!");
-  } else {
-    items.push({ id: `${Date.now()}`, veiculoId: activeVehicleId, data, odometro, litros, precoLitro });
-    toast("Salvo ✅");
-  }
-  saveItems(items); limparFormulario(); renderAll(); showView("painel");
-});
-$("btnLimparForm").addEventListener("click", limparFormulario);
-
-/* CRUD Manutenção */
-function renderMaintenanceTable(){
-  const tb = $("mTbody"); tb.innerHTML = "";
-  let filtered = maintenances.filter(x => x.veiculoId === activeVehicleId);
-
-  if(filtered.length === 0){
-    tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="5" style="text-align:center; color:var(--muted)">Nenhuma manutenção registrada.</td>`;
-    tb.appendChild(tr);
-    return;
-  }
-
-  [...filtered].reverse().forEach(x => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${x.data.split("-").reverse().join("/")}</td>
-      <td>${Number(x.odometro).toLocaleString("pt-BR")} km</td>
-      <td>${x.descricao}</td>
-      <td>R$ ${formatNum(x.custo, 2)}</td>
-      <td>
-        <div class="action-cell">
-          <button class="btn secondary mini" onclick="editarManutencao('${x.id}')">✏️</button>
-          <button class="btn danger mini" onclick="removerManutencao('${x.id}')">🗑️</button>
-        </div>
-      </td>
-    `;
-    tb.appendChild(tr);
-  });
-}
-
-$("btnSalvarManutencao").addEventListener("click", () => {
-  const idEdicao = $("editMaintId").value;
-  const data = $("mData").value;
-  const odometro = parseBRNumber($("mOdometro").value);
-  const custo = parseBRNumber($("mCusto").value) || 0;
-  const descricao = $("mDescricao").value.trim();
-
-  if(!data || !odometro || !descricao){ toast("Preencha Data, Odômetro e Descrição."); return; }
-
-  if(idEdicao){
-    maintenances = maintenances.map(x => x.id === idEdicao ? { ...x, data, odometro, custo, descricao } : x);
-    toast("Manutenção atualizada!");
-  } else {
-    maintenances.push({ id: `${Date.now()}`, veiculoId: activeVehicleId, data, odometro, custo, descricao });
-    toast("Serviço salvo!");
-  }
-  saveMaintenances(maintenances); limparMaintForm(); renderAll();
-});
-
-window.editarManutencao = function(id){
-  const m = maintenances.find(x => x.id === id);
-  if(!m) return;
-  $("editMaintId").value = m.id;
-  $("mData").value = m.data;
-  $("mOdometro").value = m.odometro;
-  $("mCusto").value = m.custo;
-  $("mDescricao").value = m.descricao;
-  $("mFormTitle").textContent = "✏️ Editar Manutenção";
-  $("btnSalvarManutencao").textContent = "Atualizar Serviço";
-};
-
-window.removerManutencao = function(id){
-  if(!confirm("Remover esta manutenção permanentemente?")) return;
-  maintenances = maintenances.filter(x => x.id !== id);
-  saveMaintenances(maintenances); renderAll();
-  toast("Removido.");
-};
-
-function limparMaintForm(){
-  $("editMaintId").value = ""; $("mOdometro").value = ""; $("mCusto").value = ""; $("mDescricao").value = "";
-  $("mData").value = new Date().toISOString().slice(0,10);
-  $("mFormTitle").textContent = "🔧 Registrar Manutenção / Serviço";
-  $("btnSalvarManutencao").textContent = "Salvar Serviço";
-}
-$("btnLimparMaintForm").addEventListener("click", limparMaintForm);
-
-/* Gestão de Veículos */
-$("btnCadastrarVeiculo").addEventListener("click", ()=>{
-  const nome = $("novoVeiculo").value.trim();
-  const odoCompra = parseBRNumber($("odometroCompra").value) || 0;
-  const editId = $("editVehId").value;
-
-  if(!nome) { toast("Digite o nome."); return; }
-  
-  if(editId) {
-    vehicles = vehicles.map(v => v.id === editId ? { ...v, nome, odoCompra } : v);
-    toast("Veículo atualizado!");
-  } else {
-    if(vehicles.some(v => v.nome.toLowerCase() === nome.toLowerCase())) { toast("Carro já existente."); return; }
-    const novo = { id: `${Date.now()}`, nome, odoCompra };
-    vehicles.push(novo); activeVehicleId = novo.id;
-    localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId);
-  }
-  saveVehicles(vehicles); limparVehForm(); renderAll();
-});
-
-window.editarVeiculo = function(id) {
-  const v = vehicles.find(x => x.id === id); if(!v) return;
-  $("editVehId").value = v.id; $("novoVeiculo").value = v.nome; $("odometroCompra").value = v.odoCompra || 0;
-  $("vehFormTitle").textContent = "✏️ Editar Veículo";
-  $("btnCadastrarVeiculo").textContent = "Atualizar Veículo";
-  $("btnLimparVehForm").style.display = "inline-flex";
-};
-
-function limparVehForm() {
-  $("editVehId").value = ""; $("novoVeiculo").value = ""; $("odometroCompra").value = "";
-  $("vehFormTitle").textContent = "🚘 Cadastrar Veículo";
-  $("btnCadastrarVeiculo").textContent = "Adicionar à Garagem";
-  $("btnLimparVehForm").style.display = "none";
-}
-$("btnLimparVehForm").addEventListener("click", limparVehForm);
-
-function renderVehiclesList(){
-  const list = $("listaVeiculos"); list.innerHTML = "";
-  vehicles.forEach(v => {
-    const itemEl = document.createElement("div"); itemEl.className = "v-item";
-    const isDefault = vehicles.length === 1;
-    const deleteBtn = isDefault ? "" : `<button class="btn danger mini" onclick="removerVeiculo('${v.id}')">🗑️</button>`;
-    const activeLabel = v.id === activeVehicleId ? " <small style='color:var(--ok)'>(Ativo)</small>" : "";
-
-    itemEl.innerHTML = `
-      <div class="info">
-        <span class="name">🚗 ${v.nome} ${activeLabel}</span>
-        <span class="sub">Compra: ${(v.odoCompra||0).toLocaleString("pt-BR")} km</span>
-      </div>
-      <div class="action-cell">
-        <button class="btn secondary mini" onclick="editarVeiculo('${v.id}')">✏️</button>
-        ${deleteBtn}
-      </div>
-    `;
-    list.appendChild(itemEl);
-  });
-}
-
-window.removerVeiculo = function(id){
-  if(!confirm("Remover veículo? Seus abastecimentos e manutenções deixarão de ser listados.")) return;
-  vehicles = vehicles.filter(x => x.id !== id); saveVehicles(vehicles);
-  if(activeVehicleId === id){ activeVehicleId = vehicles[0].id; localStorage.setItem(ACTIVE_VEHICLE_KEY, activeVehicleId); }
-  renderAll();
-};
-
-$("btnApagarTudo").addEventListener("click", ()=>{
-  if(!confirm("Apagar todo o histórico de abastecimentos deste carro?")) return;
-  items = items.filter(x => x.veiculoId !== activeVehicleId);
-  saveItems(items); limparFormulario(); renderAll();
-});
-
-$("btnExportarJson").addEventListener("click", ()=>{
-  const payload = { veiculos: vehicles, historicoCompleto: items, manutencoes: list=maintenances };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href = url;
-  a.download = `backup_completo_veiculos.json`; a.click();
-});
-
-// Inicialização
-const hoje = new Date().toISOString().slice(0,10);
-$("data").value = hoje; $("mData").value = hoje;
-renderAll();
-</script>
-</body>
-</html>
+    veiculos: [
