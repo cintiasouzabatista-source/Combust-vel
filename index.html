@@ -235,10 +235,10 @@
   <aside class="sidebar" id="sidebar">
     <div>
       <div class="brand">
-        <div class="logo">🚗</div>
+        <div class="logo"></div>
         <div class="txt">
           <div class="t">Painel Combustível</div>
-          <div class="s">Garagem multimarcas</div>
+          <div class="s">Garagem</div>
         </div>
       </div>
 
@@ -269,7 +269,7 @@
     </div>
 
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
-      <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
+      <label for="globalVehicle" style="margin-top: 0;">Selecionar Veículo</label>
       <select id="globalVehicle"></select>
     </div>
 
@@ -418,99 +418,5 @@
           <input id="novoVeiculo" placeholder="Ex: Onix 1.0, Civic" />
         </div>
         <div>
-          <label for="odometroCompra">Odômetro Inicial (Compra)</label>
-          <input id="odometroCompra" placeholder="Ex: 40000" type="number" />
-        </div>
-      </div>
-      
-      <div class="row" style="margin-top:16px">
-        <button class="btn primary" id="btnCadastrarVeiculo" type="button">Adicionar à Garagem</button>
-        <button class="btn secondary" id="btnLimparVehForm" type="button" style="display:none">Cancelar</button>
-      </div>
-      
-      <div style="height:1px; background:var(--line); margin:24px 0;"></div>
-      
-      <div class="sectionTitle">📋 Seus Veículos</div>
-      <div class="v-list" id="listaVeiculos"></div>
-    </section>
-  </main>
-</div>
+          <label for="
 
-<div id="toast"></div>
-
-<script>
-const STORE_KEY = "cb_abastecimentos_v5";
-const VEHICLES_KEY = "cb_veiculos_v6";
-const MAINT_KEY = "cb_manutencoes_v5";
-const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
-const THEME_KEY = "cb_theme_v5";
-
-const $ = (id)=>document.getElementById(id);
-
-function toast(msg){
-  const t = $("toast");
-  t.textContent = msg; t.style.display="block";
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>{ t.style.display="none"; }, 2500);
-}
-
-function parseBRNumber(s){
-  if(!s) return null;
-  const norm = String(s).trim().replace(/\s/g, "").replace(/\./g,"").replace(",", ".");
-  const n = Number(norm);
-  return Number.isFinite(n) ? n : null;
-}
-
-function formatNum(n, digits=2){
-  const v = Number(n);
-  return Number.isFinite(v) ? v.toLocaleString("pt-BR",{minimumFractionDigits:digits, maximumFractionDigits:digits}) : "—";
-}
-
-/* Gerenciamento de Tema */
-let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
-document.documentElement.setAttribute("data-theme", currentTheme);
-$("btnThemeToggle").addEventListener("click", () => {
-  currentTheme = currentTheme === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", currentTheme);
-  localStorage.setItem(THEME_KEY, currentTheme);
-});
-
-/* Carregar Dados */
-function loadItems(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch(e){ return []; } }
-function saveItems(items){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
-
-function loadMaintenances(){ try{ return JSON.parse(localStorage.getItem(MAINT_KEY) || "[]"); } catch(e){ return []; } }
-function saveMaintenances(m){ localStorage.setItem(MAINT_KEY, JSON.stringify(m)); }
-
-function loadVehicles(){
-  try{ 
-    let raw = localStorage.getItem(VEHICLES_KEY);
-    return raw ? JSON.parse(raw) : [{ id: "1", nome: "Padrão", odoCompra: 0 }];
-  } catch(e){ return [{ id: "1", nome: "Padrão", odoCompra: 0 }]; }
-}
-function saveVehicles(v){ localStorage.setItem(VEHICLES_KEY, JSON.stringify(v)); }
-
-let items = loadItems();
-let CakeMaint = loadMaintenances(); // Variável global de trabalho das manutenções
-let vehicles = loadVehicles();
-let activeVehicleId = localStorage.getItem(ACTIVE_VEHICLE_KEY) || vehicles[0].id;
-
-if (!vehicles.some(v => v.id === activeVehicleId)) { activeVehicleId = vehicles[0].id; }
-
-/* Navegação entre Views */
-const views = ["painel","abastecer","historico","manutencao","veiculos"];
-function showView(name){
-  for(const v of views){
-    const el = document.getElementById("view-"+v);
-    if(el) el.style.display = (v===name) ? "block" : "none";
-  }
-  document.querySelectorAll(".nav button").forEach(b=>{
-    b.classList.toggle("active", b.dataset.view===name);
-  });
-  
-  const titles = {
-    painel: ["Painel","Métricas essenciais"],
-    abastecer: ["Abastecer","Novo lançamento"],
-    historico: ["Histórico","Seus lançamentos"],
-    manutencao: ["Manutenção","Controle de revisões"],
-    veiculos: [
