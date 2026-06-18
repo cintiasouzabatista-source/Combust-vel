@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Bank Day Pro - Moto Control</title>
+  <title>Moto Control</title>
 
   <style>
     :root{
@@ -325,15 +325,15 @@
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="logo">🚗</div>
+      <div class="logo"></div>
       <div class="txt">
         <div class="t">Painel Combustível</div>
-        <div class="s">Garagem multimarcas</div>
+        <div class="s">Meus Veiculos</div>
       </div>
     </div>
 
     <nav class="nav" aria-label="Menu">
-      <button class="active" data-view="painel"><span class="ic">🏠</span><span>Painel</span></button>
+      <button class="active" data-view="painel"><span class="ic"></span><span>Painel</span></button>
       <button data-view="abastecer"><span class="ic">⛽</span><span>Abastecer</span></button>
       <button data-view="historico"><span class="ic">🧾</span><span>Histórico Consumo</span></button>
       <button data-view="manutencao"><span class="ic">🔧</span><span>Manutenção & Óleo</span></button>
@@ -350,11 +350,11 @@
         <h1 id="pageTitle">Painel</h1>
         <div class="subtitle" id="pageSub">Métricas essenciais</div>
       </div>
-      <div class="statusPill"><span class="dot"></span><span id="pillStatus">Pronto</span></div>
+    
     </div>
 
     <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
-      <label for="globalVehicle" style="margin-top: 0;">🚙 Selecionar Veículo Ativo:</label>
+      <label for="globalVehicle" style="margin-top: 0;">Selecionar Veículo Ativo:</label>
       <select id="globalVehicle"></select>
     </div>
 
@@ -418,7 +418,7 @@
         <button class="btn secondary" id="btnLimparForm" type="button">Limpar</button>
       </div>
       <div class="row" style="margin-top:12px">
-        <button class="btn danger" id="btnApagarTudo" type="button">🧹 Apagar tudo deste carro</button>
+        <button class="btn danger" id="btnApagarTudo" type="button">🧹 Resetar App</button>
         <button class="btn secondary" id="btnExportarJson" type="button">⬇️ Backup Geral (JSON)</button>
       </div>
       <div class="statusLine" id="saveStatus">—</div>
@@ -487,7 +487,7 @@
 
     <!-- ABA 5: VEÍCULOS -->
     <section class="section view" id="view-veiculos" style="display:none">
-      <div class="sectionTitle">🚘 Cadastrar Veículo</div>
+      <div class="sectionTitle">Cadastrar Veículo</div>
       <label for="novoVeiculo">Nome do Veículo</label>
       <input id="novoVeiculo" placeholder="Ex: Honda Lead 2010, Onix, Civic" />
       <button class="btn" id="btnCadastrarVeiculo" type="button" style="margin-top:12px">Adicionar à Garagem</button>
