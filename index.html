@@ -15,7 +15,15 @@
             padding-bottom: 80px; /* Espaço para o menu inferior no mobile */
         }
 
-        /* Container Principal de Abastecimento */
+        /* Controle de Telas (Esconder seções inativas) */
+        .app-section {
+            display: none;
+        }
+        .app-section.active-section {
+            display: block;
+        }
+
+        /* Container Principal */
         .form-container {
             background-color: #0f172a;
             border-radius: 16px;
@@ -120,7 +128,7 @@
             font-weight: 600;
         }
 
-        /* Botões Principais */
+        /* Botões */
         .form-actions-main {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -153,7 +161,6 @@
         }
         .btn-secondary:hover { background-color: #475569; }
 
-        /* Botões Utilitários e Zona de Perigo */
         .form-actions-danger {
             display: flex;
             justify-content: space-between;
@@ -258,6 +265,8 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
+            width: 100%;
+            padding: 4px 0;
         }
         .nav-item.active {
             color: #3b82f6;
@@ -266,106 +275,110 @@
 </head>
 <body>
 
-    <!-- Container do Formulário de Abastecimento -->
-    <div class="form-container">
+    <div id="section-painel" class="app-section form-container">
         <div class="form-header">
-            <h2>Abastecer</h2>
-            <p class="form-subtitle">Registre os dados para calcular o consumo da sua Honda Lead</p>
+            <h2>📊 Painel Geral</h2>
+            <p class="form-subtitle">Métricas de consumo e desempenho da sua Honda Lead</p>
         </div>
+        <p style="color: #94a3b8; text-align: center; margin: 40px 0;">[Área do Dashboard / Gráficos de Consumo]</p>
+    </div>
 
-        <div class="input-group full-width">
-            <label for="select-veiculo">Veículo Ativo</label>
-            <select id="select-veiculo" class="custom-select">
-                <option value="1">Honda Lead 2010</option>
-            </select>
-        </div>
+    <div id="section-abastecer" class="app-section active-section">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Abastecer</h2>
+                <p class="form-subtitle">Registre os dados para calcular o consumo da sua Honda Lead</p>
+            </div>
 
-        <hr class="form-divider">
-
-        <form id="form-abastecimento">
             <div class="input-group full-width">
-                <label for="input-data">Data do Abastecimento</label>
-                <input type="date" id="input-data" value="2026-06-18">
+                <label for="select-veiculo">Veículo Ativo</label>
+                <select id="select-veiculo" class="custom-select">
+                    <option value="1">Honda Lead 2010</option>
+                </select>
             </div>
 
-            <div class="form-row-2col">
-                <div class="input-group">
-                    <label for="input-odometro">Odômetro atual (km)</label>
-                    <input type="number" id="input-odometro" placeholder="Ex: 93450">
+            <hr class="form-divider">
+
+            <form id="form-abastecimento">
+                <div class="input-group full-width">
+                    <label for="input-data">Data do Abastecimento</label>
+                    <input type="date" id="input-data" value="2026-06-18">
                 </div>
-                <div class="input-group">
-                    <label for="input-litros">Litros abastecidos</label>
-                    <input type="number" step="0.01" id="input-litros" placeholder="Ex: 4.5">
+
+                <div class="form-row-2col">
+                    <div class="input-group">
+                        <label for="input-odometro">Odômetro atual (km)</label>
+                        <input type="number" id="input-odometro" placeholder="Ex: 93450">
+                    </div>
+                    <div class="input-group">
+                        <label for="input-litros">Litros abastecidos</label>
+                        <input type="number" step="0.01" id="input-litros" placeholder="Ex: 4.5">
+                    </div>
                 </div>
+
+                <div class="form-row-2col">
+                    <div class="input-group">
+                        <label for="input-preco">Preço por Litro (R$)</label>
+                        <input type="number" step="0.01" id="input-preco" placeholder="Ex: 5.69">
+                    </div>
+                    <div class="custo-total-box">
+                        <span class="custo-label">Custo Total estimado</span>
+                        <span id="label-custo-total" class="custo-valor">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <div class="form-actions-main">
+                    <button type="submit" class="btn-primary">Salvar Registro</button>
+                    <button type="button" class="btn-secondary" id="btn-limpar">Limpar</button>
+                </div>
+            </form>
+
+            <hr class="form-divider">
+
+            <div class="form-actions-danger">
+                <button type="button" class="btn-outline-danger" id="btn-reset">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Apagar dados deste carro
+                </button>
+                <button type="button" class="btn-outline-secondary" id="btn-backup">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Backup Geral (JSON)
+                </button>
             </div>
-
-            <div class="form-row-2col">
-                <div class="input-group">
-                    <label for="input-preco">Preço por Litro (R$)</label>
-                    <input type="number" step="0.01" id="input-preco" placeholder="Ex: 5.69">
-                </div>
-                <div class="custo-total-box">
-                    <span class="custo-label">Custo Total estimado</span>
-                    <span id="label-custo-total" class="custo-valor">R$ 0,00</span>
-                </div>
-            </div>
-
-            <div class="form-actions-main">
-                <button type="submit" class="btn-primary">Salvar Registro</button>
-                <button type="button" class="btn-secondary" id="btn-limpar">Limpar</button>
-            </div>
-        </form>
-
-        <hr class="form-divider">
-
-        <div class="form-actions-danger">
-            <button type="button" class="btn-outline-danger" id="btn-reset">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                Apagar dados deste carro
-            </button>
-            <button type="button" class="btn-outline-secondary" id="btn-backup">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
-                Backup Geral (JSON)
-            </button>
         </div>
     </div>
 
-    <!-- Tabela Conectada de Histórico de Manutenções -->
-    <div class="maint-section">
-        <div class="maint-title">🔧 Histórico de Manutenções Detalhado</div>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Odômetro</th>
-                        <th>Descrição da Peça / Serviço</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody id="maint-table-body">
-                    <!-- Gerado Dinamicamente via JS -->
-                </tbody>
-            </table>
+    <div id="section-servicos" class="app-section">
+        <div class="maint-section">
+            <div class="maint-title">🔧 Histórico de Manutenções Detalhado</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Odômetro</th>
+                            <th>Descrição da Peça / Serviço</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="maint-table-body">
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Barra de Navegação Clean Footer -->
     <nav class="footer-nav">
-        <button class="nav-item">📊 <span>Painel</span></button>
-        <button class="nav-item active">⛽ <span>Abastecer</span></button>
-        <button class="nav-item">🔧 <span>Serviços</span></button>
+        <button class="nav-item" data-target="section-painel">📊 <span>Painel</span></button>
+        <button class="nav-item active" data-target="section-abastecer">⛽ <span>Abastecer</span></button>
+        <button class="nav-item" data-target="section-servicos">🔧 <span>Serviços</span></button>
     </nav>
 
     <script>
-        // Configuração das chaves do LocalStorage
         const MAINT_KEY = "cb_manutencoes_v5";
         const ACTIVE_VEHICLE_KEY = "cb_ativo_v5";
-        const VEHICLES_KEY = "cb_veiculos_v6";
 
-        // Carga inicial do banco de dados com histórico completo desmembrado da Pavani Moto Center
         const historicoInicialPavani = [
-            // --- OS 1068 (24/10/2025)
             { id: "m_1068_1", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 480.00, descricao: "Revisão Scooter (OS 1068)" },
             { id: "m_1068_2", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 250.00, descricao: "M.O. Troca da Caixa de Direção" },
             { id: "m_1068_3", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 370.00, descricao: "Correia de Transmissão CVT" },
@@ -375,7 +388,6 @@
             { id: "m_1068_7", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 145.00, descricao: "Caixa de Direção (Peça)" },
             { id: "m_1068_8", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 370.00, descricao: "Pneu Traseiro Kenda" },
             { id: "m_1068_9", veiculoId: "1", data: "24/10/2025", odometro: "90.000", custo: 110.00, descricao: "Junta do CVT" },
-            // --- OS 1264 (10/04/2026)
             { id: "m_1264_1",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 570.00, descricao: "Revisão Scooter até 450cc (OS 1264)" },
             { id: "m_1264_2",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 69.94,  descricao: "Rolamento 6201 (2 unidades)" },
             { id: "m_1264_3",  veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 168.00, descricao: "Placa de Partida" },
@@ -399,6 +411,26 @@
             { id: "m_1264_21", veiculoId: "1", data: "10/04/2026", odometro: "93.290", custo: 83.20,  descricao: "Rolamento 6201 Blindado Roda (2 un)" }
         ];
 
+        // Lógica de Navegação entre Menus
+        const navItems = document.querySelectorAll(".nav-item");
+        const sections = document.querySelectorAll(".app-section");
+
+        navItems.forEach(item => {
+            item.addEventListener("click", () => {
+                // Remove classe active de todos os botões do menu
+                navItems.forEach(nav => nav.classList.remove("active"));
+                // Adiciona active no botão clicado
+                item.classList.add("active");
+
+                // Esconde todas as seções
+                sections.forEach(sec => sec.classList.remove("active-section"));
+                
+                // Mostra a seção alvo com base no atributo 'data-target'
+                const targetId = item.getAttribute("data-target");
+                document.getElementById(targetId).classList.add("active-section");
+            });
+        });
+
         // Inicialização do Banco de Dados Local
         function inicializarBanco() {
             if (!localStorage.getItem(ACTIVE_VEHICLE_KEY)) {
@@ -408,11 +440,8 @@
             let manutencoesAtuais = [];
             try {
                 manutencoesAtuais = JSON.parse(localStorage.getItem(MAINT_KEY) || "[]");
-            } catch(e) {
-                console.error("Erro ao ler localStorage:", e);
-            }
+            } catch(e) {}
 
-            // Se estiver vazio, popula automaticamente com a lista detalhada
             if (!Array.isArray(manutencoesAtuais) || manutencoesAtuais.length === 0) {
                 localStorage.setItem(MAINT_KEY, JSON.stringify(historicoInicialPavani));
                 manutencoesAtuais = historicoInicialPavani;
@@ -420,7 +449,7 @@
             renderizarTabela(manutencoesAtuais);
         }
 
-        // Renderiza as linhas na tabela com proteção de Fallback para itens corrompidos
+        // Renderiza o Histórico de Serviços na Tabela
         function renderizarTabela(dados) {
             const tbody = document.getElementById("maint-table-body");
             if (!tbody) return;
@@ -430,8 +459,6 @@
 
             dadosOrdenados.forEach(item => {
                 const tr = document.createElement("tr");
-                
-                // Proteção: Garante que o custo seja um número válido antes de formatar
                 const valorCusto = typeof item.custo === 'number' ? item.custo : parseFloat(item.custo) || 0;
 
                 tr.innerHTML = `
@@ -444,7 +471,7 @@
             });
         }
 
-        // Eventos de Cálculo de Custo em tempo real no formulário
+        // Eventos de Cálculo de Custo em tempo real
         const inputLitros = document.getElementById("input-litros");
         const inputPreco = document.getElementById("input-preco");
         const labelCusto = document.getElementById("label-custo-total");
@@ -461,24 +488,13 @@
         if (inputLitros) inputLitros.addEventListener("input", calcularCustoTotal);
         if (inputPreco) inputPreco.addEventListener("input", calcularCustoTotal);
 
-        // Evita que o clique em "Salvar" quebre ou atualize a página antes de implementar a lógica de Push
         if (formAbastecimento) {
             formAbastecimento.addEventListener("submit", function(e) {
                 e.preventDefault();
-                alert("Formulário interceptado! Implemente aqui o push para o LocalStorage.");
+                alert("Dados prontos para salvar!");
             });
         }
 
-        // Limpar Formulário
-        const btnLimpar = document.getElementById("btn-limpar");
-        if (btnLimpar && formAbastecimento) {
-            btnLimpar.addEventListener("click", () => {
-                formAbastecimento.reset();
-                if (labelCusto) labelCusto.textContent = "R$ 0,00";
-            });
-        }
-
-        // Executa na carga da página
         window.onload = inicializarBanco;
     </script>
 </body>
