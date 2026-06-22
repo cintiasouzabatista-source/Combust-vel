@@ -16,7 +16,7 @@ body.light-mode{
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);transition:.2s}
-.wrap{max-width:720px;margin:0 auto;padding:16px 12px 120px}
+.wrap{max-width:720px;margin:0 auto;padding:16px 12px 140px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 header h1{flex:1;font-size:20px;margin:0}
 select,input,button{font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);padding:12px}
@@ -29,7 +29,7 @@ button:active{transform:scale(.97)}
 .grid{display:grid;gap:10px}
 .grid-2{grid-template-columns:1fr 1fr}
 .grid-3{grid-template-columns:1fr 1fr 1fr}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
 .card h3{margin:0 0 10px;font-size:15px}
 .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
 .item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--panel)}
@@ -42,7 +42,12 @@ button:active{transform:scale(.97)}
 .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .kpi.card{padding:12px}
 .kpi.val{font-size:22px;font-weight:700;margin-top:4px}
-.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:10px;padding:12px 18px;background:var(--panel);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(10px)}
+.footer{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:10px;padding:12px 18px;background:var(--panel);
+  border:1px solid var(--line);border-radius:24px;
+  backdrop-filter:blur(10px);z-index:998
+}
 .footer button{border:none;background:none;font-size:20px;color:var(--muted)}
 .footer button.active{color:var(--accent)}
 .empty{color:var(--muted);text-align:center;padding:20px 0;font-size:13px}
@@ -89,7 +94,7 @@ button:active{transform:scale(.97)}
       </div>
       <button class="btn" onclick="addVeiculo()">Salvar Veículo</button>
     </div>
-    <div id="listaVeiculos" style="margin-top:10px"></div>
+    <div id="listaVeiculos"></div>
   </section>
 
   <!-- ABASTECIMENTO -->
@@ -105,7 +110,7 @@ button:active{transform:scale(.97)}
       </div>
       <button class="btn" onclick="addAbast()">Salvar</button>
     </div>
-    <div id="listaAbast" style="margin-top:10px"></div>
+    <div id="listaAbast"></div>
   </section>
 
   <!-- MANUTENÇÃO -->
@@ -126,7 +131,7 @@ button:active{transform:scale(.97)}
       </div>
       <button class="btn" onclick="addManut()">Salvar</button>
     </div>
-    <div id="listaManut" style="margin-top:10px"></div>
+    <div id="listaManut"></div>
   </section>
 
   <!-- CONFIG -->
@@ -135,8 +140,9 @@ button:active{transform:scale(.97)}
       <h3>Aparência</h3>
       <button class="btn-ghost" onclick="toggleTema()">🌓 Trocar Tema</button>
     </div>
-    <div class="card" style="margin-top:10px">
+    <div class="card">
       <h3 style="color:var(--danger)">Zona de Perigo</h3>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 10px">Isso vai apagar todos os veículos, abastecimentos e manutenções.</p>
       <button class="btn-danger" onclick="resetApp()">🚨 Resetar App</button>
     </div>
   </section>
@@ -178,6 +184,7 @@ function load(){
   renderVeiculosSelect();
   renderAll();
   loadTema();
+  aData.valueAsDate = new Date();
 }
 
 function save(){localStorage.setItem(KEY, JSON.stringify(db))}
@@ -402,7 +409,6 @@ function renderAll(){
   renderVeiculos();
   renderAbast();
   renderManut();
-  aData.valueAsDate = new Date();
 }
 
 // TEMA E RESET
@@ -414,7 +420,12 @@ function toggleTema(){
   localStorage.setItem('tema', document.body.classList.contains('light-mode')?'light':'dark');
 }
 function resetApp(){
-  if(confirm('Apagar TUDO mesmo?')){localStorage.clear(); location.reload();}
+  if(confirm('🚨 ATENÇÃO: Isso vai apagar TODOS os veículos, abastecimentos e manutenções. Confirma?')){
+    if(confirm('Tem certeza? Essa ação não tem volta!')){
+      localStorage.clear();
+      location.reload();
+    }
+  }
 }
 
 load();
