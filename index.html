@@ -133,19 +133,16 @@
 </div>
 
 <!-- Modais -->
-<div class="modal" id="vehicleModal">
-    <div class="modal-box">
-        <h2>Cadastrar Veículo</h2>
-        <input type="text" id="newVehicleName" placeholder="Nome/Apelido">
-        <input type="text" id="newVehicleModelo" placeholder="Modelo">
-        <div class="grid-3">
-            <input type="number" id="newVehicleAno" placeholder="Ano">
-            <input type="number" id="newVehicleKmOdometro" placeholder="KM Atual">
-            <select id="newVehicleTipo">
-                <option value="Moto">Moto</option>
-                <option value="Carro">Carro</option>
-            </select>
-        </div>
+<div class="modal-box">
+    <h2>Gerenciar Veículos</h2>
+    <input type="text" id="newVehicleName" placeholder="Nome do veículo">
+    <button class="btn" onclick="addVehicle()">Adicionar</button>
+    <div id="vehicleList" style="margin-top:16px;max-height:250px;overflow-y:auto"></div>
+    <div class="modal-actions">
+        <button class="btn-ghost" onclick="resetApp()" style="color:var(--danger)">🗑️ Resetar App</button>
+        <button class="btn-ghost" onclick="closeVehicleModal()">Fechar</button>
+    </div>
+</div>
         <label class="label" style="margin-top:10px">Data de Aquisição</label>
         <input type="date" id="newVehicleDataAquisi">
         
@@ -224,6 +221,54 @@
         renderAll();
         alert('Manutenção salva!');
     }
+
+    // --- LÓGICA DE EXCLUSÃO E RESET ---
+
+// Deletar Manutenção
+function deletarManutencao(index) {
+    db.manutencoes.splice(index, 1);
+    save();
+    renderAll();
+}
+
+// Deletar Veículo
+function deletarVeiculo(id) {
+    if(!confirm('Deseja excluir este veículo e todos os dados associados?')) return;
+    db.veiculos = db.veiculos.filter(v => v.id !== id);
+    save();
+    renderAll();
+}
+
+// Resetar o App (Limpa o LocalStorage)
+function resetApp() {
+    if(confirm('ATENÇÃO: Isso apagará TODOS os dados. Tem certeza?')) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+// --- ATUALIZE SEU RENDERALL PARA MOSTRAR OS BOTÕES ---
+function renderAll() {
+    // ... (parte do select e KM continua igual) ...
+
+    // Atualizar Lista de Manutenções com botão de excluir
+    const listaM = document.getElementById('listaManut');
+    listaM.innerHTML = db.manutencoes.filter(m => m.vehicleId === activeVehicle).map((m, index) => 
+        `<div class="item">
+            <div><strong>${m.desc}</strong><br><small>KM: ${m.km}</small></div>
+            <button class="btn-danger" style="padding:4px 8px" onclick="deletarManutencao(${index})">X</button>
+        </div>`
+    ).join('');
+    
+    // Atualizar Lista de Veículos no Modal com botão de excluir
+    const listV = document.getElementById('vehicleList');
+    listV.innerHTML = db.veiculos.map(v => `
+        <div class="vehicle-item">
+            <span>${v.nome}</span>
+            <button class="btn-danger" style="padding:4px 8px" onclick="deletarVeiculo('${v.id}')">Excluir</button>
+        </div>
+    `).join('');
+}
 </script>    
    </script>
 </body>
