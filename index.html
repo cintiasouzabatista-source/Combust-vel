@@ -164,12 +164,22 @@
     const STORAGE_KEY = 'motoControl_v10';
     let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
     let activeVehicle = null;
-    let editandoId = null;
-    const views = ['painel','abastecer','historico','manutencao'];
-    let currentViewIndex = 0;
 
+    // --- CARREGAMENTO E INICIALIZAÇÃO ---
+    function load(){
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw) db = JSON.parse(raw);
+        if(!db.veiculos.length) { 
+            db.veiculos = [{id:'v1', nome:'Moto 1', modelo:'Padrão', ano:'2024', tipo:'Moto', kmOdometro:0, dataAquisi:'2024-01-01'}]; 
+            db.ativo='v1'; 
+        }
+        activeVehicle = db.ativo || db.veiculos[0].id;
+        renderAll();
+    }
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+
+    // --- LÓGICA DE INTERFACE ---
     function showView(name){
-        currentViewIndex = views.indexOf(name);
         document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
         document.getElementById('view-'+name).classList.add('active');
         document.querySelectorAll('.footer-clean button').forEach(b=>b.classList.remove('active'));
@@ -177,29 +187,12 @@
         document.getElementById('pageTitle').textContent = name.charAt(0).toUpperCase() + name.slice(1);
     }
 
-    document.querySelectorAll('.footer-clean button').forEach(btn=>{
-        btn.onclick = () => showView(btn.dataset.view);
-    });
-
-    // --- CARREGAMENTO E LÓGICA ---
-    function loadTheme(){const saved = localStorage.getItem('moto_theme_v10');if(saved === 'light') document.body.classList.add('light-mode');}
-    document.getElementById('themeBtn').onclick = () => {document.body.classList.toggle('light-mode');localStorage.setItem('moto_theme_v10', document.body.classList.contains('light-mode')? 'light' : 'dark');}
-    loadTheme();
-    
-    function load(){
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(raw) db = JSON.parse(raw);
-        if(!db.veiculos.length) { db.veiculos = [{id:'v1', nome:'Moto 1', kmOdometro:0, kmInicial:0, kmDia:30}]; db.ativo='v1'; }
-        activeVehicle = db.ativo || db.veiculos[0].id;
-        renderAll();
-    }
-    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
-    // --- LÓGICA DE VEÍCULOS ---
+    // --- CADASTRO DE VEÍCULOS ---
     function openVehicleModal() { document.getElementById('vehicleModal').classList.add('active'); }
     function closeVehicleModal() { document.getElementById('vehicleModal').classList.remove('active'); }
 
     function addVehicle() {
-        const novoVeiculo = {
+        const v = {
             id: 'v' + Date.now(),
             nome: document.getElementById('newVehicleName').value,
             modelo: document.getElementById('newVehicleModelo').value,
@@ -208,67 +201,60 @@
             tipo: document.getElementById('newVehicleTipo').value,
             dataAquisi: document.getElementById('newVehicleDataAquisi').value
         };
-
-        if(!novoVeiculo.nome) return alert('Preencha o nome do veículo');
-
-        db.veiculos.push(novoVeiculo);
+        db.veiculos.push(v);
         save();
         renderAll();
         closeVehicleModal();
+        alert('Veículo cadastrado!');
+    }
+
+    // --- MANUTENÇÃO (A FUNÇÃO QUE DAVA ERRO) ---
+    function salvarManutencao() {
+        const desc = document.getElementById('descManut').value;
+        const km = document.getElementById('kmManut').value;
+        if(!desc || !km) return alert('Preencha descrição e KM');
         
-        // Limpar campos após salvar
-        document.getElementById('newVehicleName').value = '';
-        document.getElementById('newVehicleModelo').value = '';
-        alert('Veículo cadastrado com sucesso!');
-    }
-// 1. Atualize sua função renderAll existente
-function renderAll() {
-    // A. Renderizar Select de veículos no topo
-    const sel = document.getElementById('globalVehicle');
-    sel.innerHTML = db.veiculos.map(v => 
-        `<option value="${v.id}" ${v.id === activeVehicle ? 'selected' : ''}>${v.nome} - ${v.modelo}</option>`
-    ).join('');
-
-    // B. Atualizar Painel (exemplo com o primeiro da lista se não houver lógica de filtro)
-    const veiculoAtivo = db.veiculos.find(v => v.id === activeVehicle) || db.veiculos[0];
-    if(veiculoAtivo) {
-        document.getElementById('kmAtual').textContent = veiculoAtivo.kmOdometro + " km";
+        db.manutencoes.push({desc, km, vehicleId: activeVehicle, data: new Date().toISOString()});
+        save();
+        renderAll();
+        alert('Manutenção salva!');
     }
 
-    // C. Renderizar lista dentro do modal de manutenção (para ver o que foi cadastrado)
-    renderVehicleList();
-}
+    // --- RENDERIZAÇÃO GERAL ---
+    function renderAll() {
+        // Atualiza Select
+        const sel = document.getElementById('globalVehicle');
+        sel.innerHTML = db.veiculos.map(v => `<option value="${v.id}" ${v.id === activeVehicle ? 'selected' : ''}>${v.nome}</option>`).join('');
+        
+        // Atualiza Cards do Painel com dados do veículo ativo
+        const v = db.veiculos.find(x => x.id === activeVehicle);
+        if(v) {
+            document.getElementById('kmAtual').textContent = v.kmOdometro + " km";
+        }
+        
+        // Atualiza lista de manutenção
+        const listaM = document.getElementById('listaManut');
+        listaM.innerHTML = db.manutencoes.filter(m => m.vehicleId === activeVehicle).map(m => 
+            `<div class="item"><div>${m.desc}<br><small>${m.km} km</small></div></div>`
+        ).join('');
+    }
 
-// 2. Adicione esta função para listar os veículos no Modal
-function renderVehicleList() {
-    const list = document.getElementById('vehicleList');
-    if(!list) return;
-    
-    list.innerHTML = db.veiculos.map(v => `
-        <div class="vehicle-item">
-            <div class="vehicle-info">
-                <strong>${v.nome}</strong>
-                <small>${v.modelo} | ${v.ano} | ${v.tipo}</small>
-            </div>
-            <button class="btn-danger" style="padding:4px 8px" onclick="deletarVeiculo('${v.id}')">🗑️</button>
-        </div>
-    `).join('');
-}
+    // --- EVENTOS INICIAIS ---
+    document.querySelectorAll('.footer-clean button').forEach(btn => btn.onclick = () => showView(btn.dataset.view));
+    document.getElementById('themeBtn').onclick = () => {
+        document.body.classList.toggle('light-mode');
+        localStorage.setItem('moto_theme_v10', document.body.classList.contains('light-mode')? 'light' : 'dark');
+    };
+    if(localStorage.getItem('moto_theme_v10') === 'light') document.body.classList.add('light-mode');
 
-// 3. Função para deletar (caso precise limpar algo errado)
-function deletarVeiculo(id) {
-    db.veiculos = db.veiculos.filter(v => v.id !== id);
-    save();
-    renderAll();
-}
+    document.getElementById('globalVehicle').onchange = (e) => {
+        activeVehicle = e.target.value;
+        db.ativo = activeVehicle;
+        save();
+        renderAll();
+    };
 
-// 4. Garanta que o select dispare a mudança de veículo
-document.getElementById('globalVehicle').onchange = (e) => {
-    activeVehicle = e.target.value;
-    db.ativo = activeVehicle;
-    save();
-    renderAll(); // Isso fará o painel atualizar com os dados do veículo selecionado
-};
+    load();
     
    </script>
 </body>
