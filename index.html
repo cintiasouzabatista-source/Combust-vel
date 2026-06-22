@@ -4,215 +4,75 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Moto Control</title>
-
   <style>
-    :root{
-      --bg:#0b0f19;
-      --panel:#131a26;
-      --card:#1c2533;
-      --stroke:rgba(255,255,255,.08);
-      --text:#eaf1ff;
-      --muted:rgba(234,241,255,.65);
-      --accent:#2b6dff;
-      --accent2:#1f55cc;
-      --danger:#ff476f;
-      --ok:#29d17c;
-      --warning:#ffb84d;
-      --shadow:0 12px 28px rgba(0,0,0,.45);
-      --radius:18px;
-      --line:rgba(255,255,255,.08);
-    }
-
-    body.light-mode {
-      --bg: #f4f7fc;
-      --panel: #ffffff;
-      --card: #eef2f7;
-      --stroke: rgba(0, 0, 0, .08);
-      --text: #0f172a;
-      --muted: #475569;
-      --line: rgba(0, 0, 0, .08);
-      --shadow: 0 10px 25px rgba(0, 0, 0, .05);
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: var(--bg);
-      overflow-x:hidden;
-      transition: background 0.2s ease, color 0.2s ease;
-    }
-
-    .app{min-height:100vh}
-
-    .main{width:100%; padding:16px 14px 110px;}
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:16px;
-    }
-    
-    .theme-toggle-btn {
-      background: var(--accent);
-      color: #ffffff !important;
-      border: none;
-      font-weight: 700;
-      padding: 10px 16px;
-      border-radius: 14px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    h1{ margin:0; font-size:24px; font-weight:700; }
-    .subtitle{ margin:6px 0 0; color:var(--muted); font-size:12px; }
-
-    .section{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:16px;
-      margin:14px 0;
-    }
-
+    :root{ --bg:#0b0f19; --panel:#131a26; --card:#1c2533; --text:#eaf1ff; --muted:rgba(234,241,255,.65); --accent:#2b6dff; --ok:#29d17c; --line:rgba(255,255,255,.08); }
+    body{ margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
+    .main{ padding:16px 14px 100px; }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; }
     .cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media (min-width: 600px){ .cards{ grid-template-columns:repeat(4, 1fr); } }
-    
-    .card{
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:14px;
-      min-height:92px;
-    }
-    .card .label{ margin:0; color:var(--muted); font-size:12px; font-weight:500; }
-    .card .val{ margin-top:10px; font-size:18px; font-weight:700; }
-    .small{ margin-top:6px; color:var(--muted); opacity: 0.8; font-size:12px; }
-
-    /* Footer Menu */
-    .footer-clean{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:28px;padding:12px 22px;background:rgba(19,26,38,.92);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.08);border-radius:30px;z-index:4000;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    .footer-clean button{border:none;background:none;color:var(--muted);font-size:22px;cursor:pointer;transition:.2s}
-    .footer-clean button.active{color:var(--text);transform:translateY(-2px)}
-
-    /* Ajustes Gerais */
-    .grid-pecas { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
-    @media (min-width: 600px) { .grid-pecas { grid-template-columns: 1fr 1fr; } }
-    .card-peca { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
-    .peca-info { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .peca-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
-    .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700; }
-    .status-badge.perigo { background: rgba(255,71,111,0.15); color: var(--danger); }
-    .status-badge.atencao { background: rgba(255,184,77,0.15); color: var(--warning); }
-    .status-badge.bom { background: rgba(41,209,124,0.15); color: var(--ok); }
-    .progress-bg { background: rgba(0,0,0,0.15); height: 6px; border-radius: 99px; overflow: hidden; margin: 6px 0; }
-    .progress-bar { height: 100%; width: 0%; transition: width 0.3s; }
-    label{ display:block; margin:12px 0 6px; color:var(--text); font-size:12px; font-weight:600; }
-    input, select{ width:100%; border-radius:14px; border:1px solid var(--line); background:var(--card); color:var(--text); padding:12px; }
-    .btn{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.14); padding:12px; background:linear-gradient(180deg, var(--accent), var(--accent2)); color: #fff !important; cursor:pointer; font-weight:600; }
-    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    table{ width:100%; border-collapse:collapse; border-radius:16px; }
-    th, td{ padding:12px 10px; text-align:left; font-size:13px; border-bottom:1px solid var(--line); }
-    .v-list{ display: flex; flex-direction: column; gap: 8px; margin-top: 18px;}
-    .v-item{ display: flex; flex-direction: column; gap: 6px; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
-    .v-header-row { display: flex; justify-content: space-between; align-items: center; }
-    .v-meta-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--muted); margin-top: 2px; }
-    #toast { position: fixed; bottom: 80px; right: 20px; background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: none; z-index: 3000; }
-    .modal-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; width: 90%; max-width: 440px; z-index: 2900; display: none; }
-    .modal-box.show { display: block; }
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2800; display: none; }
-    .modal-backdrop.show { display: block; }
-</style>
+    .val{ font-size:18px; font-weight:700; margin-top:5px; }
+    .label{ color:var(--muted); font-size:11px; }
+    .section{ background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:16px; margin-top:16px; }
+    .footer-clean{ position:fixed; bottom:20px; left:5%; width:90%; display:flex; justify-content:space-around; background:rgba(25,30,40,.9); padding:15px; border-radius:30px; backdrop-filter:blur(10px); }
+    button{ cursor:pointer; }
+  </style>
 </head>
-
 <body>
-<div class="app">
-  <main class="main">
-    <div class="topbar">
-      <div>
-        <h1 id="pageTitle">Painel</h1>
-        <div class="subtitle" id="pageSub">Métricas essenciais</div>
-      </div>
-      <button id="themeBtn" class="theme-toggle-btn">🌓</button>
+<main class="main">
+  <div class="cards">
+    <div class="card">
+      <div class="label">Média</div>
+      <div class="val" id="kmlGeral">--</div>
     </div>
-    
-    <div style="margin-bottom: 14px;" id="globalVehiclesContainer">
-      <select id="globalVehicle"></select>
+    <div class="card">
+      <div class="label">Próximo Abast.</div>
+      <div class="val" id="proxAbast">--</div>
     </div>
-
-    <section class="section view" id="view-painel">
-      <div class="cards">
-        <div class="card">
-          <div class="label">Média Geral</div>
-          <div class="val" id="kmlGeral">—</div>
-          <div class="small">Km/L</div>
-        </div>
-        <div class="card">
-          <div class="label">Próximo Abastecimento</div>
-          <div class="val" id="proxAbast">---</div>
-          <div class="small">estimado (dias)</div>
-        </div>
-        <div class="card">
-          <div class="label">Total Gasto</div>
-          <div class="val" id="totalGasto">R$ 0,00</div>
-          <div class="small">combustível</div>
-        </div>
-        <div class="card">
-          <div class="label">Km Atual</div>
-          <div class="val" id="kmAtual">0 km</div>
-          <div class="small">odômetro</div>
-        </div>
-      </div>
-      <div id="containerVidaUtilHome" style="margin-top: 24px; display: none;">
-        <h3 style="margin: 0 0 4px 0; font-size: 16px;">⏱️ Desgaste de Peças</h3>
-        <div class="grid-pecas" id="gridPecasHome"></div>
-      </div>
-    </section>
-
-    <section class="section view" id="view-abastecer" style="display:none">...</section>
-    <section class="section view" id="view-historico" style="display:none">...</section>
-    <section class="section view" id="view-manutencao" style="display:none">...</section>
-    <section class="section view" id="view-veiculos" style="display:none">...</section>
-  </main>
-
-  <div class="footer-clean">
-    <button data-view="painel" class="active">⌂</button>
-    <button data-view="abastecer">⊕</button>
-    <button data-view="historico">◔</button>
-    <button data-view="manutencao">⚙︎</button>
-    <button data-view="veiculos">◉</button>
   </div>
-</div>
+
+  <section class="section" id="view-painel">
+    <h3>Painel</h3>
+    <div id="status">Selecione uma opção abaixo</div>
+  </section>
+</main>
+
+<nav class="footer-clean">
+  <button onclick="alert('Painel')">🏠</button>
+  <button onclick="alert('Abastecer')">⛽</button>
+  <button onclick="alert('Histórico')">🧾</button>
+  <button onclick="alert('Config')">⚙️</button>
+</nav>
 
 <script>
-// [Inserir aqui toda a lógica JS original, apenas atualize a função renderCards]:
-
-function renderCards(){
-  // ... (código existente de cálculo) ...
+// Lógica de cálculo do próximo abastecimento
+function calcularProxAbastecimento(historico) {
+  if (historico.length < 2) return "Insuficiente";
   
-  // Lógica para o novo card de próximo abastecimento
-  let filtered = items.filter(x => x.veiculo === activeVehicle);
-  if(filtered.length >= 2) {
-    const dataInicio = new Date(filtered[0].data);
-    const dataFim = new Date(filtered[filtered.length-1].data);
-    const dias = (dataFim - dataInicio) / (1000 * 60 * 60 * 24);
-    const totalKm = Number(filtered[filtered.length-1].odometro) - Number(filtered[0].odometro);
-    const kmPorDia = dias > 0 ? (totalKm / dias) : 0;
-    
-    // Supondo tanque médio de 6 litros para moto, ajuste conforme necessário
-    const autonomiaRestante = 150; 
-    const diasProx = kmPorDia > 0 ? Math.round(autonomiaRestante / kmPorDia) : "—";
-    $("proxAbast").textContent = diasProx !== "—" ? `${diasProx} dias` : "—";
-  } else {
-    $("proxAbast").textContent = "—";
+  // Pega o intervalo médio de km entre os últimos abastecimentos
+  const ultimos = historico.slice(-3);
+  let somatorioKm = 0;
+  for(let i = 1; i < ultimos.length; i++) {
+    somatorioKm += (ultimos[i].odometro - ultimos[i-1].odometro);
   }
+  
+  const mediaKm = somatorioKm / (ultimos.length - 1);
+  const autonomiaMedia = 150; // Ajuste conforme a autonomia da sua moto
+  
+  // Exemplo simples: estimativa baseada na média
+  return Math.round(autonomiaMedia / (mediaKm/30)) + " dias";
 }
 
-// ... (restante dos seus scripts)
+// Inicialização básica
+window.onload = () => {
+  // Simulação de dados para teste
+  const mockHistorico = [
+    { odometro: 93000, data: '2026-06-01' },
+    { odometro: 93300, data: '2026-06-10' }
+  ];
+  
+  document.getElementById('proxAbast').textContent = calcularProxAbastecimento(mockHistorico);
+  document.getElementById('kmlGeral').textContent = "35 km/L";
+}
 </script>
 </body>
 </html>
