@@ -1,23 +1,3 @@
-:root {
-  --bg: #0f172a;
-  --card: #1e293b;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --primary: #2563eb;
-  --danger: #ef4444;
-  --warn: #f59e0b;
-  --ok: #10b981;
-  --border: #334155;
-}
-
-body.light {
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-}
-
 * {
   margin: 0;
   padding: 0;
@@ -25,15 +5,20 @@ body.light {
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: #0f172a;
+  color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding-bottom: 80px;
+  padding: 0;
+}
+
+body.light {
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 /* HEADER */
 h1 {
-  background: var(--card);
+  background: #1e293b;
   padding: 16px;
   font-size: 20px;
   display: flex;
@@ -42,195 +27,208 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* BOTOES TOPO */
-button {
-  cursor: pointer;
+body.light h1 {
+  background: #fff;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #1e293b;
+  position: sticky;
+  top: 60px;
+}
+
+body.light .tabs {
+  background: #fff;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 10px;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  background: #334155;
+  color: #94a3b8;
   font-weight: 600;
+  font-size: 14px;
 }
 
-/* Tabs Painel/Abastecer/Manutenção */
-button:has(.fa-chart-line),
-button:has(.fa-gas-pump),
-button:has(.fa-wrench) {
-  padding: 10px 16px;
-  margin: 8px 4px;
-  background: var(--card);
-  color: var(--muted);
-  border: 1px solid var(--border);
-}
-
-button:has(.fa-chart-line).active,
-button:has(.fa-gas-pump).active,
-button:has(.fa-wrench).active {
-  background: var(--primary);
+.tabs button.active {
+  background: #2563eb;
   color: white;
-  border-color: var(--primary);
 }
 
-/* Botão tema Lua/Sol */
-button:has(.fa-moon),
-button:has(.fa-sun) {
-  position: absolute;
-  right: 16px;
-  top: 14px;
-  background: transparent;
-  color: var(--text);
-  font-size: 20px;
-  padding: 8px;
+/* CONTEÚDO */
+main {
+  padding: 16px;
+  padding-bottom: 100px;
 }
 
-/* TITULOS */
-h2, h3 {
-  margin: 16px 0 12px 0;
-  font-size: 18px;
+/* KPI CARDS GRID */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-/* CARDS KPI */
-div:has(> p:contains("Média Geral")),
-div:has(> p:contains("Total Gasto")),
-div:has(> p:contains("Km Atual")),
-div:has(> p:contains("Próx. Troca Óleo")) {
-  background: var(--card);
+.card {
+  background: #1e293b;
   padding: 16px;
   border-radius: 12px;
-  margin: 8px;
-  display: inline-block;
-  width: calc(50% - 16px);
-  vertical-align: top;
 }
 
-div:has(> p:contains("Média Geral")) p,
-div:has(> p:contains("Total Gasto")) p,
-div:has(> p:contains("Km Atual")) p,
-div:has(> p:contains("Próx. Troca Óleo")) p {
-  color: var(--muted);
+body.light .card {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.card p {
+  color: #94a3b8;
   font-size: 12px;
   margin-bottom: 4px;
 }
 
-div:has(> p:contains("Média Geral")) div,
-div:has(> p:contains("Total Gasto")) div,
-div:has(> p:contains("Km Atual")) div,
-div:has(> p:contains("Próx. Troca Óleo")) div {
+.card h2 {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 700;
 }
 
-/* FORM CARD */
-div:has(> h3:contains("Novo Abastecimento")),
-div:has(> h3:contains("Nova Manutenção")) {
-  background: var(--card);
-  padding: 16px;
-  border-radius: 12px;
-  margin: 16px 8px;
+.card.alerta {
+  border-left: 4px solid #f59e0b;
 }
 
-/* INPUTS */
+.card.vencida {
+  border-left: 4px solid #ef4444;
+}
+
+/* TITULOS SEÇÃO */
+h3 {
+  font-size: 18px;
+  margin: 16px 0 12px 0;
+}
+
+/* FORM */
 input, select {
   width: 100%;
-  padding: 12px;
-  margin: 6px 0;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 14px;
+  margin: 8px 0;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 10px;
   font-size: 16px;
+}
+
+body.light input, body.light select {
+  background: #fff;
+  color: #0f172a;
+  border-color: #e2e8f0;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: #2563eb;
 }
 
-/* Grid 3 colunas Litros R$/L Total */
-input[placeholder="Litros"] + input + input {
+/* GRID 3 COLUNAS */
+.grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
 }
 
-/* BOTÃO SALVAR */
-button:has(.fa-plus) {
+/* GRID 2 COLUNAS */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* BOTÕES */
+.btn {
   width: 100%;
-  padding: 14px;
-  background: var(--primary);
+  padding: 16px;
+  background: #2563eb;
   color: white;
-  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
   font-size: 16px;
+  margin-top: 12px;
+  cursor: pointer;
 }
 
-/* BOTÃO EXPORTAR CSV */
-button:has(.fa-download) {
-  background: var(--ok);
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-del {
+  background: #ef4444;
   color: white;
-  padding: 10px 16px;
-  margin: 8px;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
-/* LISTA DE ITENS */
-div:has(> button.btn-del) {
-  background: var(--card);
-  padding: 12px;
-  border-radius: 8px;
-  margin: 8px;
+/* LISTA ITENS */
+.item {
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 10px;
+  margin: 8px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-div:has(> button.btn-del) p {
-  margin: 2px 0;
+body.light .item {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-div:has(> button.btn-del) p b {
+.item p {
+  margin: 3px 0;
+}
+
+.item p b {
   font-size: 15px;
 }
 
-div:has(> button.btn-del) p.muted {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-/* BOTÃO LIXEIRA */
-.btn-del {
-  background: var(--danger);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-}
-
-/* TEXTO MUTED */
 .muted {
-  color: var(--muted);
+  color: #94a3b8;
   font-size: 12px;
 }
 
-/* SEM DADOS */
-p:contains("Sem dados"),
-p:contains("Nenhum abastecimento lançado") {
+.empty {
   text-align: center;
-  color: var(--muted);
-  padding: 32px 0;
+  color: #94a3b8;
+  padding: 40px 0;
 }
 
-/* CARD ALERTA */
-div.alerta {
-  border-left: 4px solid var(--warn);
-}
-
-div.vencida {
-  border-left: 4px solid var(--danger);
+/* BOTÃO TEMA */
+header button {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #f1f5f9;
+  font-size: 22px;
+  padding: 8px;
 }
 
 /* RESPONSIVO */
-@media (max-width: 480px) {
-  div:has(> p:contains("Média Geral")) {
-    width: calc(100% - 16px);
+@media (max-width: 400px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-3 {
+    grid-template-columns: 1fr;
   }
 }
