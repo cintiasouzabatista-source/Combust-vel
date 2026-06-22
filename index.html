@@ -132,8 +132,30 @@
 </div>
 
 <!-- Modais -->
-<div class="modal" id="vehicleModal"><div class="modal-box"><h2>Gerenciar Veículos</h2><input type="text" id="newVehicleName" placeholder="Nome do veículo"><div class="grid-3"><input type="number" id="newVehicleAno" placeholder="Ano"><input type="text" id="newVehicleModelo" placeholder="Modelo"><input type="number" id="newVehicleKmOdometro" placeholder="Km odômetro atual"></div><input type="number" id="newVehicleKmInicial" placeholder="Km quando pegou a moto"><input type="number" id="newVehicleKmDia" placeholder="Km rodado por dia" value="30"><button class="btn" onclick="addVehicle()">Adicionar</button><div id="vehicleList" style="margin-top:16px;max-height:250px;overflow-y:auto"></div><div class="modal-actions"><button class="btn-ghost" onclick="closeVehicleModal()">Fechar</button></div></div></div>
-<div class="modal" id="editModal"><div class="modal-box"><h2>Editar Abastecimento</h2><input type="date" id="editData"><input type="number" id="editKm" placeholder="Km do odômetro"><div class="grid-3"><div><label class="label">Litros</label><input type="number" step="0.01" id="editLitros" oninput="calcEditTotal()"></div><div><label class="label">Valor/Litro</label><input type="number" step="0.001" id="editValorLitro" oninput="calcEditTotal()"></div><div><label class="label">Total R$</label><input type="number" step="0.01" id="editValor"></div></div><select id="editComb"><option>Gasolina</option><option>Etanol</option><option>Gasolina Aditivada</option></select><div class="modal-actions"><button class="btn-ghost" onclick="closeEditModal()">Cancelar</button><button class="btn" onclick="confirmarEdicao()">Salvar</button></div></div></div>
+<div class="modal" id="vehicleModal">
+    <div class="modal-box">
+        <h2>Cadastrar Veículo</h2>
+        <input type="text" id="newVehicleName" placeholder="Nome/Apelido">
+        <input type="text" id="newVehicleModelo" placeholder="Modelo">
+        <div class="grid-3">
+            <input type="number" id="newVehicleAno" placeholder="Ano">
+            <input type="number" id="newVehicleKmOdometro" placeholder="KM Atual">
+            <select id="newVehicleTipo">
+                <option value="Moto">Moto</option>
+                <option value="Carro">Carro</option>
+            </select>
+        </div>
+        <label class="label" style="margin-top:10px">Data de Aquisição</label>
+        <input type="date" id="newVehicleDataAquisi">
+        
+        <button class="btn" onclick="addVehicle()">Salvar Veículo</button>
+        <div id="vehicleList" style="margin-top:16px;max-height:200px;overflow-y:auto"></div>
+        <div class="modal-actions">
+            <button class="btn-ghost" onclick="closeVehicleModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+    <div class="modal" id="editModal"><div class="modal-box"><h2>Editar Abastecimento</h2><input type="date" id="editData"><input type="number" id="editKm" placeholder="Km do odômetro"><div class="grid-3"><div><label class="label">Litros</label><input type="number" step="0.01" id="editLitros" oninput="calcEditTotal()"></div><div><label class="label">Valor/Litro</label><input type="number" step="0.001" id="editValorLitro" oninput="calcEditTotal()"></div><div><label class="label">Total R$</label><input type="number" step="0.01" id="editValor"></div></div><select id="editComb"><option>Gasolina</option><option>Etanol</option><option>Gasolina Aditivada</option></select><div class="modal-actions"><button class="btn-ghost" onclick="closeEditModal()">Cancelar</button><button class="btn" onclick="confirmarEdicao()">Salvar</button></div></div></div>
 <div class="modal" id="pdfModal"><div class="modal-box"><h2>Importar PDF da Oficina</h2><p style="color:var(--muted);font-size:14px">Envie o PDF da OS.</p><input type="file" id="pdfFile" accept=".pdf" style="margin:12px 0"><div id="pdfPreview" style="max-height:200px;overflow-y:auto;font-size:13px;color:var(--muted);margin:12px 0"></div><div class="modal-actions"><button class="btn-ghost" onclick="closePdfModal()">Cancelar</button><button class="btn" onclick="processarPDF()">Importar</button></div></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
