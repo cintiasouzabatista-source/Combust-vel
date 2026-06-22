@@ -39,6 +39,7 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 .badge{padding:4px 8px;border-radius:8px;background:rgba(16,185,129,.15);color:var(--accent2);font-size:11px;font-weight:700}
 .badge.warn{background:rgba(245,158,11,.2);color:var(--warning)}
 .badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
+.badge.import{background:rgba(43,109,255,.2);color:var(--accent);font-size:10px}
 .footer-clean{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:28px;padding:14px 26px;background:rgba(19,26,38,.9);border:1px solid var(--line);border-radius:30px;z-index:999;backdrop-filter:blur(12px);box-shadow:0 10px 40px rgba(0,0,0,.4)}
 .footer-clean button{border:none;background:none;color:var(--muted);font-size:22px;cursor:pointer;transition:.2s}
 .footer-clean button.active{color:var(--accent);transform:translateY(-3px)}
@@ -55,7 +56,6 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 .vehicle-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
 .vehicle-info small{color:var(--muted);display:block}
 .item-actions{display:flex;gap:6px}
-.imported-badge{background:rgba(43,109,255,.2);color:var(--accent);font-size:10px;padding:2px 6px;border-radius:6px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -122,7 +122,8 @@ button{cursor:pointer;font-weight:600;transition:.2s}
           <input type="number" id="proxKmManut" placeholder="Próx. troca em km">
         </div>
         <button class="btn" onclick="salvarManutencao()">Salvar</button>
-        <small style="color:var(--muted);display:block;margin-top:8px">As manutenções do PDF já foram importadas automaticamente</small>
+        <button class="btn-ghost" onclick="openPdfModal()" style="margin-top:8px;width:100%">📄 Importar PDF da Oficina</button>
+        <small style="color:var(--muted);display:block;margin-top:8px">Dados do PDF inicial já importados automaticamente</small>
       </div>
       <div class="list" id="listaManut" style="margin-top:12px"></div>
     </section>
@@ -184,14 +185,30 @@ button{cursor:pointer;font-weight:600;transition:.2s}
   </div>
 </div>
 
+<div class="modal" id="pdfModal">
+  <div class="modal-box">
+    <h2>Importar PDF da Oficina</h2>
+    <p style="color:var(--muted);font-size:14px">Envie o PDF da OS da oficina. O app extrai data, km e itens trocados.</p>
+    <input type="file" id="pdfFile" accept=".pdf" style="margin:12px 0">
+    <div id="pdfPreview" style="max-height:200px;overflow-y:auto;font-size:13px;color:var(--muted);margin:12px 0"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closePdfModal()">Cancelar</button>
+      <button class="btn" onclick="processarPDF()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-const STORAGE_KEY = 'motoControl_v7';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const STORAGE_KEY = 'motoControl_v8';
 let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
 let activeVehicle = null;
 let editandoId = null;
 
-// Dados extraídos do seu PDF - já ficam salvos direto
-const DADOS_PDF_IMPORTADOS = [
+// Dados do seu PDF inicial - import automático 1x
+const DADOS_PDF_INICIAL = [
   {descricao: "Troca Óleo Motor", km: 93290, proxKm: 98290, data: "10/04/2026"},
   {descricao: "Troca Óleo Transmissão", km: 93290, proxKm: 105290, data: "10/04/2026"},
   {descricao: "Troca Pastilha Freio", km: 93290, proxKm: 103290, data: "10/04/2026"},
@@ -209,17 +226,20 @@ function load(){
     db.veiculos = [{id:'v1', nome:'Lead 110', ano:2024, modelo:'', kmInicial:93290}];
     db.ativo = 'v1';
 
-    // Importa automático na primeira vez
-    DADOS_PDF_IMPORTADOS.forEach(m=>{
-      db.manutencoes.push({
-        id: Date.now() + Math.random(),
-        veiculo: 'v1',
-        descricao: m.descricao + ' <span class="imported-badge">PDF</span>',
-        km: m.km,
-        proxKm: m.proxKm
+    // Import automático só na primeira vez
+    if(!localStorage.getItem(STORAGE_KEY+'_pdf_importado')){
+      DADOS_PDF_INICIAL.forEach(m=>{
+        db.manutencoes.push({
+          id: Date.now() + Math.random(),
+          veiculo: 'v1',
+          descricao: m.descricao + ' <span class="badge import">PDF</span>',
+          km: m.km,
+          proxKm: m.proxKm
+        });
       });
-    });
-    save();
+      localStorage.setItem(STORAGE_KEY+'_pdf_importado', '1');
+      save();
+    }
   }
 
   activeVehicle = db.ativo;
@@ -395,7 +415,7 @@ function editarAbast(id){
   document.getElementById('editData').value = item.data;
   document.getElementById('editKm').value = item.odometro;
   document.getElementById('editLitros').value = item.litros;
-  document.getElementById('editValor')..value = item.valor;
+  document.getElementById('editValor').value = item.valor;
   document.getElementById('editValorLitro').value = (item.valor/item.litros).toFixed(3);
   document.getElementById('editComb').value = item.combustivel;
   document.getElementById('editModal').classList.add('active');
@@ -413,7 +433,7 @@ function confirmarEdicao(){
   const idx = db.abastecimentos.findIndex(a=>a.id==editandoId);
   if(idx>-1){
     db.abastecimentos[idx] = {
-    ...db.abastecimentos[idx],
+   ...db.abastecimentos[idx],
       data: document.getElementById('editData').value,
       odometro: +document.getElementById('editKm').value,
       litros: +document.getElementById('editLitros').value,
@@ -449,6 +469,82 @@ function removerManut(id){
   save(); renderAll();
 }
 
+function openPdfModal(){ document.getElementById('pdfModal').classList.add('active'); }
+function closePdfModal(){ document.getElementById('pdfModal').classList.remove('active'); document.getElementById('pdfFile').value=''; document.getElementById('pdfPreview').innerHTML=''; }
+
+async function processarPDF(){
+  const file = document.getElementById('pdfFile').files[0];
+  if(!file) return alert('Selecione um PDF');
+
+  const reader = new FileReader();
+  reader.onload = async function(){
+    const typedarray = new Uint8Array(reader.result);
+    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+    let texto = '';
+
+    for(let i=1; i<=pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      texto += content.items.map(item=>item.str).join(' ') + ' ';
+    }
+
+    const manutencoes = [];
+    const osRegex = /OS:\d+[^\d]*Sa[ií]da:(\d{2}\/\d{2}\/\d{4})[^\d]*KM:(\d+)?([\s\S]*?)(?=OS:|$)/gi;
+    let osMatch;
+
+    while((osMatch = osRegex.exec(texto))!== null){
+      const data = osMatch[1];
+      const km = +osMatch[2] || 0;
+      const itens = osMatch[3];
+
+      const itemRegex = /(OLEO DE MOTOR|OLEO DE TRANSMISSAO|CORREIA|VELA|LONA DE FREIO|PASTILHA|FLUIDO DE FREIO)[^\d]*/gi;
+      let itemMatch;
+
+      while((itemMatch = itemRegex.exec(itens))!== null){
+        let desc = itemMatch[1].replace('OLEO DE MOTOR', 'Troca Óleo Motor')
+                             .replace('OLEO DE TRANSMISSAO', 'Troca Óleo Transmissão')
+                             .replace('VELA', 'Troca Vela')
+                             .replace('CORREIA', 'Troca Correia CVT')
+                             .replace('LONA DE FREIO', 'Troca Lona Freio')
+                             .replace('PASTILHA', 'Troca Pastilha Freio')
+                             .replace('FLUIDO DE FREIO', 'Troca Fluido Freio');
+
+        let proxKm = km + (desc.includes('Óleo Motor')? 5000 :
+                          desc.includes('Óleo Transmissão')? 12000 :
+                          desc.includes('Correia')? 24000 :
+                          desc.includes('Vela')? 8000 :
+                          desc.includes('Freio')? 10000 : 5000);
+
+        manutencoes.push({descricao: desc + ' <span class="badge import">PDF</span>', km: km, proxKm: proxKm, data: data});
+      }
+    }
+
+    if(manutencoes.length === 0){
+      document.getElementById('pdfPreview').innerHTML = 'Não encontrei itens de manutenção no PDF.';
+      return;
+    }
+
+    const unicas = [...new Map(manutencoes.map(m=>[m.descricao+m.km, m])).values()];
+    document.getElementById('pdfPreview').innerHTML = '<b>Encontrado:</b><br>' +
+      unicas.map(m=>`• ${m.descricao.replace(/<[^>]*>/g,'')} - Km ${m.km} em ${m.data} → Próxima: ${m.proxKm}km`).join('<br>');
+
+    if(confirm(`Encontrei ${unicas.length} manutenções. Adicionar ao histórico?`)){
+      unicas.forEach(m=>{
+        db.manutencoes.push({
+          id: Date.now() + Math.random(),
+          veiculo: activeVehicle,
+          descricao: m.descricao,
+          km: m.km,
+          proxKm: m.proxKm
+        });
+      });
+      save(); renderAll(); closePdfModal();
+      alert('Manutenções importadas com sucesso!');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 document.querySelectorAll('.footer-clean button').forEach(btn=>{
   btn.onclick = () => {
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -467,6 +563,9 @@ document.getElementById('vehicleModal').onclick = e => {
 }
 document.getElementById('editModal').onclick = e => {
   if(e.target.id==='editModal') closeEditModal();
+}
+document.getElementById('pdfModal').onclick = e => {
+  if(e.target.id==='pdfModal') closePdfModal();
 }
 
 load();
