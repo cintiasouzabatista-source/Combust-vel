@@ -194,10 +194,41 @@
         renderAll();
     }
     function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
-    function renderAll(){ /* Sua lógica de renderização original aqui */ }
-    // ... [As outras funções que você tinha: renderVehicles, addVehicle, salvarAbastecimento, etc] ...
-    
-    load();
-</script>
+    // --- LÓGICA DE VEÍCULOS ---
+    function openVehicleModal() { document.getElementById('vehicleModal').classList.add('active'); }
+    function closeVehicleModal() { document.getElementById('vehicleModal').classList.remove('active'); }
+
+    function addVehicle() {
+        const novoVeiculo = {
+            id: 'v' + Date.now(),
+            nome: document.getElementById('newVehicleName').value,
+            modelo: document.getElementById('newVehicleModelo').value,
+            ano: document.getElementById('newVehicleAno').value,
+            kmOdometro: document.getElementById('newVehicleKmOdometro').value,
+            tipo: document.getElementById('newVehicleTipo').value,
+            dataAquisi: document.getElementById('newVehicleDataAquisi').value
+        };
+
+        if(!novoVeiculo.nome) return alert('Preencha o nome do veículo');
+
+        db.veiculos.push(novoVeiculo);
+        save();
+        renderAll();
+        closeVehicleModal();
+        
+        // Limpar campos após salvar
+        document.getElementById('newVehicleName').value = '';
+        document.getElementById('newVehicleModelo').value = '';
+        alert('Veículo cadastrado com sucesso!');
+    }
+
+    function renderAll() {
+        // Atualiza o select de veículos no topo
+        const sel = document.getElementById('globalVehicle');
+        sel.innerHTML = db.veiculos.map(v => `<option value="${v.id}" ${v.id === activeVehicle ? 'selected' : ''}>${v.nome}</option>`).join('');
+        
+        // Coloque aqui o restante da sua lógica de renderização (cálculos, etc.)
+        console.log("Veículos carregados:", db.veiculos);
+    }</script>
 </body>
 </html>
