@@ -1,27 +1,236 @@
-:root { --bg:#0f172a; --card:#1e293b; --text:#f1f5f9; --muted:#94a3b8; --primary:#2563eb; --danger:#ef4444; --warn:#f59e0b; }
-body.light { --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b; }
-body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui; }
-header { padding:16px; background:var(--card); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; }
-header h1 { font-size:18px; margin:0; }
-header button { background:none; border:none; color:var(--text); font-size:20px; }
-.tabs { display:flex; background:var(--card); padding:8px; gap:8px; position:sticky; top:60px; }
-.tab-btn { flex:1; padding:12px; border:none; background:transparent; color:var(--muted); border-radius:8px; font-size:13px; }
-.tab-btn.active { background:var(--primary); color:#fff; }
-main { padding:16px; padding-bottom:80px; }
-.aba { display:none; }
-.aba.active { display:block; }
-.card { background:var(--card); padding:16px; border-radius:12px; margin-bottom:12px; }
-.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-.card p { margin:0 0 4px 0; color:var(--muted); font-size:12px; }
-.card h2 { margin:0; font-size:22px; }
-input, select { width:100%; padding:12px; margin:8px 0; border:1px solid #334155; border-radius:8px; background:var(--bg); color:var(--text); box-sizing:border-box; font-size:16px; }
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-.btn { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-weight:bold; margin-top:8px; font-size:16px; }
-.item { display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--card); border-radius:8px; margin:8px 0; }
-.item.alerta { border-left:4px solid var(--warn); }
-.item.vencida { border-left:4px solid var(--danger); }
-.item-small { padding:8px 0; border-bottom:1px solid #334155; font-size:14px; }
-.btn-del { background:var(--danger); color:#fff; border:none; padding:8px 12px; border-radius:6px; }
-.muted { color:var(--muted); font-size:12px; margin:4px 0 0 0; }
-.empty { text-align:center; color:var(--muted); padding:32px 0; }
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --primary: #2563eb;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --ok: #10b981;
+  --border: #334155;
+}
+
+body.light {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-bottom: 80px;
+}
+
+/* HEADER */
+h1 {
+  background: var(--card);
+  padding: 16px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* BOTOES TOPO */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Tabs Painel/Abastecer/Manutenção */
+button:has(.fa-chart-line),
+button:has(.fa-gas-pump),
+button:has(.fa-wrench) {
+  padding: 10px 16px;
+  margin: 8px 4px;
+  background: var(--card);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+button:has(.fa-chart-line).active,
+button:has(.fa-gas-pump).active,
+button:has(.fa-wrench).active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Botão tema Lua/Sol */
+button:has(.fa-moon),
+button:has(.fa-sun) {
+  position: absolute;
+  right: 16px;
+  top: 14px;
+  background: transparent;
+  color: var(--text);
+  font-size: 20px;
+  padding: 8px;
+}
+
+/* TITULOS */
+h2, h3 {
+  margin: 16px 0 12px 0;
+  font-size: 18px;
+}
+
+/* CARDS KPI */
+div:has(> p:contains("Média Geral")),
+div:has(> p:contains("Total Gasto")),
+div:has(> p:contains("Km Atual")),
+div:has(> p:contains("Próx. Troca Óleo")) {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 12px;
+  margin: 8px;
+  display: inline-block;
+  width: calc(50% - 16px);
+  vertical-align: top;
+}
+
+div:has(> p:contains("Média Geral")) p,
+div:has(> p:contains("Total Gasto")) p,
+div:has(> p:contains("Km Atual")) p,
+div:has(> p:contains("Próx. Troca Óleo")) p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+div:has(> p:contains("Média Geral")) div,
+div:has(> p:contains("Total Gasto")) div,
+div:has(> p:contains("Km Atual")) div,
+div:has(> p:contains("Próx. Troca Óleo")) div {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* FORM CARD */
+div:has(> h3:contains("Novo Abastecimento")),
+div:has(> h3:contains("Nova Manutenção")) {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 12px;
+  margin: 16px 8px;
+}
+
+/* INPUTS */
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* Grid 3 colunas Litros R$/L Total */
+input[placeholder="Litros"] + input + input {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+/* BOTÃO SALVAR */
+button:has(.fa-plus) {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  margin-top: 12px;
+  font-size: 16px;
+}
+
+/* BOTÃO EXPORTAR CSV */
+button:has(.fa-download) {
+  background: var(--ok);
+  color: white;
+  padding: 10px 16px;
+  margin: 8px;
+}
+
+/* LISTA DE ITENS */
+div:has(> button.btn-del) {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+div:has(> button.btn-del) p {
+  margin: 2px 0;
+}
+
+div:has(> button.btn-del) p b {
+  font-size: 15px;
+}
+
+div:has(> button.btn-del) p.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* BOTÃO LIXEIRA */
+.btn-del {
+  background: var(--danger);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* TEXTO MUTED */
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* SEM DADOS */
+p:contains("Sem dados"),
+p:contains("Nenhum abastecimento lançado") {
+  text-align: center;
+  color: var(--muted);
+  padding: 32px 0;
+}
+
+/* CARD ALERTA */
+div.alerta {
+  border-left: 4px solid var(--warn);
+}
+
+div.vencida {
+  border-left: 4px solid var(--danger);
+}
+
+/* RESPONSIVO */
+@media (max-width: 480px) {
+  div:has(> p:contains("Média Geral")) {
+    width: calc(100% - 16px);
+  }
+}
