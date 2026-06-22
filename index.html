@@ -55,6 +55,7 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 .vehicle-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
 .vehicle-info small{color:var(--muted);display:block}
 .item-actions{display:flex;gap:6px}
+.imported-badge{background:rgba(43,109,255,.2);color:var(--accent);font-size:10px;padding:2px 6px;border-radius:6px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -121,7 +122,7 @@ button{cursor:pointer;font-weight:600;transition:.2s}
           <input type="number" id="proxKmManut" placeholder="Próx. troca em km">
         </div>
         <button class="btn" onclick="salvarManutencao()">Salvar</button>
-        <button class="btn-ghost" onclick="openPdfModal()" style="margin-top:8px;width:100%">📄 Importar PDF da Moto</button>
+        <small style="color:var(--muted);display:block;margin-top:8px">As manutenções do PDF já foram importadas automaticamente</small>
       </div>
       <div class="list" id="listaManut" style="margin-top:12px"></div>
     </section>
@@ -135,7 +136,6 @@ button{cursor:pointer;font-weight:600;transition:.2s}
   </nav>
 </div>
 
-<!-- Modal Veículos -->
 <div class="modal" id="vehicleModal">
   <div class="modal-box">
     <h2>Gerenciar Veículos</h2>
@@ -153,7 +153,6 @@ button{cursor:pointer;font-weight:600;transition:.2s}
   </div>
 </div>
 
-<!-- Modal Editar Abastecimento -->
 <div class="modal" id="editModal">
   <div class="modal-box">
     <h2>Editar Abastecimento</h2>
@@ -185,36 +184,44 @@ button{cursor:pointer;font-weight:600;transition:.2s}
   </div>
 </div>
 
-<!-- Modal Importar PDF -->
-<div class="modal" id="pdfModal">
-  <div class="modal-box">
-    <h2>Importar Manual da Moto</h2>
-    <p style="color:var(--muted);font-size:14px">Envie o PDF do manual da sua moto. O app vai extrair as revisões e cadastrar automaticamente.</p>
-    <input type="file" id="pdfFile" accept=".pdf" style="margin:12px 0">
-    <div id="pdfPreview" style="max-height:200px;overflow-y:auto;font-size:13px;color:var(--muted);margin:12px 0"></div>
-    <div class="modal-actions">
-      <button class="btn-ghost" onclick="closePdfModal()">Cancelar</button>
-      <button class="btn" onclick="processarPDF()">Importar</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-const STORAGE_KEY = 'motoControl_v6';
+const STORAGE_KEY = 'motoControl_v7';
 let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
 let activeVehicle = null;
 let editandoId = null;
 
+// Dados extraídos do seu PDF - já ficam salvos direto
+const DADOS_PDF_IMPORTADOS = [
+  {descricao: "Troca Óleo Motor", km: 93290, proxKm: 98290, data: "10/04/2026"},
+  {descricao: "Troca Óleo Transmissão", km: 93290, proxKm: 105290, data: "10/04/2026"},
+  {descricao: "Troca Pastilha Freio", km: 93290, proxKm: 103290, data: "10/04/2026"},
+  {descricao: "Troca Lona Freio", km: 93290, proxKm: 103290, data: "10/04/2026"},
+  {descricao: "Troca Correia CVT", km: 93290, proxKm: 117290, data: "10/04/2026"},
+  {descricao: "Troca Vela", km: 93290, proxKm: 101290, data: "10/04/2026"},
+  {descricao: "Troca Fluido Freio", km: 93290, proxKm: 103290, data: "10/04/2026"}
+];
+
 function load(){
   const raw = localStorage.getItem(STORAGE_KEY);
   if(raw) db = JSON.parse(raw);
+
   if(!db.veiculos.length){
-    db.veiculos = [{id:'v1', nome:'Moto', ano:2024, modelo:'', kmInicial:0}];
+    db.veiculos = [{id:'v1', nome:'Lead 110', ano:2024, modelo:'', kmInicial:93290}];
     db.ativo = 'v1';
+
+    // Importa automático na primeira vez
+    DADOS_PDF_IMPORTADOS.forEach(m=>{
+      db.manutencoes.push({
+        id: Date.now() + Math.random(),
+        veiculo: 'v1',
+        descricao: m.descricao + ' <span class="imported-badge">PDF</span>',
+        km: m.km,
+        proxKm: m.proxKm
+      });
+    });
+    save();
   }
+
   activeVehicle = db.ativo;
   renderVehicles();
   renderAll();
@@ -306,7 +313,7 @@ function calcularProximoAbastecimento(lista){
 }
 
 function calcularProximaTrocaOleo(manutencoes, kmAtual){
-  const trocasOleo = manutencoes.filter(m=>m.descricao.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km);
+  const trocasOleo = manutencoes.filter(m=>m.descricao.toLowerCase().includes('óleo motor')).sort((a,b)=>b.km-a.km);
   if(!trocasOleo.length) return {texto:'--', classe:'', badge:''};
   const ultimaTroca = trocasOleo[0];
   const kmFaltam = ultimaTroca.proxKm - kmAtual;
@@ -318,7 +325,7 @@ function calcularProximaTrocaOleo(manutencoes, kmAtual){
 function renderAll(){
   const filtro = db.abastecimentos.filter(x=>x.veiculo===activeVehicle).sort((a,b)=>new Date(b.data)-new Date(a.data));
   const manut = db.manutencoes.filter(x=>x.veiculo===activeVehicle).sort((a,b)=>b.km-a.km);
-  const kmAtual = filtro[0]?.odometro || 0;
+  const kmAtual = filtro[0]?.odometro || db.veiculos.find(v=>v.id===activeVehicle)?.kmInicial || 0;
 
   const kml = calcularKmL(filtro);
   const kmlRec = calcularKmL(filtro.slice(0,4));
@@ -388,7 +395,7 @@ function editarAbast(id){
   document.getElementById('editData').value = item.data;
   document.getElementById('editKm').value = item.odometro;
   document.getElementById('editLitros').value = item.litros;
-  document.getElementById('editValor').value = item.valor;
+  document.getElementById('editValor')..value = item.valor;
   document.getElementById('editValorLitro').value = (item.valor/item.litros).toFixed(3);
   document.getElementById('editComb').value = item.combustivel;
   document.getElementById('editModal').classList.add('active');
@@ -406,7 +413,7 @@ function confirmarEdicao(){
   const idx = db.abastecimentos.findIndex(a=>a.id==editandoId);
   if(idx>-1){
     db.abastecimentos[idx] = {
-     ...db.abastecimentos[idx],
+    ...db.abastecimentos[idx],
       data: document.getElementById('editData').value,
       odometro: +document.getElementById('editKm').value,
       litros: +document.getElementById('editLitros').value,
@@ -442,62 +449,6 @@ function removerManut(id){
   save(); renderAll();
 }
 
-function openPdfModal(){ document.getElementById('pdfModal').classList.add('active'); }
-function closePdfModal(){ document.getElementById('pdfModal').classList.remove('active'); document.getElementById('pdfFile').value=''; document.getElementById('pdfPreview').innerHTML=''; }
-
-async function processarPDF(){
-  const file = document.getElementById('pdfFile').files[0];
-  if(!file) return alert('Selecione um PDF');
-
-  const reader = new FileReader();
-  reader.onload = async function(){
-    const typedarray = new Uint8Array(reader.result);
-    const pdf = await pdfjsLib.getDocument(typedarray).promise;
-    let texto = '';
-
-    for(let i=1; i<=pdf.numPages; i++){
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      texto += content.items.map(item=>item.str).join(' ') + ' ';
-    }
-
-    // Extrai padrões comuns de manual: "Troca de óleo a cada 5000 km" ou "10000 km"
-    const manutencoes = [];
-    const regex = /([Tt]roca de [óo]leo|[Cc]orrente|[Ff]iltro|[Vv]ela|[Ff]reio)[^\d]*(\d{3,5})\s*km/gi;
-    let match;
-
-    while((match = regex.exec(texto))!== null){
-      manutencoes.push({
-        descricao: match[1].replace(/\b\w/g, l => l.toUpperCase()),
-        km: 0,
-        proxKm: +match[2]
-      });
-    }
-
-    if(manutencoes.length === 0){
-      document.getElementById('pdfPreview').innerHTML = 'Não encontrei tabela de manutenção no PDF. Verifique se o PDF é o manual da moto.';
-      return;
-    }
-
-    document.getElementById('pdfPreview').innerHTML = '<b>Encontrado:</b><br>' + manutencoes.map(m=>`• ${m.descricao}: a cada ${m.proxKm}km`).join('<br>');
-
-    if(confirm(`Encontrei ${manutencoes.length} manutenções. Deseja importar?`)){
-      manutencoes.forEach(m=>{
-        db.manutencoes.push({
-          id: Date.now() + Math.random(),
-          veiculo: activeVehicle,
-          descricao: m.descricao,
-          km: 0,
-          proxKm: m.proxKm
-        });
-      });
-      save(); renderAll(); closePdfModal();
-      alert('Manutenções importadas com sucesso!');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
 document.querySelectorAll('.footer-clean button').forEach(btn=>{
   btn.onclick = () => {
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -516,9 +467,6 @@ document.getElementById('vehicleModal').onclick = e => {
 }
 document.getElementById('editModal').onclick = e => {
   if(e.target.id==='editModal') closeEditModal();
-}
-document.getElementById('pdfModal').onclick = e => {
-  if(e.target.id==='pdfModal') closePdfModal();
 }
 
 load();
