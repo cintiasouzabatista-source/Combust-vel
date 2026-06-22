@@ -12,7 +12,15 @@
 }
 *{box-sizing:border-box}
 body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:radial-gradient(1200px 800px at 20% -10%,#1a2333 0%,transparent 60%),var(--bg);min-height:100vh}
-.app{max-width:680px;margin:0 auto;padding:20px 16px 110px}
+body.light-mode{
+  --bg:#f4f7fc;--panel:#ffffff;--card:#eef2f7;--text:#0f172a;
+  --muted:#475569;--line:rgba(0,0,0,.08);
+}
+.config-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.config-row:last-child{border-bottom:0}
+.theme-btn{background:var(--accent);color:#fff;border:none;font-weight:700;padding:8px 14px;border-radius:12px;font-size:13px}
+  .app{max-width:680px;margin:0 auto;padding:20px 16px 110px}
+.app{max-width:680px;margin:0 auto;padding:20px 16px 110px;touch-action:pan-y}
 .header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
 .header h1{font-size:22px;margin:0;flex:1}
 .header select{flex:2;margin:0}
@@ -59,12 +67,11 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="mainContent">
   <header class="header">
-    <h1 id="pageTitle">Painel</h1>
-    <select id="globalVehicle"></select>
-    <button class="btn-icon" onclick="openVehicleModal()">⚙️</button>
-  </header>
+  <h1 id="pageTitle">Painel</h1>
+  <select id="globalVehicle"></select>
+</header>
 
   <main>
     <section class="view active" id="view-painel">
@@ -217,7 +224,41 @@ const DADOS_PDF_INICIAL = [
   {descricao: "Troca Vela", km: 93290, proxKm: 101290, data: "10/04/2026"},
   {descricao: "Troca Fluido Freio", km: 93290, proxKm: 103290, data: "10/04/2026"}
 ];
+const views = ['painel','abastecer','historico','manutencao'];
+let currentViewIndex = 0;
 
+function showView(name){
+  currentViewIndex = views.indexOf(name);
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.footer-clean button').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`[data-view="${name}"]`).classList.add('active');
+  document.getElementById('pageTitle').textContent =
+    name==='painel'?'Painel':name==='abastecer'?'Abastecer':name==='historico'?'Histórico':'Manutenção';
+}
+
+// SWIPE
+let touchStartX = 0;let touchEndX = 0;
+document.getElementById('mainContent').addEventListener('touchstart', e => {touchStartX = e.changedTouches[0].screenX;}, false);
+document.getElementById('mainContent').addEventListener('touchend', e => {touchEndX = e.changedTouches[0].screenX;handleSwipe();}, false);
+function handleSwipe() {
+  const swipeDistance = touchEndX - touchStartX;
+  const threshold = 60;
+  if (swipeDistance > threshold && currentViewIndex > 0) {showView(views[currentViewIndex - 1]);}
+  if (swipeDistance < -threshold && currentViewIndex < views.length - 1) {showView(views[currentViewIndex + 1]);}
+}
+
+// TEMA
+const THEME_KEY = 'moto_theme_v10';
+function loadTheme(){const saved = localStorage.getItem(THEME_KEY);if(saved === 'light') document.body.classList.add('light-mode');}
+document.getElementById('themeBtn').onclick = () => {document.body.classList.toggle('light-mode');localStorage.setItem(THEME_KEY, document.body.classList.contains('light-mode')? 'light' : 'dark');}
+
+// Troca o onclick dos botões do footer
+document.querySelectorAll('.footer-clean button').forEach(btn=>{
+  btn.onclick = () => showView(btn.dataset.view);
+});
+
+loadTheme();
 function load(){
   const raw = localStorage.getItem(STORAGE_KEY);
   if(raw) db = JSON.parse(raw);
