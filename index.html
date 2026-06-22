@@ -1,434 +1,243 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Moto App</title>
-<style>
-:root{
-  --bg:#0a0e14;--panel:#121821;--card:#1a2330;--text:#f0f6ff;
-  --muted:#9aa4b2;--accent:#3b82f6;--accent2:#22c55e;
-  --line:rgba(255,255,255,.08);--radius:16px;--danger:#ef4444;--warn:#f59e0b;
-}
-body.light-mode{
-  --bg:#f5f7fb;--panel:#ffffff;--card:#eef2f7;--text:#0f172a;
-  --muted:#64748b;--line:rgba(0,0,0,.08);
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);transition:.2s}
-.wrap{max-width:720px;margin:0 auto;padding:16px 12px 140px}
-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-header h1{flex:1;font-size:20px;margin:0}
-select,input,button{font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);padding:12px}
-input,select{width:100%;margin-bottom:8px}
-button{cursor:pointer;font-weight:600;transition:.15s}
-button:active{transform:scale(.97)}
-.btn{background:var(--accent);border:none;color:#fff}
-.btn-ghost{background:transparent;border:1px solid var(--line)}
-.btn-danger{background:var(--danger);border:none;color:#fff}
-.grid{display:grid;gap:10px}
-.grid-2{grid-template-columns:1fr 1fr}
-.grid-3{grid-template-columns:1fr 1fr 1fr}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
-.card h3{margin:0 0 10px;font-size:15px}
-.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
-.item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--panel)}
-.item small{color:var(--muted)}
-.actions{display:flex;gap:6px}
-.actions button{padding:6px 10px;font-size:12px}
-.badge{padding:3px 8px;border-radius:8px;background:rgba(34,197,94,.15);color:var(--accent2);font-size:10px;font-weight:700}
-.badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
-.badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
-.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi.card{padding:12px}
-.kpi.val{font-size:22px;font-weight:700;margin-top:4px}
-.footer{
-  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
-  display:flex;gap:10px;padding:12px 18px;background:var(--panel);
-  border:1px solid var(--line);border-radius:24px;
-  backdrop-filter:blur(10px);z-index:998
-}
-.footer button{border:none;background:none;font-size:20px;color:var(--muted)}
-.footer button.active{color:var(--accent)}
-.empty{color:var(--muted);text-align:center;padding:20px 0;font-size:13px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:999;padding:16px}
-.modal.active{display:flex}
-.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
-.modal-box h2{margin:0 0 12px;font-size:17px}
-.modal-actions{display:flex;gap:8px;margin-top:10px}
-.modal-actions button{flex:1}
-.alert-card{border-color:var(--warn);background:rgba(245,158,11,.08)}
-.urgent-card{border-color:var(--danger);background:rgba(239,68,68,.1)}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BankDay</title>
+    <meta name="theme-color" content="#0f172a">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="manifest" href="./manifest.json" crossorigin="use-credentials">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icon-192x192.png">
+    <link rel="icon" href="/favicon.png" type="image/png">
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <h1 id="titulo">Painel</h1>
-    <select id="selVeiculo"></select>
-  </header>
+<body class="dark">
 
-  <!-- PAINEL -->
-  <section id="painel">
-    <div class="kpi">
-      <div class="card"><div class="label">Média Geral</div><div class="val" id="kmlGeral">--</div></div>
-      <div class="card"><div class="label">Total Gasto</div><div class="val" id="totalGasto">R$ 0</div></div>
-      <div class="card"><div class="label">Km Atual</div><div class="val" id="kmAtual">0 km</div></div>
-      <div class="card" id="cardOleo"><div class="label">Próx. Óleo</div><div class="val" id="proxOleo">--</div></div>
+<!-- TELA PIN -->
+<div id="tela-pin" class="tela-full">
+    <div class="pin-box">
+        <div class="pin-icon"><i class="fas fa-lock"></i></div>
+        <h2>Digite seu PIN</h2>
+        <div id="form-pin">
+            <div class="pin-inputs">
+                <input type="tel" maxlength="1" class="pin-input" inputmode="numeric" autocomplete="off">
+                <input type="tel" maxlength="1" class="pin-input" inputmode="numeric" autocomplete="off">
+                <input type="tel" maxlength="1" class="pin-input" inputmode="numeric" autocomplete="off">
+                <input type="tel" maxlength="1" class="pin-input" inputmode="numeric" autocomplete="off">
+            </div>
+        <p id="pin-erro" class="hidden"></p>
+        <button onclick="resetarApp()">Esqueceu o PIN?</button>
     </div>
-  </section>
-
-  <!-- VEÍCULOS -->
-  <section id="veiculos" style="display:none">
-    <div class="card">
-      <h3>Adicionar Veículo</h3>
-      <input id="vNome" placeholder="Modelo ex: CG 160">
-      <div class="grid grid-3">
-        <input id="vAno" type="number" placeholder="Ano">
-        <input id="vTipo" placeholder="Tipo ex: Street">
-        <input id="vKmCompra" type="number" placeholder="Km compra">
-      </div>
-      <div class="grid grid-2">
-        <input id="vKmDia" type="number" placeholder="Km por dia" value="30">
-        <input id="vKmSemana" type="number" placeholder="Km por semana" value="210">
-      </div>
-      <button class="btn" onclick="addVeiculo()">Salvar Veículo</button>
-    </div>
-    <div id="listaVeiculos"></div>
-  </section>
-
-  <!-- ABASTECIMENTO -->
-  <section id="abastecer" style="display:none">
-    <div class="card">
-      <h3>Novo Abastecimento</h3>
-      <input id="aData" type="date">
-      <input id="aKm" type="number" placeholder="Km odômetro">
-      <div class="grid grid-3">
-        <input id="aLitros" type="number" step="0.01" placeholder="Litros">
-        <input id="aValorL" type="number" step="0.001" placeholder="R$/L">
-        <input id="aTotal" type="number" step="0.01" placeholder="Total R$">
-      </div>
-      <button class="btn" onclick="addAbast()">Salvar</button>
-    </div>
-    <div id="listaAbast"></div>
-  </section>
-
-  <!-- MANUTENÇÃO -->
-  <section id="manutencao" style="display:none">
-    <div class="card">
-      <h3>Nova Manutenção</h3>
-      <select id="mTipo">
-        <option value="Óleo Motor|5000">Óleo Motor - 5000km</option>
-        <option value="Óleo Transmissão|12000">Óleo Transmissão - 12000km</option>
-        <option value="Correia CVT|24000">Correia CVT - 24000km</option>
-        <option value="Vela|8000">Vela - 8000km</option>
-        <option value="Pastilha Freio|10000">Pastilha Freio - 10000km</option>
-        <option value="Filtro Ar|10000">Filtro Ar - 10000km</option>
-      </select>
-      <div class="grid grid-2">
-        <input id="mKm" type="number" placeholder="Km da troca">
-        <input id="mCusto" type="number" step="0.01" placeholder="Custo R$">
-      </div>
-      <button class="btn" onclick="addManut()">Salvar</button>
-    </div>
-    <div id="listaManut"></div>
-  </section>
-
-  <!-- CONFIG -->
-  <section id="config" style="display:none">
-    <div class="card">
-      <h3>Aparência</h3>
-      <button class="btn-ghost" onclick="toggleTema()">🌓 Trocar Tema</button>
-    </div>
-    <div class="card">
-      <h3 style="color:var(--danger)">Zona de Perigo</h3>
-      <p style="color:var(--muted);font-size:13px;margin:0 0 10px">Isso vai apagar todos os veículos, abastecimentos e manutenções.</p>
-      <button class="btn-danger" onclick="resetApp()">🚨 Resetar App</button>
-    </div>
-  </section>
 </div>
 
-<nav class="footer">
-  <button onclick="show('painel')" class="active">🏠</button>
-  <button onclick="show('veiculos')">🏍️</button>
-  <button onclick="show('abastecer')">⛽</button>
-  <button onclick="show('manutencao')">🔧</button>
-  <button onclick="show('config')">⚙️</button>
-</nav>
-
-<!-- Modal Edição -->
-<div class="modal" id="modalEdit">
-  <div class="modal-box">
-    <h2 id="editTitulo">Editar</h2>
-    <div id="editBody"></div>
-    <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeEdit()">Cancelar</button>
-      <button class="btn" onclick="saveEdit()">Salvar</button>
+<!-- ONBOARDING -->
+<div id="modal-onboarding" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Bem-vindo ao BankDay</h3>
+            <p>Como quer começar?</p>
+        </div>
+        <div class="modal-body">
+            <button onclick="selecionarModo('teste')" class="btn-onboard">
+                <i class="fas fa-flask"></i>
+                <div><p>Testar por 48h</p><span>Explore sem compromisso</span></div>
+            </button>
+            <button onclick="selecionarModo('producao')" class="btn-onboard">
+                <i class="fas fa-check-circle"></i>
+                <div><p>Usar pra valer</p><span>Cadastre suas contas reais</span></div>
+            </button>
+        </div>
     </div>
-  </div>
+</div>
+
+<!-- APP -->
+<div id="app-content" style="display:none;">
+    <header>
+        <div class="header-top">
+            <h1>BankDay</h1>
+            <div class="header-actions">
+                <button onclick="toggleTheme()"><i id="theme-icon" class="fas fa-moon"></i></button>
+                <button onclick="toggleVisibility()"><i id="eye-icon" class="fas fa-eye"></i></button>
+            </div>
+        </div>
+
+        <div class="mes-nav">
+            <button onclick="mudarMes(-1)"><i class="fas fa-chevron-left"></i></button>
+            <h2 id="mesAtual"></h2>
+            <button onclick="mudarMes(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+
+        <div class="cards-grid">
+            <div onclick="abrirExtrato('entrada')" class="card-item">
+                <p>ENTRADAS</p><p id="card-entradas" class="val text-emerald">R$ 0,00</p>
+            </div>
+            <div onclick="abrirExtrato('saida')" class="card-item">
+                <p>SAÍDAS</p><p id="card-saidas" class="val text-orange">R$ 0,00</p>
+            </div>
+            <div onclick="abrirExtrato('saldo')" class="card-item">
+                <p>SALDO</p><p id="card-saldo" class="val text-blue">R$ 0,00</p>
+            </div>
+            <div onclick="abrirExtrato('cartao')" class="card-item">
+                <p>FATURA</p><p id="card-cartoes" class="val text-rose">R$ 0,00</p>
+            </div>
+            <div onclick="abrirExtrato('liquido')" class="card-liquido">
+                <p>LÍQUIDO</p><p id="card-liquido" class="val big">R$ 0,00</p>
+            </div>
+        </div>
+    </header>
+
+    <main id="chat-box"></main>
+
+    <footer class="chat-footer">
+        <button onclick="iniciarVoz()" class="btn-mic" title="Falar"><i class="fas fa-microphone"></i></button>
+        <input id="user-input" type="text" placeholder="Ex: cafe 15 | recebi 500 | saldo inicial 1000">
+        <button id="btn-enviar"><i class="fas fa-paper-plane"></i></button>
+    </footer>
+
+    <nav class="nav">
+        <button class="nav-item active" onclick="trocarAba('chat', event)">
+            <i class="fas fa-comment-dots"></i><span>Chat</span>
+        </button>
+        <button class="nav-item" onclick="abrirExtrato()">
+            <i class="fas fa-list"></i><span>Extrato</span>
+        </button>
+        <button class="nav-item" onclick="abrirGraficos()">
+            <i class="fas fa-chart-bar"></i><span>Gráficos</span>
+        </button>
+        <button class="nav-item" onclick="abrirMenuMais(event)">
+            <i class="fas fa-ellipsis-h"></i><span>Mais</span>
+        </button>
+    </nav>
+</div>
+
+<!-- MENU MAIS - ÚNICO MENU -->
+<div id="menu-mais" class="menu-mais hidden">
+    <div class="menu-mais-content">
+        <button onclick="abrirModalConta(); fecharMenuMais()">
+            <i class="fas fa-university"></i>
+            <span>Contas</span>
+        </button>
+        <button onclick="abrirModalCartao(); fecharMenuMais()">
+            <i class="fas fa-credit-card"></i>
+            <span>Cartões</span>
+        </button>
+        <button onclick="toggleProjetado(); fecharMenuMais()">
+            <i class="fas fa-chart-line"></i>
+            <span>Projeção</span>
+        </button>
+        <button onclick="resetarTransacoes(); fecharMenuMais()">
+            <i class="fas fa-eraser"></i>
+            <span>Limpar Mês</span>
+        </button>
+        <button onclick="resetarApp()">
+            <i class="fas fa-trash"></i>
+            <span>Resetar App</span>
+        </button>
+    </div>
+</div>
+
+<!-- MODAIS -->
+<div id="modal-extrato" class="modal">
+    <div class="modal-content full">
+        <div class="modal-head"><h3>Extrato</h3><button onclick="fecharModal('modal-extrato')"><i class="fas fa-times"></i></button></div>
+        <div class="modal-filters">
+            <select id="filtro-tipo" onchange="filtrarExtrato()"><option value="">Todos</option><option value="entrada">Entradas</option><option value="saida">Saídas</option></select>
+            <select id="filtro-categoria" onchange="filtrarExtrato()"><option value="">Todas categorias</option></select>
+        </div>
+        <div id="lista-extrato" class="modal-list"></div>
+        <div class="modal-footer"><p id="total-extrato"></p></div>
+    </div>
+</div>
+
+<div id="modal-contas" class="modal">
+    <div class="modal-content">
+        <div class="modal-head"><h3>Nova Conta</h3><button onclick="fecharModal('modal-contas')"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div id="lista-contas-temp" class="list-temp"></div>
+            <input type="text" id="conta-nome" placeholder="Nome - Ex: Nubank">
+            <input type="number" id="conta-saldo" placeholder="Saldo inicial" step="0.01">
+            <button onclick="addTempConta()" class="btn-add">+ Adicionar</button>
+            <button onclick="salvarContas()" class="btn-save">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-graficos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="grafico-titulo">Análise</h3>
+            <button onclick="fecharModal('modal-graficos')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="grafico-resumo">
+            <p class="grafico-label">Total do período</p>
+            <p class="grafico-total" id="grafico-total">R$ 0,00</p>
+        </div>
+        <div class="grafico-tabs">
+            <button onclick="trocarGrafico('categoria')" class="tab-active">Categorias</button>
+            <button onclick="trocarGrafico('cartao')">Cartões</button>
+            <button onclick="trocarGrafico('conta')">Contas</button>
+            <button onclick="trocarGrafico('evolucao')">Evolução</button>
+        </div>
+        <div style="height: 250px; margin: 16px 0;">
+            <canvas id="grafico"></canvas>
+        </div>
+        <div id="grafico-lista" class="grafico-lista"></div>
+    </div>
+</div>
+
+<div id="modal-cartao" class="modal">
+    <div class="modal-content">
+        <div class="modal-head"><h3>Novo Cartão</h3><button onclick="fecharModal('modal-cartao')"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div id="lista-cartoes-temp" class="list-temp"></div>
+            <input type="text" id="cartao-nome" placeholder="Nome - Ex: Nubank">
+            <input type="number" id="cartao-limite" placeholder="Limite - Ex: 5000">
+            <input type="number" id="cartao-fechamento" placeholder="Dia fechamento" min="1" max="31">
+            <input type="number" id="cartao-vencimento" placeholder="Dia vencimento" min="1" max="31">
+            <button onclick="addTempCartao()" class="btn-add">+ Adicionar</button>
+            <button onclick="salvarCartoes()" class="btn-save">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-editar" class="modal">
+    <div class="modal-content">
+        <div class="modal-head"><h3>Editar</h3><button onclick="fecharModal('modal-editar')"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Descrição</label><input type="text" id="edit-desc"></div>
+            <div class="form-group"><label>Valor</label><input type="number" id="edit-valor" step="0.01"></div>
+            <div class="form-group"><label>Data</label><input type="date" id="edit-data"></div>
+            <div class="form-group"><label>Tipo</label><select id="edit-tipo" onchange="atualizarCategorias()"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div>
+            <div class="form-group"><label>Método</label><select id="edit-metodo" onchange="atualizarContasModal()"><option value="conta">Conta</option><option value="cartao">Cartão</option></select></div>
+            <div class="form-group"><label>Categoria</label><select id="edit-categoria"></select></div>
+            <div class="form-group"><label>Banco/Cartão</label><select id="edit-banco"></select></div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="edit-conta-fixa">
+                    <span>Conta Fixa</span>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button onclick="deletarTransacao()" class="btn-delete">Excluir</button>
+                <button onclick="salvarEdicao()" class="btn-save">Salvar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-const KEY = 'motoApp_v1';
-let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
-let editando = null;
-
-function load(){
-  const raw = localStorage.getItem(KEY);
-  if(raw) db = JSON.parse(raw);
-  if(!db.veiculos.length){
-    db.veiculos.push({id:1,nome:'CG 160',ano:2023,tipo:'Street',kmCompra:0,kmDia:30,kmSemana:210});
-    db.ativo = 1;
-    save();
-  }
-  renderVeiculosSelect();
-  renderAll();
-  loadTema();
-  aData.valueAsDate = new Date();
-}
-
-function save(){localStorage.setItem(KEY, JSON.stringify(db))}
-
-function show(tela){
-  ['painel','veiculos','abastecer','manutencao','config'].forEach(s=>document.getElementById(s).style.display='none');
-  document.getElementById(tela).style.display='block';
-  document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('titulo').textContent = tela.charAt(0).toUpperCase()+tela.slice(1);
-}
-
-// VEÍCULOS
-function renderVeiculosSelect(){
-  const sel = document.getElementById('selVeiculo');
-  sel.innerHTML = db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome} ${v.ano}</option>`).join('');
-  sel.onchange = e => {db.ativo=+e.target.value; save(); renderAll();}
-}
-
-function addVeiculo(){
-  const nome = vNome.value.trim();
-  if(!nome) return alert('Digite o modelo');
-  const id = Date.now();
-  db.veiculos.push({
-    id,nome,ano:+vAno.value||0,tipo:vTipo.value,kmCompra:+vKmCompra.value||0,
-    kmDia:+vKmDia.value||30,kmSemana:+vKmSemana.value||210
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registrado:', reg))
+      .catch(err => console.log('SW erro:', err));
   });
-  db.ativo = id;
-  vNome.value=vAno.value=vTipo.value=vKmCompra.value='';
-  save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
 }
-
-function renderVeiculos(){
-  const div = document.getElementById('listaVeiculos');
-  div.innerHTML = db.veiculos.map(v=>`
-    <div class="item">
-      <div><b>${v.nome} ${v.ano}</b><br><small>${v.tipo} • Compra: ${v.kmCompra}km • ${v.kmDia}km/dia</small></div>
-      <div class="actions">
-        <button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>
-        ${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}
-      </div>
-    </div>
-  `).join('') || '<div class="empty">Nenhum veículo</div>';
-}
-
-function editVeiculo(id){
-  const v = db.veiculos.find(x=>x.id==id);
-  editando = {tipo:'veiculo',id};
-  editBody.innerHTML = `
-    <input id="eNome" value="${v.nome}" placeholder="Modelo">
-    <div class="grid grid-3">
-      <input id="eAno" type="number" value="${v.ano}" placeholder="Ano">
-      <input id="eTipo" value="${v.tipo}" placeholder="Tipo">
-      <input id="eKmCompra" type="number" value="${v.kmCompra}" placeholder="Km compra">
-    </div>
-    <div class="grid grid-2">
-      <input id="eKmDia" type="number" value="${v.kmDia}" placeholder="Km/dia">
-      <input id="eKmSemana" type="number" value="${v.kmSemana}" placeholder="Km/semana">
-    </div>
-  `;
-  modalEdit.classList.add('active');
-}
-
-function delVeiculo(id){
-  if(!confirm('Apagar veículo e todos os dados?')) return;
-  db.veiculos = db.veiculos.filter(v=>v.id!=id);
-  db.abastecimentos = db.abastecimentos.filter(a=>a.veiculo!=id);
-  db.manutencoes = db.manutencoes.filter(m=>m.veiculo!=id);
-  db.ativo = db.veiculos[0].id;
-  save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
-}
-
-// ABASTECIMENTO
-aLitros.oninput = aValorL.oninput = () => {
-  aTotal.value = (aLitros.value*aValorL.value).toFixed(2);
-}
-
-function addAbast(){
-  if(!aData.value||!aKm.value||!aLitros.value||!aTotal.value) return alert('Preencha tudo');
-  db.abastecimentos.push({
-    id:Date.now(),veiculo:db.ativo,data:aData.value,km:+aKm.value,
-    litros:+aLitros.value,valor:+aTotal.value,valorL:+aValorL.value
-  });
-  aData.value=aKm.value=aLitros.value=aValorL.value=aTotal.value='';
-  aData.valueAsDate = new Date();
-  save(); renderAbast(); renderAll();
-}
-
-function renderAbast(){
-  const lista = db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
-  document.getElementById('listaAbast').innerHTML = lista.map(a=>`
-    <div class="item">
-      <div><b>${new Date(a.data).toLocaleDateString('pt-BR')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valor.toFixed(2)}</small></div>
-      <div class="actions">
-        <button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button>
-        <button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button>
-      </div>
-    </div>
-  `).join('') || '<div class="empty">Nenhum abastecimento</div>';
-}
-
-function editAbast(id){
-  const a = db.abastecimentos.find(x=>x.id==id);
-  editando = {tipo:'abast',id};
-  editBody.innerHTML = `
-    <input id="eData" type="date" value="${a.data}">
-    <input id="eKm" type="number" value="${a.km}" placeholder="Km">
-    <div class="grid grid-3">
-      <input id="eLitros" type="number" step="0.01" value="${a.litros}">
-      <input id="eValorL" type="number" step="0.001" value="${a.valorL}">
-      <input id="eTotal" type="number" step="0.01" value="${a.valor}">
-    </div>
-  `;
-  eLitros.oninput = eValorL.oninput = () => eTotal.value = (eLitros.value*eValorL.value).toFixed(2);
-  modalEdit.classList.add('active');
-}
-
-function delAbast(id){
-  if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAbast(); renderAll();}
-}
-
-// MANUTENÇÃO
-function addManut(){
-  const [tipo, intervalo] = mTipo.value.split('|');
-  if(!mKm.value) return alert('Digite o km');
-  db.manutencoes.push({
-    id:Date.now(),veiculo:db.ativo,tipo,km:+mKm.value,
-    proxKm:+mKm.value+ +intervalo,custo:+mCusto.value||0
-  });
-  mKm.value=mCusto.value='';
-  save(); renderManut(); renderAll();
-}
-
-function renderManut(){
-  const v = db.veiculos.find(x=>x.id==db.ativo);
-  const lista = db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>b.km-a.km);
-  const kmAtual = db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>b.km-a.km)[0]?.km || v.kmCompra;
-
-  document.getElementById('listaManut').innerHTML = lista.map(m=>{
-    const faltam = m.proxKm - kmAtual;
-    const dias = Math.ceil(faltam/v.kmDia);
-    let classe = '', badge = '';
-    if(faltam<=0){classe='urgent-card'; badge='<span class="badge danger">VENCIDA</span>'}
-    else if(faltam<=500){classe='alert-card'; badge='<span class="badge warn">ATENÇÃO</span>'}
-
-    return `<div class="item ${classe}">
-      <div><b>${m.tipo}</b> ${badge}<br><small>Feito: ${m.km}km • Próxima: ${m.proxKm}km • Faltam ${faltam}km ~${dias} dias</small></div>
-      <div class="actions">
-        <button class="btn-ghost" onclick="editManut(${m.id})">✏️</button>
-        <button class="btn-danger" onclick="delManut(${m.id})">🗑️</button>
-      </div>
-    </div>`;
-  }).join('') || '<div class="empty">Nenhuma manutenção</div>';
-}
-
-function editManut(id){
-  const m = db.manutencoes.find(x=>x.id==id);
-  editando = {tipo:'manut',id};
-  editBody.innerHTML = `
-    <select id="eTipo" disabled><option>${m.tipo}</option></select>
-    <div class="grid grid-2">
-      <input id="eKm" type="number" value="${m.km}" placeholder="Km troca">
-      <input id="eCusto" type="number" step="0.01" value="${m.custo}" placeholder="Custo">
-    </div>
-  `;
-  modalEdit.classList.add('active');
-}
-
-function delManut(id){
-  if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}
-}
-
-// EDIT MODAL
-function closeEdit(){modalEdit.classList.remove('active'); editando=null}
-function saveEdit(){
-  const e = editando;
-  if(e.tipo=='veiculo'){
-    const v = db.veiculos.find(x=>x.id==e.id);
-    Object.assign(v,{nome:eNome.value,ano:+eAno.value,tipo:eTipo.value,kmCompra:+eKmCompra.value,kmDia:+eKmDia.value,kmSemana:+eKmSemana.value});
-  }
-  if(e.tipo=='abast'){
-    const a = db.abastecimentos.find(x=>x.id==e.id);
-    Object.assign(a,{data:eData.value,km:+eKm.value,litros:+eLitros.value,valor:+eTotal.value,valorL:+eValorL.value});
-  }
-  if(e.tipo=='manut'){
-    const m = db.manutencoes.find(x=>x.id==e.id);
-    Object.assign(m,{km:+eKm.value,custo:+eCusto.value,proxKm:m.proxKm-m.km+ +eKm.value});
-  }
-  save(); closeEdit(); renderAll();
-  if(e.tipo=='veiculo') renderVeiculos();
-  if(e.tipo=='abast') renderAbast();
-  if(e.tipo=='manut') renderManut();
-}
-
-// PAINEL
-function renderAll(){
-  const v = db.veiculos.find(x=>x.id==db.ativo);
-  const abs = db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>a.km-b.km);
-  const man = db.manutencoes.filter(m=>m.veiculo==db.ativo);
-
-  const kmAtual = abs[abs.length-1]?.km || v.kmCompra;
-  document.getElementById('kmAtual').textContent = kmAtual+' km';
-  document.getElementById('totalGasto').textContent = 'R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
-
-  let kml = '--';
-  if(abs.length>1){
-    let km=0, litros=0;
-    for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
-    kml = (km/litros).toFixed(1)+' km/l';
-  }
-  document.getElementById('kmlGeral').textContent = kml;
-
-  const oleo = man.filter(m=>m.tipo.includes('Óleo')).sort((a,b)=>b.km-a.km)[0];
-  if(oleo){
-    const faltam = oleo.proxKm - kmAtual;
-    const dias = Math.ceil(faltam/v.kmDia);
-    const card = document.getElementById('cardOleo');
-    card.className = 'card ' + (faltam<=0?'urgent-card':faltam<=500?'alert-card':'');
-    document.getElementById('proxOleo').innerHTML = faltam<=0?'VENCIDA':faltam+' km<br><small>~'+dias+' dias</small>';
-  }
-
-  renderVeiculos();
-  renderAbast();
-  renderManut();
-}
-
-// TEMA E RESET
-function loadTema(){
-  if(localStorage.getItem('tema')=='light') document.body.classList.add('light-mode');
-}
-function toggleTema(){
-  document.body.classList.toggle('light-mode');
-  localStorage.setItem('tema', document.body.classList.contains('light-mode')?'light':'dark');
-}
-function resetApp(){
-  if(confirm('🚨 ATENÇÃO: Isso vai apagar TODOS os veículos, abastecimentos e manutenções. Confirma?')){
-    if(confirm('Tem certeza? Essa ação não tem volta!')){
-      localStorage.clear();
-      location.reload();
-    }
-  }
-}
-
-load();
 </script>
+<script src="script.js"></script>
 </body>
 </html>
