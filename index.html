@@ -317,20 +317,25 @@ function calcularKmL(lista){
   return totalLitros>0? totalKm/totalLitros : null;
 }
 
-function calcularProximoAbastecimento(lista){
-  if(lista.length < 2) return '--';
-  const sorted = [...lista].sort((a,b)=>new Date(a.data)-new Date(b.data));
-  const ultimo = sorted[sorted.length-1];
-  const penultimo = sorted[sorted.length-2];
-  const dias = Math.max(1, (new Date(ultimo.data) - new Date(penultimo.data))/(1000*60*60*24));
-  const kmRodados = ultimo.odometro - penultimo.odometro;
-  const kmPorDia = kmRodados/dias;
-  const kmL = calcularKmL(lista) || 30;
-  const capacidade = 6;
-  const autonomia = capacidade * kmL;
-  const diasRest = Math.round(autonomia/Math.max(0.1,kmPorDia));
-  return diasRest+' dias';
-}
+function calcularProximaTrocaOleo(manutencoes, kmAtual){
+  // Agora pega qualquer coisa com "óleo" no nome
+  const trocasOleo = manutencoes.filter(m=>
+    m.descricao.toLowerCase().includes('óleo')
+  ).sort((a,b)=>b.km-a.km);
+
+  if(!trocasOleo.length) return {texto:'--', classe:'', badge:''};
+
+  const ultimaTroca = trocasOleo[0];
+  const kmFaltam = ultimaTroca.proxKm - kmAtual;
+
+  if(kmFaltam <= 0) {
+    return {texto:'VENCIDA', classe:'urgent', badge:'URGENTE'};
+  } else if(kmFaltam <= 500) {
+    return {texto:kmFaltam+' km', classe:'alert', badge:'ATENÇÃO'};
+  } else {
+    return {texto:kmFaltam+' km', classe:'', badge:''};
+  }
+  }
 
 function calcularProximaTrocaOleo(manutencoes, kmAtual){
   const trocasOleo = manutencoes.filter(m=>m.descricao.toLowerCase().includes('óleo motor')).sort((a,b)=>b.km-a.km);
