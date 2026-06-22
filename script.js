@@ -210,3 +210,17 @@ function salvar() {
     localStorage.setItem('abastecimentos', JSON.stringify(abastecimentos));
     localStorage.setItem('manutencoes', JSON.stringify(manutencoes));
 }
+// ===== TROCAR ABAS =====
+function trocarAba(aba) {
+    // Esconde todas as abas
+    document.querySelectorAll('.aba').forEach(s => s.classList.remove('active'));
+    
+    // Remove active de todos os botões
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    
+    // Mostra só a aba clicada
+    document.getElementById(aba).classList.add('active');
+    
+    // Marca o botão como ativo
+    event.currentTarget.classList.add('active');
+}
