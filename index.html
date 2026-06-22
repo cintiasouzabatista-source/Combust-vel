@@ -202,14 +202,14 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const STORAGE_KEY = 'motoControl_v8';
+const STORAGE_KEY = 'motoControl_v9';
 let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
 let activeVehicle = null;
 let editandoId = null;
 
-// Dados do seu PDF inicial - import automático 1x
+// Dados do seu PDF inicial - óleo motor a cada 1000km
 const DADOS_PDF_INICIAL = [
-  {descricao: "Troca Óleo Motor", km: 93290, proxKm: 98290, data: "10/04/2026"},
+  {descricao: "Troca Óleo Motor", km: 93290, proxKm: 94290, data: "10/04/2026"},
   {descricao: "Troca Óleo Transmissão", km: 93290, proxKm: 105290, data: "10/04/2026"},
   {descricao: "Troca Pastilha Freio", km: 93290, proxKm: 103290, data: "10/04/2026"},
   {descricao: "Troca Lona Freio", km: 93290, proxKm: 103290, data: "10/04/2026"},
@@ -226,7 +226,6 @@ function load(){
     db.veiculos = [{id:'v1', nome:'Lead 110', ano:2024, modelo:'', kmInicial:93290}];
     db.ativo = 'v1';
 
-    // Import automático só na primeira vez
     if(!localStorage.getItem(STORAGE_KEY+'_pdf_importado')){
       DADOS_PDF_INICIAL.forEach(m=>{
         db.manutencoes.push({
@@ -317,8 +316,23 @@ function calcularKmL(lista){
   return totalLitros>0? totalKm/totalLitros : null;
 }
 
+function calcularProximoAbastecimento(lista){
+  if(lista.length < 2) return '--';
+  const sorted = [...lista].sort((a,b)=>new Date(a.data)-new Date(b.data));
+  const ultimo = sorted[sorted.length-1];
+  const penultimo = sorted[sorted.length-2];
+  const dias = Math.max(1, (new Date(ultimo.data) - new Date(penultimo.data))/(1000*60*60*24));
+  const kmRodados = ultimo.odometro - penultimo.odometro;
+  const kmPorDia = kmRodados/dias;
+  const kmL = calcularKmL(lista) || 30;
+  const capacidade = 6;
+  const autonomia = capacidade * kmL;
+  const diasRest = Math.round(autonomia/Math.max(0.1,kmPorDia));
+  return diasRest+' dias';
+}
+
+// ÚNICA função - agora aceita qualquer "óleo"
 function calcularProximaTrocaOleo(manutencoes, kmAtual){
-  // Agora pega qualquer coisa com "óleo" no nome
   const trocasOleo = manutencoes.filter(m=>
     m.descricao.toLowerCase().includes('óleo')
   ).sort((a,b)=>b.km-a.km);
@@ -335,16 +349,6 @@ function calcularProximaTrocaOleo(manutencoes, kmAtual){
   } else {
     return {texto:kmFaltam+' km', classe:'', badge:''};
   }
-  }
-
-function calcularProximaTrocaOleo(manutencoes, kmAtual){
-  const trocasOleo = manutencoes.filter(m=>m.descricao.toLowerCase().includes('óleo motor')).sort((a,b)=>b.km-a.km);
-  if(!trocasOleo.length) return {texto:'--', classe:'', badge:''};
-  const ultimaTroca = trocasOleo[0];
-  const kmFaltam = ultimaTroca.proxKm - kmAtual;
-  if(kmFaltam <= 0) return {texto:'VENCIDA', classe:'urgent', badge:'URGENTE'};
-  else if(kmFaltam <= 500) return {texto:kmFaltam+' km', classe:'alert', badge:'ATENÇÃO'};
-  else return {texto:kmFaltam+' km', classe:'', badge:''};
 }
 
 function renderAll(){
@@ -438,7 +442,7 @@ function confirmarEdicao(){
   const idx = db.abastecimentos.findIndex(a=>a.id==editandoId);
   if(idx>-1){
     db.abastecimentos[idx] = {
-   ...db.abastecimentos[idx],
+     ...db.abastecimentos[idx],
       data: document.getElementById('editData').value,
       odometro: +document.getElementById('editKm').value,
       litros: +document.getElementById('editLitros').value,
@@ -507,14 +511,15 @@ async function processarPDF(){
 
       while((itemMatch = itemRegex.exec(itens))!== null){
         let desc = itemMatch[1].replace('OLEO DE MOTOR', 'Troca Óleo Motor')
-                             .replace('OLEO DE TRANSMISSAO', 'Troca Óleo Transmissão')
-                             .replace('VELA', 'Troca Vela')
-                             .replace('CORREIA', 'Troca Correia CVT')
-                             .replace('LONA DE FREIO', 'Troca Lona Freio')
-                             .replace('PASTILHA', 'Troca Pastilha Freio')
-                             .replace('FLUIDO DE FREIO', 'Troca Fluido Freio');
+                            .replace('OLEO DE TRANSMISSAO', 'Troca Óleo Transmissão')
+                            .replace('VELA', 'Troca Vela')
+                            .replace('CORREIA', 'Troca Correia CVT')
+                            .replace('LONA DE FREIO', 'Troca Lona Freio')
+                            .replace('PASTILHA', 'Troca Pastilha Freio')
+                            .replace('FLUIDO DE FREIO', 'Troca Fluido Freio');
 
-        let proxKm = km + (desc.includes('Óleo Motor')? 5000 :
+        // Óleo motor = 1000km
+        let proxKm = km + (desc.includes('Óleo Motor')? 1000 :
                           desc.includes('Óleo Transmissão')? 12000 :
                           desc.includes('Correia')? 24000 :
                           desc.includes('Vela')? 8000 :
