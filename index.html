@@ -1,1 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Carro</title>
+<meta name="theme-color" content="#2563eb">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="dark">
 
+<header>
+    <h1><i class="fas fa-car"></i> Meu Carro</h1>
+    <button onclick="toggleTheme()"><i id="theme-icon" class="fas fa-moon"></i></button>
+</header>
+
+<nav class="tabs">
+    <button class="tab-btn active" onclick="trocarAba('painel')"><i class="fas fa-chart-line"></i> Painel</button>
+    <button class="tab-btn" onclick="trocarAba('abastecer')"><i class="fas fa-gas-pump"></i> Abastecer</button>
+    <button class="tab-btn" onclick="trocarAba('manutencao')"><i class="fas fa-wrench"></i> Manutenção</button>
+</nav>
+
+<main>
+    <!-- PAINEL -->
+    <section id="painel" class="aba active">
+        <div class="kpi-grid">
+            <div class="card"><p>Média Geral</p><h2 id="mediaGeral">0 km/L</h2></div>
+            <div class="card"><p>Total Gasto</p><h2 id="totalGasto">R$ 0,00</h2></div>
+            <div class="card"><p>Km Atual</p><h2 id="kmAtual">0 km</h2></div>
+            <div class="card" id="cardOleo"><p>Próx. Troca Óleo</p><h2 id="proxOleo">-</h2></div>
+        </div>
+        <div class="card">
+            <h3>Últimos Abastecimentos</h3>
+            <div id="ultimosAbast"></div>
+        </div>
+        <div class="card">
+            <button class="btn" onclick="exportarCSV()"><i class="fas fa-download"></i> Exportar CSV</button>
+        </div>
+    </section>
+
+    <!-- ABASTECER -->
+    <section id="abastecer" class="aba">
+        <div class="card">
+            <h3>Novo Abastecimento</h3>
+            <input id="aData" type="date">
+            <input id="aKm" type="number" placeholder="Km odômetro">
+            <div class="grid-3">
+                <input id="aLitros" type="number" step="0.01" placeholder="Litros">
+                <input id="aValorL" type="number" step="0.001" placeholder="R$/L">
+                <input id="aTotal" type="number" step="0.01" placeholder="Total R$">
+            </div>
+            <select id="aTipo">
+                <option value="Gasolina">Gasolina</option>
+                <option value="Etanol">Etanol</option>
+                <option value="Diesel">Diesel</option>
+            </select>
+            <button class="btn" onclick="addAbast()"><i class="fas fa-plus"></i> Salvar</button>
+        </div>
+        <div id="listaAbast"></div>
+    </section>
+
+    <!-- MANUTENÇÃO -->
+    <section id="manutencao" class="aba">
+        <div class="card">
+            <h3>Nova Manutenção</h3>
+            <select id="mTipo">
+                <option value="Óleo Motor|5000">Óleo Motor - 5000km</option>
+                <option value="Óleo Transmissão|12000">Óleo Transmissão - 12000km</option>
+                <option value="Correia CVT|24000">Correia CVT - 24000km</option>
+                <option value="Vela|8000">Vela - 8000km</option>
+                <option value="Pastilha Freio|10000">Pastilha Freio - 10000km</option>
+                <option value="Filtro Ar|10000">Filtro Ar - 10000km</option>
+                <option value="Pneus|40000">Pneus - 40000km</option>
+            </select>
+            <div class="grid-2">
+                <input id="mKm" type="number" placeholder="Km da troca">
+                <input id="mCusto" type="number" step="0.01" placeholder="Custo R$">
+            </div>
+            <input id="mObs" type="text" placeholder="Observação">
+            <button class="btn" onclick="addManut()"><i class="fas fa-plus"></i> Salvar</button>
+        </div>
+        <div id="listaManut"></div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+</body>
+  </html>
