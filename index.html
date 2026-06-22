@@ -221,14 +221,55 @@
         document.getElementById('newVehicleModelo').value = '';
         alert('Veículo cadastrado com sucesso!');
     }
+// 1. Atualize sua função renderAll existente
+function renderAll() {
+    // A. Renderizar Select de veículos no topo
+    const sel = document.getElementById('globalVehicle');
+    sel.innerHTML = db.veiculos.map(v => 
+        `<option value="${v.id}" ${v.id === activeVehicle ? 'selected' : ''}>${v.nome} - ${v.modelo}</option>`
+    ).join('');
 
-    function renderAll() {
-        // Atualiza o select de veículos no topo
-        const sel = document.getElementById('globalVehicle');
-        sel.innerHTML = db.veiculos.map(v => `<option value="${v.id}" ${v.id === activeVehicle ? 'selected' : ''}>${v.nome}</option>`).join('');
-        
-        // Coloque aqui o restante da sua lógica de renderização (cálculos, etc.)
-        console.log("Veículos carregados:", db.veiculos);
-    }</script>
+    // B. Atualizar Painel (exemplo com o primeiro da lista se não houver lógica de filtro)
+    const veiculoAtivo = db.veiculos.find(v => v.id === activeVehicle) || db.veiculos[0];
+    if(veiculoAtivo) {
+        document.getElementById('kmAtual').textContent = veiculoAtivo.kmOdometro + " km";
+    }
+
+    // C. Renderizar lista dentro do modal de manutenção (para ver o que foi cadastrado)
+    renderVehicleList();
+}
+
+// 2. Adicione esta função para listar os veículos no Modal
+function renderVehicleList() {
+    const list = document.getElementById('vehicleList');
+    if(!list) return;
+    
+    list.innerHTML = db.veiculos.map(v => `
+        <div class="vehicle-item">
+            <div class="vehicle-info">
+                <strong>${v.nome}</strong>
+                <small>${v.modelo} | ${v.ano} | ${v.tipo}</small>
+            </div>
+            <button class="btn-danger" style="padding:4px 8px" onclick="deletarVeiculo('${v.id}')">🗑️</button>
+        </div>
+    `).join('');
+}
+
+// 3. Função para deletar (caso precise limpar algo errado)
+function deletarVeiculo(id) {
+    db.veiculos = db.veiculos.filter(v => v.id !== id);
+    save();
+    renderAll();
+}
+
+// 4. Garanta que o select dispare a mudança de veículo
+document.getElementById('globalVehicle').onchange = (e) => {
+    activeVehicle = e.target.value;
+    db.ativo = activeVehicle;
+    save();
+    renderAll(); // Isso fará o painel atualizar com os dados do veículo selecionado
+};
+    
+   </script>
 </body>
 </html>
