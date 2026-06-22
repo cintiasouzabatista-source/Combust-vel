@@ -83,7 +83,7 @@ button{cursor:pointer;font-weight:600;transition:.2s}
       <div class="card">
         <div class="label">Novo Abastecimento</div>
         <input type="date" id="dataAbast">
-        <input type="number" id="kmAbast" placeholder="Km atual">
+        <input type="number" id="kmAbast" placeholder="Km atual do odômetro">
         <div class="grid-3">
           <div>
             <label class="label">Litros</label>
@@ -118,12 +118,11 @@ button{cursor:pointer;font-weight:600;transition:.2s}
         <div class="label">Adicionar Manutenção</div>
         <input type="text" id="descManut" placeholder="Ex: Troca de óleo">
         <div class="grid-2">
-          <input type="number" id="kmManut" placeholder="Km da troca">
+          <input type="number" id="kmManut" placeholder="Km do odômetro">
           <input type="number" id="proxKmManut" placeholder="Próx. troca em km">
         </div>
         <button class="btn" onclick="salvarManutencao()">Salvar</button>
         <button class="btn-ghost" onclick="openPdfModal()" style="margin-top:8px;width:100%">📄 Importar PDF da Oficina</button>
-        <small style="color:var(--muted);display:block;margin-top:8px">Dados do PDF inicial já importados automaticamente</small>
       </div>
       <div class="list" id="listaManut" style="margin-top:12px"></div>
     </section>
@@ -142,10 +141,12 @@ button{cursor:pointer;font-weight:600;transition:.2s}
     <h2>Gerenciar Veículos</h2>
     <input type="text" id="newVehicleName" placeholder="Nome do veículo">
     <div class="grid-3">
-      <input type="number" id="newVehicleAno" placeholder="Ano" min="1990" max="2030">
+      <input type="number" id="newVehicleAno" placeholder="Ano">
       <input type="text" id="newVehicleModelo" placeholder="Modelo">
-      <input type="number" id="newVehicleKm" placeholder="Km inicial">
+      <input type="number" id="newVehicleKmOdometro" placeholder="Km odômetro atual">
     </div>
+    <input type="number" id="newVehicleKmInicial" placeholder="Km quando pegou a moto">
+    <input type="number" id="newVehicleKmDia" placeholder="Km rodado por dia" value="30">
     <button class="btn" onclick="addVehicle()">Adicionar</button>
     <div id="vehicleList" style="margin-top:16px;max-height:250px;overflow-y:auto"></div>
     <div class="modal-actions">
@@ -158,7 +159,7 @@ button{cursor:pointer;font-weight:600;transition:.2s}
   <div class="modal-box">
     <h2>Editar Abastecimento</h2>
     <input type="date" id="editData">
-    <input type="number" id="editKm" placeholder="Km atual">
+    <input type="number" id="editKm" placeholder="Km do odômetro">
     <div class="grid-3">
       <div>
         <label class="label">Litros</label>
@@ -188,7 +189,7 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 <div class="modal" id="pdfModal">
   <div class="modal-box">
     <h2>Importar PDF da Oficina</h2>
-    <p style="color:var(--muted);font-size:14px">Envie o PDF da OS da oficina. O app extrai data, km e itens trocados.</p>
+    <p style="color:var(--muted);font-size:14px">Envie o PDF da OS da oficina. Usa km do odômetro pra manutenção.</p>
     <input type="file" id="pdfFile" accept=".pdf" style="margin:12px 0">
     <div id="pdfPreview" style="max-height:200px;overflow-y:auto;font-size:13px;color:var(--muted);margin:12px 0"></div>
     <div class="modal-actions">
@@ -202,12 +203,11 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const STORAGE_KEY = 'motoControl_v9';
+const STORAGE_KEY = 'motoControl_v10';
 let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
 let activeVehicle = null;
 let editandoId = null;
 
-// Dados do seu PDF inicial - óleo motor a cada 1000km
 const DADOS_PDF_INICIAL = [
   {descricao: "Troca Óleo Motor", km: 93290, proxKm: 94290, data: "10/04/2026"},
   {descricao: "Troca Óleo Transmissão", km: 93290, proxKm: 105290, data: "10/04/2026"},
@@ -223,7 +223,15 @@ function load(){
   if(raw) db = JSON.parse(raw);
 
   if(!db.veiculos.length){
-    db.veiculos = [{id:'v1', nome:'Lead 110', ano:2024, modelo:'', kmInicial:93290}];
+    db.veiculos = [{
+      id:'v1',
+      nome:'Lead 110',
+      ano:2024,
+      modelo:'',
+      kmOdometro:93996, // km real do odômetro
+      kmInicial:9366, // km quando você pegou
+      kmDia:30
+    }];
     db.ativo = 'v1';
 
     if(!localStorage.getItem(STORAGE_KEY+'_pdf_importado')){
@@ -255,7 +263,7 @@ function renderVehicles(){
 }
 
 function openVehicleModal(){ document.getElementById('vehicleModal').classList.add('active'); renderVehicleList(); }
-function closeVehicleModal(){ document.getElementById('vehicleModal').classList.remove('active'); ['newVehicleName','newVehicleAno','newVehicleModelo','newVehicleKm'].forEach(id=>document.getElementById(id).value=''); }
+function closeVehicleModal(){ document.getElementById('vehicleModal').classList.remove('active'); ['newVehicleName','newVehicleAno','newVehicleModelo','newVehicleKmOdometro','newVehicleKmInicial','newVehicleKmDia'].forEach(id=>document.getElementById(id).value=''); }
 
 function renderVehicleList(){
   const list = document.getElementById('vehicleList');
@@ -263,7 +271,7 @@ function renderVehicleList(){
     <div class="vehicle-item">
       <div class="vehicle-info">
         <div>${v.nome} ${v.id===activeVehicle?'✓':''}</div>
-        <small>${v.ano||''} ${v.modelo||''} • ${v.kmInicial||0} km</small>
+        <small>Odômetro: ${v.kmOdometro} km • Início: ${v.kmInicial} km • ${v.kmDia}km/dia</small>
       </div>
       ${db.veiculos.length>1?`<button class="btn-danger" onclick="removeVehicle('${v.id}')" style="padding:6px 10px;font-size:12px">Excluir</button>`:''}
     </div>
@@ -274,10 +282,12 @@ function addVehicle(){
   const nome = document.getElementById('newVehicleName').value.trim();
   const ano = +document.getElementById('newVehicleAno').value || null;
   const modelo = document.getElementById('newVehicleModelo').value.trim();
-  const kmInicial = +document.getElementById('newVehicleKm').value || 0;
+  const kmOdometro = +document.getElementById('newVehicleKmOdometro').value || 0;
+  const kmInicial = +document.getElementById('newVehicleKmInicial').value || kmOdometro;
+  const kmDia = +document.getElementById('newVehicleKmDia').value || 30;
   if(!nome) return alert('Digite um nome');
   const id = 'v'+Date.now();
-  db.veiculos.push({id,nome,ano,modelo,kmInicial});
+  db.veiculos.push({id,nome,ano,modelo,kmOdometro,kmInicial,kmDia});
   activeVehicle = id; db.ativo = id;
   closeVehicleModal();
   save(); renderVehicles(); renderAll();
@@ -331,30 +341,36 @@ function calcularProximoAbastecimento(lista){
   return diasRest+' dias';
 }
 
-// ÚNICA função - agora aceita qualquer "óleo"
-function calcularProximaTrocaOleo(manutencoes, kmAtual){
-  const trocasOleo = manutencoes.filter(m=>
-    m.descricao.toLowerCase().includes('óleo')
-  ).sort((a,b)=>b.km-a.km);
+function calcularDiasParaTroca(kmFaltam, kmDia){
+  if(kmDia <= 0) return '';
+  const dias = Math.ceil(kmFaltam / kmDia);
+  return ` ~${dias} dias`;
+}
 
+function calcularProximaTrocaOleo(manutencoes, kmAtual, kmDia){
+  const trocasOleo = manutencoes.filter(m=>m.descricao.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km);
   if(!trocasOleo.length) return {texto:'--', classe:'', badge:''};
 
   const ultimaTroca = trocasOleo[0];
   const kmFaltam = ultimaTroca.proxKm - kmAtual;
+  const diasTexto = calcularDiasParaTroca(kmFaltam, kmDia);
 
   if(kmFaltam <= 0) {
     return {texto:'VENCIDA', classe:'urgent', badge:'URGENTE'};
   } else if(kmFaltam <= 500) {
-    return {texto:kmFaltam+' km', classe:'alert', badge:'ATENÇÃO'};
+    return {texto:kmFaltam+' km'+diasTexto, classe:'alert', badge:'ATENÇÃO'};
   } else {
-    return {texto:kmFaltam+' km', classe:'', badge:''};
+    return {texto:kmFaltam+' km'+diasTexto, classe:'', badge:''};
   }
 }
 
 function renderAll(){
   const filtro = db.abastecimentos.filter(x=>x.veiculo===activeVehicle).sort((a,b)=>new Date(b.data)-new Date(a.data));
   const manut = db.manutencoes.filter(x=>x.veiculo===activeVehicle).sort((a,b)=>b.km-a.km);
-  const kmAtual = filtro[0]?.odometro || db.veiculos.find(v=>v.id===activeVehicle)?.kmInicial || 0;
+  const veiculo = db.veiculos.find(v=>v.id===activeVehicle);
+
+  const kmAtualAbast = filtro[0]?.odometro || veiculo?.kmInicial || 0;
+  const kmAtualManut = filtro[0]?.odometro || veiculo?.kmOdometro || 0;
 
   const kml = calcularKmL(filtro);
   const kmlRec = calcularKmL(filtro.slice(0,4));
@@ -362,10 +378,10 @@ function renderAll(){
   document.getElementById('kmlRecente').textContent = kmlRec? kmlRec.toFixed(1)+' km/l' : '--';
   document.getElementById('proxAbast').textContent = calcularProximoAbastecimento(filtro);
   document.getElementById('totalGasto').textContent = fmtBRL(filtro.reduce((s,x)=>s+(x.valor||0),0));
-  document.getElementById('kmAtual').textContent = kmAtual? kmAtual+' km' : '0 km';
+  document.getElementById('kmAtual').textContent = kmAtualManut+' km';
   document.getElementById('qtdAbast').textContent = filtro.length;
 
-  const oleo = calcularProximaTrocaOleo(manut, kmAtual);
+  const oleo = calcularProximaTrocaOleo(manut, kmAtualManut, veiculo?.kmDia);
   const cardOleo = document.getElementById('cardOleo');
   cardOleo.className = 'card ' + oleo.classe;
   document.getElementById('proxOleo').innerHTML = oleo.texto + (oleo.badge?` <span class="badge ${oleo.classe==='urgent'?'danger':'warn'}">${oleo.badge}</span>`:'');
@@ -442,7 +458,7 @@ function confirmarEdicao(){
   const idx = db.abastecimentos.findIndex(a=>a.id==editandoId);
   if(idx>-1){
     db.abastecimentos[idx] = {
-     ...db.abastecimentos[idx],
+    ...db.abastecimentos[idx],
       data: document.getElementById('editData').value,
       odometro: +document.getElementById('editKm').value,
       litros: +document.getElementById('editLitros').value,
@@ -511,14 +527,13 @@ async function processarPDF(){
 
       while((itemMatch = itemRegex.exec(itens))!== null){
         let desc = itemMatch[1].replace('OLEO DE MOTOR', 'Troca Óleo Motor')
-                            .replace('OLEO DE TRANSMISSAO', 'Troca Óleo Transmissão')
-                            .replace('VELA', 'Troca Vela')
-                            .replace('CORREIA', 'Troca Correia CVT')
-                            .replace('LONA DE FREIO', 'Troca Lona Freio')
-                            .replace('PASTILHA', 'Troca Pastilha Freio')
-                            .replace('FLUIDO DE FREIO', 'Troca Fluido Freio');
+                           .replace('OLEO DE TRANSMISSAO', 'Troca Óleo Transmissão')
+                           .replace('VELA', 'Troca Vela')
+                           .replace('CORREIA', 'Troca Correia CVT')
+                           .replace('LONA DE FREIO', 'Troca Lona Freio')
+                           .replace('PASTILHA', 'Troca Pastilha Freio')
+                           .replace('FLUIDO DE FREIO', 'Troca Fluido Freio');
 
-        // Óleo motor = 1000km
         let proxKm = km + (desc.includes('Óleo Motor')? 1000 :
                           desc.includes('Óleo Transmissão')? 12000 :
                           desc.includes('Correia')? 24000 :
@@ -538,7 +553,7 @@ async function processarPDF(){
     document.getElementById('pdfPreview').innerHTML = '<b>Encontrado:</b><br>' +
       unicas.map(m=>`• ${m.descricao.replace(/<[^>]*>/g,'')} - Km ${m.km} em ${m.data} → Próxima: ${m.proxKm}km`).join('<br>');
 
-    if(confirm(`Encontrei ${unicas.length} manutenções. Adicionar ao histórico?`)){
+    if(confirm(`Encontrei ${unicas.length} manutenções. Adicionar?`)){
       unicas.forEach(m=>{
         db.manutencoes.push({
           id: Date.now() + Math.random(),
@@ -549,7 +564,7 @@ async function processarPDF(){
         });
       });
       save(); renderAll(); closePdfModal();
-      alert('Manutenções importadas com sucesso!');
+      alert('Importado!');
     }
   };
   reader.readAsArrayBuffer(file);
