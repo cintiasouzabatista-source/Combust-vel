@@ -5,74 +5,76 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Moto Control</title>
   <style>
-    :root{ --bg:#0b0f19; --panel:#131a26; --card:#1c2533; --text:#eaf1ff; --muted:rgba(234,241,255,.65); --accent:#2b6dff; --ok:#29d17c; --line:rgba(255,255,255,.08); }
-    body{ margin:0; font-family:sans-serif; background:var(--bg); color:var(--text); }
-    .main{ padding:16px 14px 100px; }
-    .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; }
-    .cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .val{ font-size:18px; font-weight:700; margin-top:5px; }
-    .label{ color:var(--muted); font-size:11px; }
-    .section{ background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:16px; margin-top:16px; }
-    .footer-clean{ position:fixed; bottom:20px; left:5%; width:90%; display:flex; justify-content:space-around; background:rgba(25,30,40,.9); padding:15px; border-radius:30px; backdrop-filter:blur(10px); }
-    button{ cursor:pointer; }
+    /* Estilos mantidos da sua versão original */
+    :root{--bg:#0b0f19;--panel:#131a26;--card:#1c2533;--text:#eaf1ff;--muted:rgba(234,241,255,.65);--accent:#2b6dff;--danger:#ff476f;--ok:#29d17c;--warning:#ffb84d;--line:rgba(255,255,255,.08);--radius:18px;}
+    body{margin:0;color:var(--text);font-family:sans-serif;background:var(--bg);padding-bottom:100px;}
+    .main{padding:16px;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;}
+    .label{color:var(--muted);font-size:11px;}
+    .val{font-size:18px;font-weight:700;margin-top:6px;}
+    .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+    .footer-clean{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:20px;padding:12px 22px;background:rgba(19,26,38,.95);border:1px solid var(--line);border-radius:30px;z-index:999;backdrop-filter:blur(10px);}
+    .footer-clean button{border:none;background:none;color:var(--muted);font-size:20px;cursor:pointer;}
+    .footer-clean button.active{color:var(--text);transform:translateY(-2px);}
+    input,select{width:100%;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);margin-top:5px;}
+    .btn{width:100%;padding:12px;border-radius:14px;background:var(--accent);color:white;border:none;font-weight:600;margin-top:10px;}
   </style>
 </head>
 <body>
+
 <main class="main">
-  <div class="cards">
-    <div class="card">
-      <div class="label">Média</div>
-      <div class="val" id="kmlGeral">--</div>
-    </div>
-    <div class="card">
-      <div class="label">Próximo Abast.</div>
-      <div class="val" id="proxAbast">--</div>
-    </div>
+  <div class="topbar">
+    <h1>Moto Control</h1>
+    <button id="themeBtn" style="background:none;border:none;color:var(--text)">🌓</button>
   </div>
 
+  <select id="globalVehicle" style="margin-bottom: 20px;"></select>
+
   <section class="section" id="view-painel">
-    <h3>Painel</h3>
-    <div id="status">Selecione uma opção abaixo</div>
+    <div class="cards">
+      <div class="card"><div class="label">Média (Km/L)</div><div class="val" id="kmlGeral">--</div></div>
+      <div class="card"><div class="label">Prox. Abast. (Est.)</div><div class="val" id="proxAbast">--</div></div>
+      <div class="card"><div class="label">Total Gasto</div><div class="val" id="totalGasto">R$ 0</div></div>
+      <div class="card"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
+    </div>
   </section>
+
+  <section class="section view" id="view-abastecer" style="display:none">...</section>
 </main>
 
 <nav class="footer-clean">
-  <button onclick="alert('Painel')">🏠</button>
-  <button onclick="alert('Abastecer')">⛽</button>
-  <button onclick="alert('Histórico')">🧾</button>
-  <button onclick="alert('Config')">⚙️</button>
+  <button data-view="painel" class="active">🏠</button>
+  <button data-view="abastecer">⛽</button>
+  <button data-view="historico">🧾</button>
+  <button data-view="manutencao">🔧</button>
+  <button data-view="veiculos">🚘</button>
 </nav>
 
 <script>
-// Lógica de cálculo do próximo abastecimento
-function calcularProxAbastecimento(historico) {
-  if (historico.length < 2) return "Insuficiente";
-  
-  // Pega o intervalo médio de km entre os últimos abastecimentos
-  const ultimos = historico.slice(-3);
-  let somatorioKm = 0;
-  for(let i = 1; i < ultimos.length; i++) {
-    somatorioKm += (ultimos[i].odometro - ultimos[i-1].odometro);
-  }
-  
-  const mediaKm = somatorioKm / (ultimos.length - 1);
-  const autonomiaMedia = 150; // Ajuste conforme a autonomia da sua moto
-  
-  // Exemplo simples: estimativa baseada na média
-  return Math.round(autonomiaMedia / (mediaKm/30)) + " dias";
+// --- SUA LÓGICA DE DADOS CONTINUA AQUI ---
+// (Certifique-se de copiar seu código JavaScript original para baixo deste ponto)
+
+// Função para o novo Card de Próximo Abastecimento
+function atualizarProxAbastecimento() {
+    let filtered = items.filter(x => x.veiculo === activeVehicle);
+    if(filtered.length >= 2) {
+        // Calcula média de km por dia dos últimos registros
+        const d1 = new Date(filtered[filtered.length-2].data);
+        const d2 = new Date(filtered[filtered.length-1].data);
+        const dias = Math.max(1, (d2 - d1) / (1000 * 60 * 60 * 24));
+        const kmRodados = filtered[filtered.length-1].odometro - filtered[filtered.length-2].odometro;
+        const kmDia = kmRodados / dias;
+        
+        // Estima dias para próximo abastecimento (assumindo tanque de 6L para moto)
+        const autonomia = 150; 
+        const diasRestantes = Math.round(autonomia / kmDia);
+        document.getElementById("proxAbast").textContent = diasRestantes + " dias";
+    }
 }
 
-// Inicialização básica
-window.onload = () => {
-  // Simulação de dados para teste
-  const mockHistorico = [
-    { odometro: 93000, data: '2026-06-01' },
-    { odometro: 93300, data: '2026-06-10' }
-  ];
-  
-  document.getElementById('proxAbast').textContent = calcularProxAbastecimento(mockHistorico);
-  document.getElementById('kmlGeral').textContent = "35 km/L";
-}
+// Chame essa função dentro da sua função renderAll() original
 </script>
 </body>
 </html>
