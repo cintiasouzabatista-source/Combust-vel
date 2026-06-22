@@ -13,17 +13,23 @@
 *{box-sizing:border-box}
 body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:radial-gradient(1200px 800px at 20% -10%,#1a2333 0%,transparent 60%),var(--bg);min-height:100vh}
 .app{max-width:680px;margin:0 auto;padding:20px 16px 110px}
-h1{font-size:22px;margin:0 0 12px}
+
+/* Cabeçalho novo */
+.header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.header h1{font-size:22px;margin:0;flex:1}
+.header select{flex:2;margin:0}
+.header.btn-icon{width:44px;height:44px;padding:0;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:20px}
+
 select,input,button{font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);padding:12px}
-select{width:100%;margin-bottom:16px}
 input{width:100%;margin-bottom:10px}
 button{cursor:pointer;font-weight:600;transition:.2s}
 .btn{width:100%;background:var(--accent);border:none}
 .btn:active{transform:scale(.98)}
 .btn-ghost{background:transparent;border:1px solid var(--line)}
+.btn-danger{background:var(--danger);border:none}
+
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;transition:.2s}
-.card:hover{border-color:rgba(43,109,255,.3)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
 .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
 .val{font-size:24px;font-weight:700;margin-top:6px}
 .view{display:none;animation:fade.25s}
@@ -38,18 +44,25 @@ button{cursor:pointer;font-weight:600;transition:.2s}
 .footer-clean button.active{color:var(--accent);transform:translateY(-3px)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .empty{color:var(--muted);text-align:center;padding:40px 20px}
-.row{display:flex;gap:8px}
-.row button{flex:0 0 auto}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal.active{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:420px;animation:up.3s}
+@keyframes up{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-box h2{margin:0 0 16px;font-size:18px}
+.modal-actions{display:flex;gap:8px;margin-top:12px}
+.modal-actions button{flex:1}
+.vehicle-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
+  <!-- Cabeçalho novo -->
+  <header class="header">
     <h1 id="pageTitle">Painel</h1>
-    <div class="row">
-      <select id="globalVehicle"></select>
-      <button class="btn-ghost" onclick="addVehicle()">+ Veículo</button>
-    </div>
+    <select id="globalVehicle"></select>
+    <button class="btn-icon" onclick="openVehicleModal()">⚙️</button>
   </header>
 
   <main>
@@ -116,11 +129,23 @@ button{cursor:pointer;font-weight:600;transition:.2s}
   </nav>
 </div>
 
+<!-- Modal de Veículos -->
+<div class="modal" id="vehicleModal">
+  <div class="modal-box">
+    <h2>Gerenciar Veículos</h2>
+    <input type="text" id="newVehicleName" placeholder="Nome do veículo">
+    <button class="btn" onclick="addVehicle()">Adicionar</button>
+    <div id="vehicleList" style="margin-top:16px;max-height:250px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeVehicleModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const STORAGE_KEY = 'motoControl_v2';
+const STORAGE_KEY = 'motoControl_v3';
 let db = {veiculos:[], abastecimentos:[], manutencoes:[], ativo:null};
 let activeVehicle = null;
-let items = [];
 
 function load(){
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -130,7 +155,6 @@ function load(){
     db.ativo = 'v1';
   }
   activeVehicle = db.ativo;
-  items = db.abastecimentos;
   renderVehicles();
   renderAll();
 }
@@ -143,13 +167,42 @@ function renderVehicles(){
   sel.onchange = e => { activeVehicle = e.target.value; db.ativo = activeVehicle; save(); renderAll(); }
 }
 
+function openVehicleModal(){
+  document.getElementById('vehicleModal').classList.add('active');
+  renderVehicleList();
+}
+function closeVehicleModal(){
+  document.getElementById('vehicleModal').classList.remove('active');
+  document.getElementById('newVehicleName').value = '';
+}
+
+function renderVehicleList(){
+  const list = document.getElementById('vehicleList');
+  list.innerHTML = db.veiculos.map(v=>`
+    <div class="vehicle-item">
+      <span>${v.nome} ${v.id===activeVehicle?'✓':''}</span>
+      ${db.veiculos.length>1?`<button class="btn-danger" onclick="removeVehicle('${v.id}')" style="padding:6px 10px;font-size:12px">Excluir</button>`:''}
+    </div>
+  `).join('');
+}
+
 function addVehicle(){
-  const nome = prompt('Nome do veículo:');
-  if(!nome) return;
+  const nome = document.getElementById('newVehicleName').value.trim();
+  if(!nome) return alert('Digite um nome');
   const id = 'v'+Date.now();
   db.veiculos.push({id,nome});
   activeVehicle = id; db.ativo = id;
-  save(); renderVehicles(); renderAll();
+  document.getElementById('newVehicleName').value = '';
+  save(); renderVehicles(); renderVehicleList(); renderAll();
+}
+
+function removeVehicle(id){
+  if(!confirm('Excluir este veículo e todos os dados dele?')) return;
+  db.veiculos = db.veiculos.filter(v=>v.id!==id);
+  db.abastecimentos = db.abastecimentos.filter(a=>a.veiculo!==id);
+  db.manutencoes = db.manutencoes.filter(m=>m.veiculo!==id);
+  activeVehicle = db.veiculos[0].id; db.ativo = activeVehicle;
+  save(); renderVehicles(); renderVehicleList(); renderAll();
 }
 
 function fmtBRL(v){ return 'R$ '+v.toFixed(2).replace('.',',') }
@@ -176,8 +229,8 @@ function calcularProximoAbastecimento(lista){
   const dias = Math.max(1, (new Date(ultimo.data) - new Date(penultimo.data))/(1000*60*60*24));
   const kmRodados = ultimo.odometro - penultimo.odometro;
   const kmPorDia = kmRodados/dias;
-  const kmL = calcularKmL(lista) || 30; // fallback 30km/l
-  const autonomia = 6 * kmL; // tanque 6L padrão
+  const kmL = calcularKmL(lista) || 30;
+  const autonomia = 6 * kmL;
   const diasRest = Math.round(autonomia/Math.max(0.1,kmPorDia));
   return diasRest+' dias';
 }
@@ -186,7 +239,6 @@ function renderAll(){
   const filtro = db.abastecimentos.filter(x=>x.veiculo===activeVehicle).sort((a,b)=>new Date(b.data)-new Date(a.data));
   const manut = db.manutencoes.filter(x=>x.veiculo===activeVehicle).sort((a,b)=>b.km-a.km);
 
-  // Painel
   const kml = calcularKmL(filtro);
   const kmlRec = calcularKmL(filtro.slice(0,4));
   document.getElementById('kmlGeral').textContent = kml? kml.toFixed(1)+' km/l' : '--';
@@ -196,7 +248,6 @@ function renderAll(){
   document.getElementById('kmAtual').textContent = filtro[0]?.odometro? filtro[0].odometro+' km' : '0 km';
   document.getElementById('qtdAbast').textContent = filtro.length;
 
-  // Histórico
   const histEl = document.getElementById('listaHistorico');
   histEl.innerHTML = filtro.length? filtro.map(a=>`
     <div class="item">
@@ -208,7 +259,6 @@ function renderAll(){
     </div>
   `).join('') : '<div class="empty">Nenhum abastecimento registrado</div>';
 
-  // Manutenção
   const manutEl = document.getElementById('listaManut');
   manutEl.innerHTML = manut.length? manut.map(m=>`
     <div class="item">
@@ -274,6 +324,11 @@ document.querySelectorAll('.footer-clean button').forEach(btn=>{
       btn.dataset.view==='historico'?'Histórico':'Manutenção';
   }
 });
+
+// Fechar modal clicando fora
+document.getElementById('vehicleModal').onclick = e => {
+  if(e.target.id==='vehicleModal') closeVehicleModal();
+}
 
 load();
 </script>
