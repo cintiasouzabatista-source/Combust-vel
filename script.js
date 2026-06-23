@@ -1,65 +1,42 @@
-// 1. Inicialização segura
 let veiculos = JSON.parse(localStorage.getItem("veiculos")) || [];
+let abastecimentos = JSON.parse(localStorage.getItem("abastecimentos")) || [];
+let manutencoes = JSON.parse(localStorage.getItem("manutencoes")) || [];
 let veiculoAtual = veiculos.length > 0 ? veiculos[0].id : null;
 
 function addVeiculo() {
-    // Captura os valores
-    const nome = document.getElementById("vNome").value;
-    const ano = document.getElementById("vAnoModelo").value;
-    const km = document.getElementById("vKmInicial").value;
-    const data = document.getElementById("vDataAquisicao").value; // Verifique se o ID no HTML é este
-
-    // Validação
-    if (!nome) {
-        alert("Por favor, preencha o nome do veículo.");
-        return;
-    }
-
-    // Cria o objeto
-    const novoVeiculo = {
-        id: Date.now(),
-        nome: nome,
-        anoModelo: ano,
-        kmInicial: km,
-        dataAquisicao: data
-    };
-
-    // Salva no array e no Storage
-    veiculos.push(novoVeiculo);
+    veiculos.push({ id: Date.now(), nome: document.getElementById("vNome").value });
     localStorage.setItem("veiculos", JSON.stringify(veiculos));
-    
-    // Feedback ao utilizador
-    alert("Veículo salvo com sucesso!");
-    
-    // Limpa campos e recarrega a interface
-    document.getElementById("vNome").value = "";
-    document.getElementById("vAnoModelo").value = "";
-    document.getElementById("vKmInicial").value = "";
-    document.getElementById("vDataAquisicao").value = "";
-    
-    render(); // Atualiza a página sem precisar de F5
+    render();
+}
+
+function addAbast() {
+    abastecimentos.push({ vId: veiculoAtual, data: document.getElementById("aData").value, total: document.getElementById("aTotal").value });
+    localStorage.setItem("abastecimentos", JSON.stringify(abastecimentos));
+    render();
+}
+
+function addManut() {
+    manutencoes.push({ vId: veiculoAtual, tipo: document.getElementById("mTipo").value });
+    localStorage.setItem("manutencoes", JSON.stringify(manutencoes));
+    render();
 }
 
 function render() {
-    // Atualiza o select do topo
     const select = document.getElementById("selectVeiculo");
-    if (select) {
-        select.innerHTML = veiculos.map(v => 
-            `<option value="${v.id}">${v.nome}</option>`
-        ).join('');
-    }
-
-    // Atualiza a lista da aba Veículos
-    const lista = document.getElementById("listaVeiculos");
-    if (lista) {
-        lista.innerHTML = veiculos.map(v => `
-            <div class="item">
-                <p><b>${v.nome}</b> (${v.anoModelo})</p>
-                <button class="btn-del" onclick="excluirVeiculo(${v.id})">Excluir</button>
-            </div>
-        `).join('');
-    }
+    select.innerHTML = veiculos.map(v => `<option value="${v.id}">${v.nome}</option>`).join('');
+    
+    const abast = abastecimentos.filter(a => a.vId == veiculoAtual);
+    document.getElementById("totalGasto").innerText = "R$ " + abast.reduce((s, a) => s + Number(a.total), 0).toFixed(2);
+    
+    document.getElementById("listaPainel").innerHTML = abast.map(a => `<div class="item"><span>${a.data}</span><span>R$ ${a.total}</span></div>`).join('');
+    document.getElementById("listaVeiculos").innerHTML = veiculos.map(v => `<div class="item">${v.nome}</div>`).join('');
 }
 
-// Inicializa ao carregar
-window.onload = render;
+function trocarAba(id) {
+    document.querySelectorAll('.aba').forEach(a => a.style.display = a.id === id ? 'block' : 'none');
+}
+
+function resetarApp() { localStorage.clear(); location.reload(); }
+function toggleTheme() { document.body.classList.toggle('light'); }
+
+window.onload = () => { render(); trocarAba('painel'); };
