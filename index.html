@@ -19,6 +19,21 @@
     <button class="active" onclick="trocarAba('painel')"><i class="fas fa-chart-line"></i> Painel</button>
     <button onclick="trocarAba('abastecer')"><i class="fas fa-gas-pump"></i> Abastecer</button>
     <button onclick="trocarAba('manutencao')"><i class="fas fa-wrench"></i> Manutenção</button>
+    <select id="selectVeiculo" onchange="mudarVeiculo()"></select>
+
+<button onclick="trocarAba('veiculos')"><i class="fas fa-car"></i> Veículos</button>
+
+<section id="veiculos" class="aba">
+    <div class="card">
+        <h3>Gerenciar Veículos</h3>
+        <input id="vNome" type="text" placeholder="Apelido do Veículo (ex: Palio)">
+        <button class="btn" onclick="salvarVeiculo()">Salvar Veículo</button>
+    </div>
+    <div id="listaVeiculos"></div>
+    <div class="card" style="margin-top: 20px;">
+        <button class="btn" style="background:#ef4444" onclick="resetarApp()">Resetar Todo o App</button>
+    </div>
+</section>
 </nav>
 
 <main>
