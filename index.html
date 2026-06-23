@@ -23,22 +23,18 @@
 </nav>
 
 <main>
-    <section id="painel" class="aba active">...</section>
-    <section id="abastecer" class="aba">...</section>
-    <section id="manutencao" class="aba">...</section>
-    
-    <section id="veiculos" class="aba">
-        <div class="card">
-            <h3>Gerenciar Veículos</h3>
-            <input id="vNome" type="text" placeholder="Apelido">
-            <input id="vAnoModelo" type="text" placeholder="Ano/Modelo">
-            <input id="vKmInicial" type="number" placeholder="Km Inicial">
-            <input id="vDataAquisição" type="date">
-            <button class="btn" onclick="addVeiculo()">Salvar Veículo</button>
+    <section id="painel" class="aba active">
+        <div class="kpi-grid">
+            <div class="card"><p>Média</p><h2 id="mediaGeral">0 km/L</h2></div>
+            <div class="card"><p>Total Gasto</p><h2 id="totalGasto">R$ 0,00</h2></div>
+            <div class="card"><p>Km Atual</p><h2 id="kmAtual">0 km</h2></div>
+            <div class="card"><p>Próx. Troca</p><h2 id="proxOleo">-</h2></div>
         </div>
-        <div id="listaVeiculos"></div>
+        <div class="card">
+            <h3>Últimos Abastecimentos</h3>
+            <div id="listaPainel"></div>
+        </div>
     </section>
-</main>
 
     <section id="abastecer" class="aba">
         <div class="card">
@@ -46,7 +42,7 @@
             <input id="aKm" type="number" placeholder="Km">
             <input id="aLitros" type="number" placeholder="Litros">
             <input id="aTotal" type="number" placeholder="Total R$">
-            <button class="btn" onclick="addAbast()">Salvar</button>
+            <button class="btn" onclick="addAbast()">Salvar Abastecimento</button>
         </div>
         <div id="listaAbast"></div>
     </section>
@@ -57,26 +53,27 @@
             <input id="mKm" type="number" placeholder="Km">
             <input id="mCusto" type="number" placeholder="Custo R$">
             <input id="mObs" type="text" placeholder="Observação">
-            <button class="btn" onclick="addManut()">Salvar</button>
+            <button class="btn" onclick="addManut()">Salvar Manutenção</button>
         </div>
         <div id="listaManut"></div>
     </section>
 
-   <section id="veiculos" class="aba">
-    <div class="card">
-        <h3>Cadastrar Veículo</h3>
-        <input id="vNome" type="text" placeholder="Apelido (ex: Meu Carro)">
-        <input id="vAnoModelo" type="text" placeholder="Ano/Modelo (ex: 2022/2023)">
-        <input id="vKmInicial" type="number" placeholder="Km inicial de aquisição">
-        <input id="vDataAquisição" type="date" placeholder="Data de aquisição">
-        <button class="btn" onclick="addVeiculo()">+ Salvar Veículo</button>
-    </div>
-    <div id="listaVeiculos"></div>
-    <div class="card" style="margin-top: 20px;">
-        <button class="btn-del" onclick="resetarApp()">Resetar Todo o App</button>
-    </div>
-</section>
+    <section id="veiculos" class="aba">
+        <div class="card">
+            <h3>Cadastrar Veículo</h3>
+            <input id="vNome" type="text" placeholder="Apelido (ex: Meu Carro)">
+            <input id="vAnoModelo" type="text" placeholder="Ano/Modelo (ex: 2022/2023)">
+            <input id="vKmInicial" type="number" placeholder="Km inicial de aquisição">
+            <input id="vDataAquisicao" type="date">
+            <button class="btn" onclick="addVeiculo()">+ Salvar Veículo</button>
+        </div>
+        <div id="listaVeiculos"></div>
+        <div class="card" style="margin-top: 20px;">
+            <button class="btn-del" onclick="resetarApp()">Resetar Todo o App</button>
+        </div>
+    </section>
 </main>
+
 <script src="script.js"></script>
 </body>
 </html>
