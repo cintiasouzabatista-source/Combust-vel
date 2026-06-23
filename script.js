@@ -2,6 +2,32 @@
 
 let abastecimentos = JSON.parse(localStorage.getItem("abastecimentos")) || [];
 let manutencoes = JSON.parse(localStorage.getItem("manutencoes")) || [];
+let veiculos = JSON.parse(localStorage.getItem("veiculos")) || [{id: Date.now(), nome: "Meu Veículo"}];
+let veiculoAtual = localStorage.getItem("veiculoAtual") || veiculos[0].id;
+
+function salvarVeiculo() {
+    const nome = document.getElementById("vNome").value;
+    if(!nome) return;
+    veiculos.push({id: Date.now(), nome});
+    localStorage.setItem("veiculos", JSON.stringify(veiculos));
+    renderVeiculos();
+}
+
+function mudarVeiculo() {
+    veiculoAtual = document.getElementById("selectVeiculo").value;
+    localStorage.setItem("veiculoAtual", veiculoAtual);
+    location.reload(); // Recarrega para filtrar os dados do novo veículo
+}
+
+function resetarApp() {
+    if(confirm("Deseja apagar todos os dados?")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+// Ao renderizar listas (Abastecimentos/Manutencao), filtre:
+// abastecimentos.filter(a => a.veiculoId == veiculoAtual)
 
 // ===== INICIALIZAÇÃO =====
 
