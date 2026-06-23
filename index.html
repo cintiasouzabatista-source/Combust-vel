@@ -58,13 +58,20 @@
         <div id="listaManut"></div>
     </section>
 
-    <section id="veiculos" class="aba">
-        <div class="card">
-            <input id="vNome" type="text" placeholder="Nome do veículo">
-            <button class="btn" onclick="addVeiculo()">+ Cadastrar Veículo</button>
-        </div>
-        <button class="btn-del" onclick="resetarApp()">RESETAR TUDO</button>
-    </section>
+   <section id="veiculos" class="aba">
+    <div class="card">
+        <h3>Cadastrar Veículo</h3>
+        <input id="vNome" type="text" placeholder="Apelido (ex: Meu Carro)">
+        <input id="vAnoModelo" type="text" placeholder="Ano/Modelo (ex: 2022/2023)">
+        <input id="vKmInicial" type="number" placeholder="Km inicial de aquisição">
+        <input id="vDataAquisição" type="date" placeholder="Data de aquisição">
+        <button class="btn" onclick="addVeiculo()">+ Salvar Veículo</button>
+    </div>
+    <div id="listaVeiculos"></div>
+    <div class="card" style="margin-top: 20px;">
+        <button class="btn-del" onclick="resetarApp()">Resetar Todo o App</button>
+    </div>
+</section>
 </main>
 <script src="script.js"></script>
 </body>
