@@ -142,3 +142,18 @@ input, select {
 @media (max-width: 400px) {
     .grid-3, .grid-2 { grid-template-columns: 1fr; }
 }
+/* Garante que o layout não quebre */
+.aba {
+    display: none;
+    width: 100%;
+}
+
+.aba.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
