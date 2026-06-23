@@ -158,14 +158,28 @@ function addAbast() {
 // ===== SALVAR MANUTENÇÃO =====
 
 function addManut() {
-
-    const tipoInfo = document.getElementById("mTipo").value;
-
+    const tipo = document.getElementById("mTipo").value;
     const km = Number(document.getElementById("mKm").value);
-
     const custo = Number(document.getElementById("mCusto").value);
-
     const obs = document.getElementById("mObs").value;
+
+    if (!tipo || !km) {
+        alert("Preencha o Tipo e a Quilometragem.");
+        return;
+    }
+
+    manutencoes.push({ tipo, km, custo, obs });
+    localStorage.setItem("manutencoes", JSON.stringify(manutencoes));
+    
+    // Limpar campos
+    document.getElementById("mTipo").value = "";
+    document.getElementById("mKm").value = "";
+    document.getElementById("mCusto").value = "";
+    document.getElementById("mObs").value = "";
+
+    renderManut();
+    atualizarPainel();
+}
 
     if (!km) {
 
