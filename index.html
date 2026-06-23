@@ -1,55 +1,326 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+Pronto! App de combustível completo, tela única, painel simples e CRUD em tudo.
+
+Copia tudo → cola no Bloco de Notas → salva como `combustivel.html` → abre no Firefox do celular.
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Garagem</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Combustível App</title>
+<style>
+:root{
+  --bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--muted:#94a3b8;
+  --accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155;
+}
+body.light{--bg:#f8fafc;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
+.wrap{max-width:700px;margin:0 auto;padding:16px 12px 100px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+header h1{flex:1;font-size:18px;margin:0}
+select,input,button{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit}
+button{cursor:pointer;font-weight:600;border:none}
+.btn{background:var(--accent);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line)}
+.btn-danger{background:var(--danger);color:#fff}
+.grid{display:grid;gap:8px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:15px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{padding:12px}
+.kpi.label{font-size:11px;color:var(--muted);text-transform:uppercase}
+.kpi.val{font-size:22px;font-weight:700;margin-top:4px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--card)}
+.item small{color:var(--muted)}
+.actions{display:flex;gap:6px}
+.actions button{padding:6px 10px;font-size:12px;width:auto}
+.badge{font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(34,197,94,.2);color:var(--ok)}
+.badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
+.badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
+.footer{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;padding:10px 16px;background:var(--card);border:1px solid var(--line);border-radius:20px}
+.footer button{border:none;background:none;font-size:20px;color:var(--muted)}
+.footer button.active{color:var(--accent)}
+.empty{color:var(--muted);text-align:center;padding:20px 0;font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
+.modal.active{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:480px;max-height:90vh;overflow:auto}
+.modal-actions{display:flex;gap:8px;margin-top:10px}
+.alert{border-color:var(--warn);background:rgba(245,158,11,.08)}
+.urgent{border-color:var(--danger);background:rgba(239,68,68,.1)}
+</style>
 </head>
-<body class="dark">
-    <header>
-        <h1><i class="fas fa-car"></i> Garagem</h1>
-        <select id="selectVeiculo" onchange="mudarVeiculo()"></select>
-        <button onclick="toggleTheme()"><i id="theme-icon" class="fas fa-moon"></i></button>
-    </header>
-    <nav class="tabs">
-        <button class="active" onclick="trocarAba('painel')">Painel</button>
-        <button onclick="trocarAba('abastecer')">Abastecer</button>
-        <button onclick="trocarAba('manutencao')">Manutenção</button>
-        <button onclick="trocarAba('veiculos')">Veículos</button>
-    </nav>
-    <main>
-        <section id="painel" class="aba active">
-            <div class="kpi-grid">
-                <div class="card"><p>Gasto Total</p><h2 id="totalGasto">R$ 0,00</h2></div>
-            </div>
-            <div class="card"><h3>Histórico</h3><div id="listaPainel"></div></div>
-        </section>
-        <section id="abastecer" class="aba">
-            <div class="card">
-                <input id="aData" type="date"><input id="aKm" type="number" placeholder="Km"><input id="aLitros" type="number" placeholder="Litros"><input id="aTotal" type="number" placeholder="Total R$">
-                <button class="btn" onclick="addAbast()">Salvar</button>
-            </div>
-            <div id="listaAbast"></div>
-        </section>
-        <section id="manutencao" class="aba">
-            <div class="card">
-                <input id="mTipo" type="text" placeholder="Tipo"><input id="mKm" type="number" placeholder="Km"><input id="mCusto" type="number" placeholder="Custo R$"><input id="mObs" type="text" placeholder="Obs">
-                <button class="btn" onclick="addManut()">Salvar</button>
-            </div>
-            <div id="listaManut"></div>
-        </section>
-        <section id="veiculos" class="aba">
-            <div class="card">
-                <h3>Cadastrar Veículo</h3>
-                <input id="vNome" type="text" placeholder="Apelido"><input id="vAnoModelo" type="text" placeholder="Ano/Modelo"><input id="vKmInicial" type="number" placeholder="Km Inicial"><input id="vDataAquisicao" type="date">
-                <button class="btn" onclick="addVeiculo()">+ Salvar</button>
-            </div>
-            <div id="listaVeiculos"></div>
-            <button class="btn-del" onclick="resetarApp()">Resetar Tudo</button>
-        </section>
-    </main>
-    <script src="script.js"></script>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Painel</h1>
+    <select id="selVeiculo"></select>
+  </header>
+
+  <!-- PAINEL -->
+  <section id="painel">
+    <div class="kpis">
+      <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
+      <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
+      <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
+      <div class="card kpi" id="cardOleo"><div class="label">Próx Óleo</div><div class="val" id="proxOleo">--</div></div>
+    </div>
+  </section>
+
+  <!-- VEÍCULOS -->
+  <section id="veiculos" style="display:none">
+    <div class="card">
+      <h3>Novo Veículo</h3>
+      <input id="vNome" placeholder="Modelo ex: Biz 125">
+      <div class="grid grid-3">
+        <input id="vAno" type="number" placeholder="Ano">
+        <input id="vKmCompra" type="number" placeholder="Km compra">
+        <input id="vKmDia" type="number" placeholder="Km/dia" value="30">
+      </div>
+      <button class="btn" onclick="addVeiculo()">Salvar</button>
+    </div>
+    <div id="listaVeiculos"></div>
+  </section>
+
+  <!-- ABASTECER -->
+  <section id="abastecer" style="display:none">
+    <div class="card">
+      <h3>Novo Abastecimento</h3>
+      <input id="aData" type="date">
+      <input id="aKm" type="number" placeholder="Km odômetro">
+      <div class="grid grid-3">
+        <input id="aLitros" type="number" step="0.01" placeholder="Litros">
+        <input id="aValorL" type="number" step="0.001" placeholder="R$/L">
+        <input id="aTotal" type="number" step="0.01" placeholder="Total R$">
+      </div>
+      <button class="btn" onclick="addAbast()">Salvar</button>
+    </div>
+    <div id="listaAbast"></div>
+  </section>
+
+  <!-- MANUTENÇÃO -->
+  <section id="manutencao" style="display:none">
+    <div class="card">
+      <h3>Nova Manutenção</h3>
+      <select id="mTipo">
+        <option value="Óleo Motor|5000">Óleo Motor 5000km</option>
+        <option value="Correia|24000">Correia CVT 24000km</option>
+        <option value="Vela|8000">Vela 8000km</option>
+        <option value="Freio|10000">Pastilha Freio 10000km</option>
+      </select>
+      <div class="grid grid-2">
+        <input id="mKm" type="number" placeholder="Km da troca">
+        <input id="mValor" type="number" step="0.01" placeholder="Valor R$">
+      </div>
+      <button class="btn" onclick="addManut()">Salvar</button>
+    </div>
+    <div id="listaManut"></div>
+  </section>
+
+  <!-- CONFIG -->
+  <section id="config" style="display:none">
+    <div class="card"><h3>Aparência</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Tema Claro/Escuro</button></div>
+    <div class="card"><h3 style="color:var(--danger)">Resetar App</h3><button class="btn-danger" onclick="resetApp()">🚨 Apagar Tudo</button></div>
+  </section>
+</div>
+
+<nav class="footer">
+  <button onclick="show('painel')" class="active">🏠</button>
+  <button onclick="show('veiculos')">🏍️</button>
+  <button onclick="show('abastecer')">⛽</button>
+  <button onclick="show('manutencao')">🔧</button>
+  <button onclick="show('config')">⚙️</button>
+</nav>
+
+<!-- Modal Edição -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3 id="modalTitle">Editar</h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="saveEdit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='combApp_v1';
+let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null};
+let edit={tipo:null,id:null};
+
+function load(){
+  const raw=localStorage.getItem(KEY);
+  if(raw) db=JSON.parse(raw);
+  if(!db.veiculos.length){
+    db.veiculos.push({id:1,nome:'Biz 125',ano:2022,kmCompra:0,kmDia:30,kmSemana:210});
+    db.ativo=1; save();
+  }
+  renderVeiculosSelect(); renderAll(); loadTema(); aData.valueAsDate=new Date();
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+
+function show(t){
+  ['painel','veiculos','abastecer','manutencao','config'].forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(t).style.display='block';
+  document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  title.textContent=t.charAt(0).toUpperCase()+t.slice(1);
+}
+
+// VEÍCULOS
+function renderVeiculosSelect(){
+  selVeiculo.innerHTML=db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
+  selVeiculo.onchange=e=>{db.ativo=+e.target.value; save(); renderAll();}
+}
+function addVeiculo(){
+  if(!vNome.value.trim()) return alert('Digite o modelo');
+  db.veiculos.push({id:Date.now(),nome:vNome.value,ano:+vAno.value||0,kmCompra:+vKmCompra.value||0,kmDia:+vKmDia.value||30,kmSemana:(+vKmDia.value||30)*7});
+  db.ativo=db.veiculos.at(-1).id;
+  vNome.value=vAno.value=vKmCompra.value=''; save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
+}
+function renderVeiculos(){
+  listaVeiculos.innerHTML=db.veiculos.map(v=>`
+    <div class="item">
+      <div><b>${v.nome} ${v.ano}</b><br><small>${v.kmCompra}km • ${v.kmDia}km/dia • ${v.kmSemana}km/semana</small></div>
+      <div class="actions">
+        <button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>
+        ${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}
+      </div>
+    </div>
+  `).join('')||'<div class="empty">Sem veículos</div>';
+}
+function editVeiculo(id){
+  const v=db.veiculos.find(x=>x.id==id); edit={tipo:'veiculo',id};
+  modalBody.innerHTML=`<input id="eNome" value="${v.nome}"><div class="grid grid-3"><input id="eAno" type="number" value="${v.ano}"><input id="eKmCompra" type="number" value="${v.kmCompra}"><input id="eKmDia" type="number" value="${v.kmDia}"></div>`;
+  modal.classList.add('active');
+}
+function delVeiculo(id){
+  if(!confirm('Apagar veículo e dados?')) return;
+  db.veiculos=db.veiculos.filter(v=>v.id!=id);
+  db.abastecimentos=db.abastecimentos.filter(a=>a.veiculo!=id);
+  db.manutencoes=db.manutencoes.filter(m=>m.veiculo!=id);
+  db.ativo=db.veiculos[0].id; save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
+}
+
+// ABASTECER
+aLitros.oninput=aValorL.oninput=()=>aTotal.value=(aLitros.value*aValorL.value).toFixed(2);
+function addAbast(){
+  if(!aData.value||!aKm.value||!aLitros.value) return alert('Preencha tudo');
+  db.abastecimentos.push({id:Date.now(),veiculo:db.ativo,data:aData.value,km:+aKm.value,litros:+aLitros.value,valor:+aTotal.value,valorL:+aValorL.value});
+  aData.value=aKm.value=aLitros.value=aValorL.value=aTotal.value=''; aData.valueAsDate=new Date();
+  save(); renderAbast(); renderAll();
+}
+function renderAbast(){
+  const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  listaAbast.innerHTML=list.map(a=>`
+    <div class="item">
+      <div><b>${new Date(a.data).toLocaleDateString('pt-BR')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valor.toFixed(2)}</small></div>
+      <div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
+    </div>
+  `).join('')||'<div class="empty">Sem abastecimentos</div>';
+}
+function editAbast(id){
+  const a=db.abastecimentos.find(x=>x.id==id); edit={tipo:'abast',id};
+  modalBody.innerHTML=`<input id="eData" type="date" value="${a.data}"><input id="eKm" type="number" value="${a.km}"><div class="grid grid-3"><input id="eLitros" step="0.01" type="number" value="${a.litros}"><input id="eValorL" step="0.001" type="number" value="${a.valorL}"><input id="eTotal" step="0.01" type="number" value="${a.valor}"></div>`;
+  eLitros.oninput=eValorL.oninput=()=>eTotal.value=(eLitros.value*eValorL.value).toFixed(2);
+  modal.classList.add('active');
+}
+function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAbast(); renderAll();}}
+
+// MANUTENÇÃO
+function addManut(){
+  const [tipo,int]=mTipo.value.split('|');
+  if(!mKm.value) return alert('Digite o km');
+  db.manutencoes.push({id:Date.now(),veiculo:db.ativo,tipo,km:+mKm.value,proxKm:+mKm.value+ +int,valor:+mValor.value||0});
+  mKm.value=mValor.value=''; save(); renderManut(); renderAll();
+}
+function renderManut(){
+  const v=db.veiculos.find(x=>x.id==db.ativo);
+  const kmAtual=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>b.km-a.km)[0]?.km||v.kmCompra;
+  const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>b.km-a.km);
+  listaManut.innerHTML=list.map(m=>{
+    const faltam=m.proxKm-kmAtual; const dias=Math.ceil(faltam/v.kmDia);
+    let cls='',badge='';
+    if(faltam<=0){cls='urgent'; badge='<span class="badge danger">VENCIDA</span>'}
+    else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
+    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>Feito ${m.km}km • Próxima ${m.proxKm}km • Faltam ${faltam}km ~${dias}d</small></div><div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
+  }).join('')||'<div class="empty">Sem manutenções</div>';
+}
+function editManut(id){
+  const m=db.manutencoes.find(x=>x.id==id); edit={tipo:'manut',id};
+  modalBody.innerHTML=`<select disabled><option>${m.tipo}</option></select><div class="grid grid-2"><input id="eKm" type="number" value="${m.km}"><input id="eValor" type="number" value="${m.valor}"></div>`;
+  modal.classList.add('active');
+}
+function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
+
+// MODAL
+function closeModal(){modal.classList.remove('active'); edit={tipo:null,id:null}}
+function saveEdit(){
+  if(edit.tipo=='veiculo'){
+    const v=db.veiculos.find(x=>x.id==edit.id);
+    Object.assign(v,{nome:eNome.value,ano:+eAno.value,kmCompra:+eKmCompra.value,kmDia:+eKmDia.value,kmSemana:+eKmDia.value*7});
+  }
+  if(edit.tipo=='abast'){
+    const a=db.abastecimentos.find(x=>x.id==edit.id);
+    Object.assign(a,{data:eData.value,km:+eKm.value,litros:+eLitros.value,valor:+eTotal.value,valorL:+eValorL.value});
+  }
+  if(edit.tipo=='manut'){
+    const m=db.manutencoes.find(x=>x.id==edit.id);
+    Object.assign(m,{km:+eKm.value,valor:+eValor.value,proxKm:m.proxKm-m.km+ +eKm.value});
+  }
+  save(); closeModal(); renderAll();
+  if(edit.tipo=='veiculo') renderVeiculos();
+  if(edit.tipo=='abast') renderAbast();
+  if(edit.tipo=='manut') renderManut();
+}
+
+// PAINEL
+function renderAll(){
+  const v=db.veiculos.find(x=>x.id==db.ativo);
+  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>a.km-b.km);
+  const man=db.manutencoes.filter(m=>m.veiculo==db.ativo);
+
+  const kmAtual=abs.at(-1)?.km||v.kmCompra;
+  kmAtual.textContent=kmAtual+' km';
+  gasto.textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
+
+  let kml='--';
+  if(abs.length>1){
+    let km=0,litros=0;
+    for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
+    kml=(km/litros).toFixed(1)+' km/l';
+  }
+  kml.textContent=kml;
+
+  const oleo=man.filter(m=>m.tipo.includes('Óleo')).sort((a,b)=>b.km-a.km)[0];
+  if(oleo){
+    const faltam=oleo.proxKm-kmAtual; const dias=Math.ceil(faltam/v.kmDia);
+    cardOleo.className='card kpi '+(faltam<=0?'urgent':faltam<=500?'alert':'');
+    proxOleo.innerHTML=faltam<=0?'VENCIDA':faltam+'km<br><small>~'+dias+'d</small>';
+  }
+
+  renderVeiculos(); renderAbast(); renderManut();
+}
+
+// TEMA + RESET
+function loadTema(){if(localStorage.getItem('tema')=='light') document.body.classList.add('light')}
+function toggleTema(){document.body.classList.toggle('light'); localStorage.setItem('tema',document.body.classList.contains('light')?'light':'dark')}
+function resetApp(){
+  if(confirm('Apagar tudo?')&&confirm('Tem certeza?')){localStorage.clear(); location.reload()}
+}
+
+load();
+</script>
 </body>
 </html>
+*Funcionalidades:*
+1. *Cadastro Veículos*: modelo, ano, km compra, km/dia e km/semana calcula automático
+2. *Abastecimento*: litros x valor/L x total x km. Editar/excluir em cada item
+3. *Manutenção*: escolhe tipo com km recomendado + alerta amarelo/vermelho quando chega perto
+4. *Painel simples*: 4 cards - média km/l, gasto total, km atual, próxima troca óleo
+5. *Edição/Exclusão*: botão ✏️ e 🗑️ em todos os cadastros
+6. *Tema claro/escuro* + *Reset total* na aba ⚙️
+
+Testa aí. Se quiser adicionar mais tipos de manutenção ou exportar dados me fala que eu já incluo 👊
