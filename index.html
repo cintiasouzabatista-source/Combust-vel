@@ -1,517 +1,275 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Combustível App</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-:root{
-  --bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;
-  --accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#1e293b;
-}
-body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{margin:0;background:var(--bg);color:var(--text);transition:.2s;touch-action:pan-y}
-.wrap{max-width:680px;margin:0 auto;padding:16px 12px 100px}
-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-header h1{flex:1;font-size:20px;margin:0;font-weight:700}
-select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
-input::placeholder{color:var(--muted)}
-button{cursor:pointer;font-weight:700;border:none}
-.btn{background:var(--accent);color:#fff;font-size:16px}
-.btn-ghost{background:transparent;border:1px solid var(--line)}
-.btn-danger{background:var(--danger);color:#fff}
-.grid{display:grid;gap:10px}
-.grid-2{grid-template-columns:1fr 1fr}
-.grid-3{grid-template-columns:1fr 1fr 1fr}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.card h3{margin:0 0 12px;font-size:16px;font-weight:700}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi{padding:16px;text-align:center}
-.kpi.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.kpi.val{font-size:26px;font-weight:800;margin-top:6px}
-.item{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
-.item b{font-size:15px}
-.item small{color:var(--muted);font-size:13px;line-height:1.4}
-.actions{display:flex;gap:8px}
-.actions button{padding:8px 12px;font-size:14px;width:auto;border-radius:8px}
-.badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
-.badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
-.badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
-.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:10}
-.footer button{border:none;background:none;font-size:24px;color:var(--muted)}
-.footer button.active{color:var(--accent)}
-.empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
-.modal.active{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:420px}
-.modal-box h3{margin:0 0 16px;font-size:18px}
-.modal-actions{display:flex;gap:10px;margin-top:16px}
-.alert{border-left:4px solid var(--warn)}
-.urgent{border-left:4px solid var(--danger)}
-.label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
-.info-card{background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05));border-color:rgba(59,130,246,.3)}
-.dias-semana{display:flex;gap:6px;margin:8px 0}
-.dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
-.dia-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.chart-container{position:relative;height:200px;margin-top:10px}
-</style>
-</head>
-<body>
-<div class="wrap" id="appContainer">
-  <header>
-    <h1 id="title">Painel</h1>
-    <select id="selVeiculo"></select>
-  </header>
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Fuel, Wrench, Bike, X, ChevronUp, ChevronDown } from 'lucide-react';
 
-  <section id="painel">
-    <div class="card info-card">
-      <small style="color:var(--muted)">💡 Km Atual atualiza só se não houver abastecimento hoje. Baseado no seu km/dia</small>
-    </div>
-    <div class="kpis">
-      <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
-      <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
-      <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
-      <div class="card kpi info-card" id="cardAbast"><div class="label">Próx Abastecimento</div><div class="val" id="proxAbast">--</div></div>
-      <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
-    </div>
-    <div class="card">
-      <h3>📊 Consumo Mensal km/l</h3>
-      <div class="chart-container"><canvas id="graficoConsumo"></canvas></div>
-    </div>
-  </section>
+export default function App() {
+  const [vehicles, setVehicles] = useState([
+    { id: 1, name: 'Honda Lead', kmCompra: 93667, kmDia: 35, tanque: 6.5, dataCompra: '2024-01-01' }
+  ]);
+  const [refuels, setRefuels] = useState([
+    { id: 1, vehicleId: 1, date: '2024-06-17', km: 93867, liters: 3.9, price: 6.2 }
+  ]);
+  const [maintenances, setMaintenances] = useState([]);
 
-  <section id="abastecer" style="display:none">
-    <div class="card">
-      <h3>⛽ Novo Abastecimento</h3>
-      <label class="label">Data</label>
-      <input id="aData" type="date">
-      <label class="label">Km Odômetro</label>
-      <input id="aKm" type="number" placeholder="Ex: 94000">
-      <div class="grid grid-2">
-        <div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01" placeholder="5.5"></div>
-        <div><label class="label">R$ por Litro</label><input id="aValorL" type="number" step="0.001" placeholder="6.29"></div>
-      </div>
-      <label class="label">Total R$</label>
-      <input id="aTotal" type="number" step="0.01" placeholder="34.60" readonly>
-      <button class="btn" onclick="addAbast()">Salvar</button>
-    </div>
-    <div id="listaAbast"></div>
-  </section>
+  const [activeTab, setActiveTab] = useState('panel');
+  const [isMobile, setIsMobile] = useState(false);
 
-  <section id="manutencao" style="display:none">
-    <div class="card">
-      <h3>🔧 Nova Manutenção</h3>
-      <label class="label">Data da Manutenção</label>
-      <input id="mData" type="date">
-      <label class="label">Tipo de Serviço</label>
-      <input id="mTipo" placeholder="Ex: Troca de óleo, Pastilha">
-      <div class="grid grid-2">
-        <div><label class="label">Km da troca</label><input id="mKm" type="number" placeholder="94000"></div>
-        <div><label class="label">Intervalo km</label><input id="mIntervalo" type="number" placeholder="4000"></div>
-      </div>
-      <label class="label">Valor R$</label>
-      <input id="mValor" type="number" step="0.01" placeholder="120.00">
-      <button class="btn" onclick="addManut()">Salvar</button>
-    </div>
-    <div id="listaManut"></div>
-  </section>
+  // Estados dos modais com minimizador
+  const [modalState, setModalState] = useState({
+    vehicle: { open: false, minimized: false, data: {} },
+    refuel: { open: false, minimized: false, data: {} },
+    maintenance: { open: false, minimized: false, data: {} }
+  });
 
-  <section id="veiculos" style="display:none">
-    <div class="card">
-      <h3>🏍️ Novo Veículo</h3>
-      <label class="label">Modelo</label>
-      <input id="vNome" placeholder="Ex: Honda Lead 110">
-      <div class="grid grid-2">
-        <div><label class="label">Ano</label><input id="vAno" type="number" placeholder="2010"></div>
-        <div><label class="label">Data Aquisição</label><input id="vData" type="date"></div>
-      </div>
-      <div class="grid grid-3">
-        <div><label class="label">Km compra</label><input id="vKmCompra" type="number" placeholder="93667"></div>
-        <div><label class="label">Km/dia</label><input id="vKmDia" type="number" placeholder="35"></div>
-        <div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1" placeholder="6.5"></div>
-      </div>
-      <label class="label">Dias que você roda na semana</label>
-      <div class="dias-semana" id="diasSemana">
-        <button type="button" class="dia-btn" data-dia="1">Seg</button>
-        <button type="button" class="dia-btn" data-dia="2">Ter</button>
-        <button type="button" class="dia-btn" data-dia="3">Qua</button>
-        <button type="button" class="dia-btn" data-dia="4">Qui</button>
-        <button type="button" class="dia-btn" data-dia="5">Sex</button>
-        <button type="button" class="dia-btn" data-dia="6">Sáb</button>
-        <button type="button" class="dia-btn" data-dia="0">Dom</button>
-      </div>
-      <button class="btn" onclick="addVeiculo()">Salvar Veículo</button>
-    </div>
-    <div id="listaVeiculos"></div>
-  </section>
+  const timersRef = useRef({});
 
-  <section id="config" style="display:none">
-    <div class="card"><h3>🎨 Aparência</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Trocar Tema</button></div>
-    <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
-  </section>
-</div>
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-<nav class="footer">
-  <button onclick="show('painel')" class="active">🛣️</button>
-  <button onclick="show('abastecer')">⛽</button>
-  <button onclick="show('manutencao')">🔧</button>
-  <button onclick="show('veiculos')">🏍️</button>
-  <button onclick="show('config')">⚙️</button>
-</nav>
-
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <h3 id="modalTitle">Editar</h3>
-    <div id="modalBody"></div>
-    <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn" onclick="saveEdit()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const KEY_ATUAL='combApp_v8';
-const KEYS_ANTIGAS=['combApp_v7','combApp_v6','combApp_v5','combApp_v4','combApp_v3','combApp_v2','combApp'];
-let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null};
-let edit={tipo:null,id:null};
-let diasSelecionados = [1,2,3,4,5];
-let grafico = null;
-
-function dataHoje(){return new Date().toLocaleDateString('en-CA');}
-function formatarData(yyyy_mm_dd){
-  if(!yyyy_mm_dd) return '--';
-  const [ano, mes, dia] = yyyy_mm_dd.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
-
-// MIGRAÇÃO AUTOMÁTICA
-function load(){
-  let raw = localStorage.getItem(KEY_ATUAL);
-  if(!raw){
-    for(let keyAntiga of KEYS_ANTIGAS){
-      raw = localStorage.getItem(keyAntiga);
-      if(raw){
-        console.log(`Migrando dados de ${keyAntiga} → ${KEY_ATUAL}`);
-        localStorage.setItem(KEY_ATUAL, raw);
-        break;
+  // Auto-fecha modal minimizado após 30s só no mobile
+  useEffect(() => {
+    Object.keys(modalState).forEach(key => {
+      const modal = modalState[key];
+      if (isMobile && modal.minimized && modal.open) {
+        if (timersRef.current[key]) clearTimeout(timersRef.current[key]);
+        timersRef.current[key] = setTimeout(() => {
+          closeModal(key);
+        }, 30000);
+      } else {
+        if (timersRef.current[key]) {
+          clearTimeout(timersRef.current[key]);
+          timersRef.current[key] = null;
+        }
       }
-    }
-  }
-
-  if(raw) db = JSON.parse(raw);
-
-  if(!db.veiculos.length){
-    db.veiculos.push({id:1,nome:'Honda Lead',ano:2010,dataAquisicao:dataHoje(),kmCompra:93667,kmDia:35,kmSemana:175,tanque:6.5,diasSemana:[1,2,3,4,5]});
-    db.ativo=1; save();
-  }
-
-  vData.value = dataHoje();
-  mData.value = dataHoje();
-  setupDiasSemana();
-  setupSwipe();
-  renderVeiculosSelect(); renderAll(); loadTema(); aData.value = dataHoje();
-}
-
-function save(){localStorage.setItem(KEY_ATUAL,JSON.stringify(db))}
-
-function setupSwipe(){
-  let startX = 0;
-  const container = document.getElementById('appContainer');
-  container.addEventListener('touchstart', e=>{startX = e.touches[0].clientX});
-  container.addEventListener('touchend', e=>{
-    const endX = e.changedTouches[0].clientX;
-    const diff = startX - endX;
-    if(Math.abs(diff) > 50){
-      const telas = ['painel','abastecer','manutencao','veiculos','config'];
-      const atual = telas.findIndex(t=>document.getElementById(t).style.display=='block');
-      if(diff > 0 && atual < telas.length-1) show(telas[atual+1]);
-      if(diff < 0 && atual > 0) show(telas[atual-1]);
-    }
-  });
-}
-
-function setupDiasSemana(){
-  document.querySelectorAll('.dia-btn').forEach(btn=>{
-    const dia = +btn.dataset.dia;
-    if(diasSelecionados.includes(dia)) btn.classList.add('active');
-    btn.onclick = ()=>{
-      btn.classList.toggle('active');
-      diasSelecionados = Array.from(document.querySelectorAll('.dia-btn.active')).map(b=>+b.dataset.dia);
-    }
-  });
-}
-
-function show(t){
-  ['painel','abastecer','manutencao','veiculos','config'].forEach(s=>document.getElementById(s).style.display='none');
-  document.getElementById(t).style.display='block';
-  document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
-  event?.target?.classList.add('active');
-  title.textContent=t.charAt(0).toUpperCase()+t.slice(1);
-  if(t=='painel') setTimeout(renderGrafico, 100);
-}
-
-function contarDiasUteis(dataInicio, dataFim, diasSemana){
-  let count = 0;
-  let data = new Date(dataInicio + 'T00:00:00');
-  const fim = new Date(dataFim + 'T00:00:00');
-  while(data <= fim){
-    if(diasSemana.includes(data.getDay())) count++;
-    data.setDate(data.getDate() + 1);
-  }
-  return count;
-}
-
-function getKmAtual(v){
-  const abs = db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'))[0];
-  if(!abs) return v.kmCompra;
-  if(abs.data == dataHoje()) return abs.km;
-  const diasUteis = contarDiasUteis(abs.data, dataHoje(), v.diasSemana || [1,2,3,4,5]);
-  return abs.km + (v.kmDia * diasUteis);
-}
-
-function renderVeiculosSelect(){
-  selVeiculo.innerHTML=db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
-  selVeiculo.onchange=e=>{db.ativo=+e.target.value; save(); renderAll();}
-}
-function addVeiculo(){
-  if(!vNome.value.trim()||!vData.value) return alert('Preencha modelo e data');
-  db.veiculos.push({
-    id:Date.now(),nome:vNome.value,ano:+vAno.value||0,dataAquisicao:vData.value,
-    kmCompra:+vKmCompra.value||0,kmDia:+vKmDia.value||35,kmSemana:(+vKmDia.value||35)*diasSelecionados.length,
-    tanque:+vTanque.value||0,diasSemana:[...diasSelecionados]
-  });
-  db.ativo=db.veiculos.at(-1).id;
-  vNome.value=vAno.value=vKmCompra.value=vTanque.value='';
-  save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
-}
-function renderVeiculos(){
-  listaVeiculos.innerHTML=db.veiculos.map(v=>{
-    const dias = contarDiasUteis(v.dataAquisicao, dataHoje(), v.diasSemana);
-    const nomesDias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].filter((d,i)=>v.diasSemana.includes(i)).join(',');
-    return `<div class="item">
-      <div><b>${v.nome} ${v.ano}</b><br><small>Desde ${formatarData(v.dataAquisicao)} • ${dias} dias úteis<br>${v.kmCompra}km • ${v.kmDia}km/dia • ${nomesDias} • Tanque ${v.tanque||'?'}L</small></div>
-      <div class="actions"><button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}</div>
-    </div>`;
-  }).join('')||'<div class="empty">Nenhum veículo cadastrado</div>';
-}
-function editVeiculo(id){
-  const v=db.veiculos.find(x=>x.id==id); edit={tipo:'veiculo',id};
-  diasSelecionados = v.diasSemana || [1,2,3,4,5];
-  modalBody.innerHTML=`<label class="label">Modelo</label><input id="eNome" value="${v.nome}"><div class="grid grid-2"><div><label class="label">Ano</label><input id="eAno" type="number" value="${v.ano}"></div><div><label class="label">Data Aquisição</label><input id="eData" type="date" value="${v.dataAquisicao}"></div></div><div class="grid grid-3"><div><label class="label">Km compra</label><input id="eKmCompra" type="number" value="${v.kmCompra}"></div><div><label class="label">Km/dia</label><input id="eKmDia" type="number" value="${v.kmDia}"></div><div><label class="label">Tanque L</label><input id="eTanque" type="number" step="0.1" value="${v.tanque||''}"></div></div><label class="label">Dias que roda</label><div class="dias-semana" id="diasEdit"></div>`;
-  modal.classList.add('active');
-  setTimeout(()=>{
-    const container = document.getElementById('diasEdit');
-    ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((nome,i)=>{
-      const btn = document.createElement('button');
-      btn.type='button'; btn.className='dia-btn'; btn.dataset.dia=i; btn.textContent=nome;
-      if(diasSelecionados.includes(i)) btn.classList.add('active');
-      btn.onclick=()=>{btn.classList.toggle('active'); diasSelecionados = Array.from(container.querySelectorAll('.dia-btn.active')).map(b=>+b.dataset.dia)};
-      container.appendChild(btn);
     });
-  },0);
-}
-function delVeiculo(id){
-  if(!confirm('Apagar veículo e todos os dados?')) return;
-  db.veiculos=db.veiculos.filter(v=>v.id!=id);
-  db.abastecimentos=db.abastecimentos.filter(a=>a.veiculo!=id);
-  db.manutencoes=db.manutencoes.filter(m=>m.veiculo!=id);
-  db.ativo=db.veiculos[0].id; save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
-}
 
-aLitros.oninput=aValorL.oninput=()=>aTotal.value=(aLitros.value*aValorL.value).toFixed(2);
-function addAbast(){
-  if(!aData.value||!aKm.value||!aLitros.value) return alert('Preencha data, km e litros');
-  db.abastecimentos.push({id:Date.now(),veiculo:db.ativo,data:aData.value,km:+aKm.value,litros:+aLitros.value,valor:+aTotal.value,valorL:+aValorL.value});
-  aData.value=aKm.value=aLitros.value=aValorL.value=aTotal.value=''; aData.value = dataHoje();
-  save(); renderAbast(); renderAll();
-}
-function renderAbast(){
-  const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'));
-  listaAbast.innerHTML=list.map(a=>`
-    <div class="item">
-      <div><b>${formatarData(a.data)}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small></div>
-      <div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
-    </div>
-  `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
-}
-function editAbast(id){
-  const a=db.abastecimentos.find(x=>x.id==id); edit={tipo:'abast',id};
-  modalBody.innerHTML=`<label class="label">Data</label><input id="eData" type="date" value="${a.data}"><label class="label">Km</label><input id="eKm" type="number" value="${a.km}"><div class="grid grid-2"><div><label class="label">Litros</label><input id="eLitros" step="0.01" type="number" value="${a.litros}"></div><div><label class="label">R$/L</label><input id="eValorL" step="0.001" type="number" value="${a.valorL}"></div></div><label class="label">Total</label><input id="eTotal" step="0.01" type="number" value="${a.valor}" readonly>`;
-  eLitros.oninput=eValorL.oninput=()=>eTotal.value=(eLitros.value*eValorL.value).toFixed(2);
-  modal.classList.add('active');
-}
-function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAbast(); renderAll();}}
+    return () => {
+      Object.values(timersRef.current).forEach(t => t && clearTimeout(t));
+    };
+  }, [modalState, isMobile]);
 
-// MANUTENÇÃO COM DATA
-function addManut(){
-  const tipo = mTipo.value.trim();
-  const km = +mKm.value;
-  const intervalo = +mIntervalo.value || 4000;
-  if(!tipo ||!km ||!mData.value) return alert('Preencha data, tipo e km');
-  db.manutencoes.push({
-    id:Date.now(),
-    veiculo:db.ativo,
-    data:mData.value,
-    tipo,
-    km,
-    intervalo,
-    proxKm:km+intervalo,
-    valor:+mValor.value||0
-  });
-  mData.value=dataHoje();
-  mTipo.value=mKm.value=mIntervalo.value=mValor.value='';
-  save(); renderManut(); renderAll();
-}
-function renderManut(){
-  const v=db.veiculos.find(x=>x.id==db.ativo);
-  const kmAtual=getKmAtual(v);
-  const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'));
+  const openModal = (type) => {
+    setModalState(prev => ({
+     ...prev,
+      [type]: {...prev[type], open: true, minimized: false, data: {} }
+    }));
+  };
 
-  listaManut.innerHTML=list.map(m=>{
-    const faltam=m.proxKm-kmAtual;
-    const diasUteis=Math.ceil(faltam/v.kmDia);
-    let cls='',badge='';
-    if(faltam<=0){cls='urgent'; badge='<span class="badge danger">VENCIDA</span>'}
-    else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
-    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>${formatarData(m.data)} • Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km ~ ${diasUteis} dias úteis</small></div><div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
-  }).join('')||'<div class="empty">Nenhuma manutenção cadastrada</div>';
+  const minimizeModal = (type) => {
+    setModalState(prev => ({
+     ...prev,
+      [type]: {...prev[type], minimized: true }
+    }));
+  };
 
-  const trocasOleo = list.filter(m=>m.tipo.toLowerCase().includes('óleo')||m.tipo.toLowerCase().includes('oleo'));
-  if(trocasOleo.length){
-    const ultimaOleo = trocasOleo.sort((a,b)=>b.km-a.km)[0];
-    const proxOleoKm = ultimaOleo.proxKm;
-    const faltamOleo = proxOleoKm - kmAtual;
-    let clsOleo = '';
-    if(faltamOleo<=0) clsOleo='urgent';
-    else if(faltamOleo<=300) clsOleo='alert';
-    cardOleo.className = 'card kpi ' + clsOleo;
-    proxOleo.innerHTML = faltamOleo<=0? 'VENCIDA' : faltamOleo+'km<br><small>~'+Math.ceil(faltamOleo/v.kmDia)+'d</small>';
-  }
-}
-function editManut(id){
-  const m=db.manutencoes.find(x=>x.id==id); edit={tipo:'manut',id};
-  const dataAtual = m.data || dataHoje();
-  modalBody.innerHTML=`<label class="label">Data</label><input id="eData" type="date" value="${dataAtual}"><label class="label">Tipo</label><input id="eTipo" value="${m.tipo}"><div class="grid grid-2"><div><label class="label">Km</label><input id="eKm" type="number" value="${m.km}"></div><div><label class="label">Intervalo</label><input id="eIntervalo" type="number" value="${m.intervalo}"></div></div><label class="label">Valor</label><input id="eValor" type="number" value="${m.valor}">`;
-  modal.classList.add('active');
-}
-function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
+  const maximizeModal = (type) => {
+    setModalState(prev => ({
+     ...prev,
+      [type]: {...prev[type], minimized: false }
+    }));
+  };
 
-function renderGrafico(){
-  const v=db.veiculos.find(x=>x.id==db.ativo);
-  const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data+'T00:00:00')-new Date(b.data+'T00:00:00'));
+  const closeModal = (type) => {
+    setModalState(prev => ({
+     ...prev,
+      [type]: { open: false, minimized: false, data: {} }
+    }));
+  };
 
-  const meses = {};
-  for(let i=1;i<abs.length;i++){
-    const mes = abs[i].data.substring(0,7);
-    const km = abs[i].km - abs[i-1].km;
-    const kml = km / abs[i].litros;
-    if(!meses[mes]) meses[mes] = [];
-    meses[mes].push(kml);
-  }
+  const handleModalChange = (type, field, value) => {
+    setModalState(prev => ({
+     ...prev,
+      [type]: {...prev[type], data: {...prev[type].data, [field]: value } }
+    }));
+  };
 
-  const labels = Object.keys(meses).map(m=>m.split('-')[1]+'/'+m.split('-')[0]);
-  const dados = Object.values(meses).map(arr=>arr.reduce((a,b)=>a+b)/arr.length);
+  const saveVehicle = () => {
+    const data = modalState.vehicle.data;
+    const newVehicle = {
+      id: Date.now(),
+      name: data.name,
+      kmCompra: Number(data.kmCompra),
+      kmDia: Number(data.kmDia),
+      tanque: Number(data.tanque),
+      dataCompra: data.dataCompra || new Date().toISOString().split('T')[0]
+    };
+    setVehicles([...vehicles, newVehicle]);
+    closeModal('vehicle');
+  };
 
-  const ctx = document.getElementById('graficoConsumo');
-  if(grafico) grafico.destroy();
+  const saveRefuel = () => {
+    const data = modalState.refuel.data;
+    const newRefuel = {
+      id: Date.now(),
+      vehicleId: vehicles[0].id,
+      date: data.date || new Date().toISOString().split('T')[0],
+      km: Number(data.km),
+      liters: Number(data.liters),
+      price: Number(data.price)
+    };
+    setRefuels([...refuels, newRefuel]);
+    closeModal('refuel');
+  };
 
-  grafico = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'km/l',
-        data: dados,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.1)',
-        tension: 0.4,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {legend: {display: false}},
-      scales: {
-        y: {beginAtZero: true, grid: {color: 'rgba(148,163,184,0.2)'}},
-        x: {grid: {color: 'rgba(148,163,184,0.2)'}}
-      }
+  // Cálculo Km Atual
+  const getKmAtual = () => {
+    const vehicle = vehicles[0];
+    const lastRefuel = refuels.filter(r => r.vehicleId === vehicle.id).sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+
+    if (!lastRefuel) return vehicle.kmCompra;
+
+    const hoje = new Date().toISOString().split('T')[0];
+    if (lastRefuel.date === hoje) return lastRefuel.km;
+
+    const diasUteis = Math.max(1, Math.floor((new Date(hoje) - new Date(lastRefuel.date)) / (1000*60*60*24)));
+    return lastRefuel.km + (vehicle.kmDia * diasUteis);
+  };
+
+  const kmAtual = getKmAtual();
+
+  // Modal component com minimizador
+  const Modal = ({ type, title, icon: Icon, color, children }) => {
+    const state = modalState[type];
+    if (!state.open) return null;
+
+    if (state.minimized && isMobile) {
+      return (
+        <div className={`fixed bottom-0 left-0 right-0 z-50 bg-${color}-600 text-white p-3 rounded-t-xl shadow-2xl flex items-center justify-between`}>
+          <button onClick={() => maximizeModal(type)} className="flex items-center gap-2 flex-1">
+            <Icon size={20} />
+            <span className="font-semibold">{title}</span>
+            <ChevronUp size={20} />
+          </button>
+          <button onClick={() => closeModal(type)}>
+            <X size={20} />
+          </button>
+        </div>
+      );
     }
-  });
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50">
+        <div className="bg-white w-full md:w-96 rounded-t-2xl md:rounded-2xl p-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Icon className={`text-${color}-600`} size={24} />
+              <h3 className="text-lg font-bold">{title}</h3>
+            </div>
+            <div className="flex gap-2">
+              {isMobile && (
+                <button onClick={() => minimizeModal(type)} className="p-2">
+                  <ChevronDown size={20} />
+                </button>
+              )}
+              <button onClick={() => closeModal(type)} className="p-2">
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 pb-20">
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">Meu Veículo</h1>
+
+        <div className="bg-white rounded-xl p-4 shadow mb-4">
+          <p className="text-sm text-gray-600">Km Atual</p>
+          <p className="text-3xl font-bold">{kmAtual.toLocaleString()} km</p>
+          <p className="text-xs text-gray-500 mt-1">Atualiza só se não houver abastecimento hoje</p>
+        </div>
+
+        <div className="flex gap-2 mb-4">
+          <button onClick={() => openModal('refuel')} className="flex-1 bg-green-600 text-white py-3 rounded-lg flex items-center justify-center gap-2">
+            <Fuel size={20} /> Abastecer
+          </button>
+          <button onClick={() => openModal('vehicle')} className="flex-1 bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center gap-2">
+            <Bike size={20} /> Veículo
+          </button>
+          <button onClick={() => openModal('maintenance')} className="flex-1 bg-orange-600 text-white py-3 rounded-lg flex items-center justify-center gap-2">
+            <Wrench size={20} /> Manutenção
+          </button>
+        </div>
+      </div>
+
+      {/* Modal Veículo */}
+      <Modal type="vehicle" title="Novo Veículo" icon={Bike} color="blue">
+        <input
+          placeholder="Nome"
+          className="w-full border p-2 rounded mb-2"
+          value={modalState.vehicle.data.name || ''}
+          onChange={e => handleModalChange('vehicle', 'name', e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Km compra"
+          className="w-full border p-2 rounded mb-2"
+          value={modalState.vehicle.data.kmCompra || ''}
+          onChange={e => handleModalChange('vehicle', 'kmCompra', e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Km/dia"
+          className="w-full border p-2 rounded mb-2"
+          value={modalState.vehicle.data.kmDia || ''}
+          onChange={e => handleModalChange('vehicle', 'kmDia', e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Tanque L"
+          className="w-full border p-2 rounded mb-4"
+          value={modalState.vehicle.data.tanque || ''}
+          onChange={e => handleModalChange('vehicle', 'tanque', e.target.value)}
+        />
+        <button onClick={saveVehicle} className="w-full bg-blue-600 text-white py-2 rounded">Salvar</button>
+      </Modal>
+
+      {/* Modal Abastecimento */}
+      <Modal type="refuel" title="Abastecimento" icon={Fuel} color="green">
+        <input
+          type="date"
+          className="w-full border p-2 rounded mb-2"
+          value={modalState.refuel.data.date || ''}
+          onChange={e => handleModalChange('refuel', 'date', e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Km"
+          className="w-full border p-2 rounded mb-2"
+          value={modalState.refuel.data.km || ''}
+          onChange={e => handleModalChange('refuel', 'km', e.target.value)}
+        />
+        <input
+          type="number"
+          step="0.1"
+          placeholder="Litros"
+          className="w-full border p-2 rounded mb-2"
+          value={modalState.refuel.data.liters || ''}
+          onChange={e => handleModalChange('refuel', 'liters', e.target.value)}
+        />
+        <input
+          type="number"
+          step="0.01"
+          placeholder="R$/L"
+          className="w-full border p-2 rounded mb-4"
+          value={modalState.refuel.data.price || ''}
+          onChange={e => handleModalChange('refuel', 'price', e.target.value)}
+        />
+        <button onClick={saveRefuel} className="w-full bg-green-600 text-white py-2 rounded">Salvar</button>
+      </Modal>
+
+      {/* Modal Manutenção */}
+      <Modal type="maintenance" title="Manutenção" icon={Wrench} color="orange">
+        <p className="text-gray-600">Form de manutenção aqui...</p>
+        <button onClick={() => closeModal('maintenance')} className="w-full bg-orange-600 text-white py-2 rounded mt-4">Fechar</button>
+      </Modal>
+    </div>
+  );
 }
-
-function closeModal(){modal.classList.remove('active'); edit={tipo:null,id:null}}
-function saveEdit(){
-  if(edit.tipo=='veiculo'){
-    const v=db.veiculos.find(x=>x.id==edit.id);
-    Object.assign(v,{nome:eNome.value,ano:+eAno.value,dataAquisicao:eData.value,kmCompra:+eKmCompra.value,kmDia:+eKmDia.value,kmSemana:+eKmDia.value*diasSelecionados.length,tanque:+eTanque.value||0,diasSemana:[...diasSelecionados]});
-  }
-  if(edit.tipo=='abast'){
-    const a=db.abastecimentos.find(x=>x.id==edit.id);
-    Object.assign(a,{data:eData.value,km:+eKm.value,litros:+eLitros.value,valor:+eTotal.value,valorL:+eValorL.value});
-  }
-  if(edit.tipo=='manut'){
-    const m=db.manutencoes.find(x=>x.id==edit.id);
-    const novoKm = +eKm.value;
-    const novoIntervalo = +eIntervalo.value || 4000;
-    Object.assign(m,{data:eData.value,tipo:eTipo.value,km:novoKm,intervalo:novoIntervalo,proxKm:novoKm+novoIntervalo,valor:+eValor.value});
-  }
-  save(); closeModal(); renderAll();
-  if(edit.tipo=='veiculo') renderVeiculos();
-  if(edit.tipo=='abast') renderAbast();
-  if(edit.tipo=='manut') renderManut();
-}
-
-function renderAll(){
-  const v=db.veiculos.find(x=>x.id==db.ativo);
-  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data+'T00:00:00')-new Date(b.data+'T00:00:00'));
-
-  const kmAtual=getKmAtual(v);
-  document.getElementById('kmAtual').textContent=kmAtual+' km';
-  document.getElementById('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
-
-  let kml=0;
-  if(abs.length>1){
-    let km=0,litros=0;
-    for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
-    kml=km/litros;
-    document.getElementById('kml').textContent=kml.toFixed(1)+' km/l';
-  } else {
-    document.getElementById('kml').textContent='--';
-  }
-
-  if(kml>0 && abs.length>0){
-    const ultimoAbs = abs.at(-1);
-    const litrosTanque = v.tanque || Math.max(...abs.map(a=>a.litros));
-    const autonomia = Math.floor(kml * litrosTanque);
-    const proxKm = ultimoAbs.km + autonomia;
-    const faltam = proxKm - kmAtual;
-    const diasUteis = Math.ceil(faltam/v.kmDia);
-
-    let cls = '';
-    if(faltam<=0) cls='urgent';
-    else if(faltam<=50) cls='alert';
-
-    cardAbast.className = 'card kpi info-card ' + cls;
-    proxAbast.innerHTML = faltam<=0? 'ABASTECER AGORA' : proxKm+'km<br><small>~'+diasUteis+' dias úteis</small>';
-  } else {
-    proxAbast.textContent = 'Cadastre tanque';
-  }
-
-  renderVeiculos(); renderAbast(); renderManut();
-  if(document.getElementById('painel').style.display!='none') renderGrafico();
-}
-
-function loadTema(){if(localStorage.getItem('tema')=='light') document.body.classList.add('light')}
-function toggleTema(){document.body.classList.toggle('light'); localStorage.setItem('tema',document.body.classList.contains('light')?'light':'dark')}
-function resetApp(){
-  if(confirm('Apagar tudo?')&&confirm('Tem certeza?')){localStorage.clear(); location.reload()}
-}
-
-load();
-</script>
-</body>
-</html>
