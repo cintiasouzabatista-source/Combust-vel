@@ -1,270 +1,144 @@
+/* 1. Reset Global */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body {
-  background: #0f172a;
-  color: #f1f5f9;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding: 0;
+/* 2. Variáveis de Tema */
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent: #2563eb;
 }
 
 body.light {
-  background: #f8fafc;
-  color: #0f172a;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
 }
 
-/* HEADER */
+body {
+    background: var(--bg-color);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* 3. Layout Principal */
+main {
+    padding: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 4. Cabeçalho e Tabs */
 h1 {
-  background: #1e293b;
-  padding: 16px;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+    background: var(--card-bg);
+    padding: 16px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-body.light h1 {
-  background: #fff;
-}
-
-/* TABS */
 .tabs {
-  display: flex;
-  gap: 8px;
-  padding: 12px;
-  background: #1e293b;
-  position: sticky;
-  top: 60px;
-}
-
-body.light .tabs {
-  background: #fff;
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: var(--bg-color);
+    position: sticky;
+    top: 60px;
+    z-index: 9;
 }
 
 .tabs button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: #334155;
-  color: #94a3b8;
-  font-weight: 600;
-  font-size: 14px;
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .tabs button.active {
-  background: #2563eb;
-  color: white;
+    background: var(--accent);
+    color: white;
 }
 
-/* Garante que os botões dentro das cards não fiquem grudados */
-.card .btn {
-    margin-top: 10px;
-    padding: 10px;
-}
-
+/* 5. Cards e Grids */
 .card {
-  background: #1e293b;
-  padding: 16px;
-  border-radius: 12px;
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
-body.light .card {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
-.card p {
-  color: #94a3b8;
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-
-.card h2 {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.card.alerta {
-  border-left: 4px solid #f59e0b;
-}
-
-.card.vencida {
-  border-left: 4px solid #ef4444;
-}
-
-/* TITULOS SEÇÃO */
-h3 {
-  font-size: 18px;
-  margin: 16px 0 12px 0;
-}
-
-/* FORM */
+/* 6. Formulários */
 input, select {
-  width: 100%;
-  padding: 14px;
-  margin: 8px 0;
-  background: #1e293b;
-  color: #f1f5f9;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  font-size: 16px;
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    background: var(--bg-color);
+    color: var(--text-main);
+    border: 1px solid #334155;
+    border-radius: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
 }
 
-body.light input, body.light select {
-  background: #fff;
-  color: #0f172a;
-  border-color: #e2e8f0;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: #2563eb;
-}
-
-/* GRID 3 COLUNAS */
-.grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-
-/* GRID 2 COLUNAS */
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-/* BOTÕES */
 .btn {
-  width: 100%;
-  padding: 16px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 16px;
-  margin-top: 12px;
-  cursor: pointer;
-}
-
-.btn:active {
-  transform: scale(0.98);
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
 }
 
 .btn-del {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-/* LISTA ITENS */
-.item {
-  background: #1e293b;
-  padding: 14px;
-  border-radius: 10px;
-  margin: 8px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-body.light .item {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.item p {
-  margin: 3px 0;
-}
-
-.item p b {
-  font-size: 15px;
-}
-
-.muted {
-  color: #94a3b8;
-  font-size: 12px;
-}
-
-.empty {
-  text-align: center;
-  color: #94a3b8;
-  padding: 40px 0;
-}
-
-/* BOTÃO TEMA */
-header button {
-  margin-left: auto;
-  background: transparent;
-  border: none;
-  color: #f1f5f9;
-  font-size: 22px;
-  padding: 8px;
-}
-
-/* RESPONSIVO */
-@media (max-width: 400px) {
-  .kpi-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .grid-3 {
-    grid-template-columns: 1fr;
-  }
-}
-/* CONTROLE DAS ABAS */
-
-.aba{
-  display:none;
-}
-
-.aba.active{
-  display:block;
-}
-/* Garante que o container principal tenha um respiro */
-main {
-    padding: 16px;
-    max-width: 600px; /* Limita a largura em telas grandes para não ficar esticado */
-    margin: 0 auto;   /* Centraliza o app na tela */
-}
-
-/* Ajuste do Grid de Cards */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
-    gap: 16px; /* Espaçamento entre os cards */
-    margin-bottom: 20px;
-}
-
-/* Card como container flexível */
-.card {
-    background: var(--card);
-    padding: 20px; /* Mais respiro interno */
-    border-radius: 16px; /* Bordas mais suaves */
-    margin-bottom: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sombra para profundidade */
-}
-
-/* Inputs dentro dos cards */
-input, select {
-    width: 100%;
-    padding: 12px;
-    margin: 6px 0;
-    border-radius: 10px;
-    border: 1px solid #334155;
-    background: #0f172a;
+    background: #ef4444;
     color: white;
-    box-sizing: border-box; /* Essencial: impede que o padding aumente o tamanho do input */
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* 7. Lista de Itens */
+.item {
+    background: var(--card-bg);
+    padding: 14px;
+    border-radius: 10px;
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 8. Utilitários */
+.aba { display: none; }
+.aba.active { display: block; }
+
+@media (max-width: 400px) {
+    .grid-3, .grid-2 { grid-template-columns: 1fr; }
 }
