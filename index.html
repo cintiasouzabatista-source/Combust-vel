@@ -6,46 +6,49 @@
 <title>Combustível App</title>
 <style>
 :root{
-  --bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--muted:#94a3b8;
-  --accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155;
+  --bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;
+  --accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#1e293b;
 }
-body.light{--bg:#f8fafc;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0}
+body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
-.wrap{max-width:700px;margin:0 auto;padding:16px 12px 100px}
-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-header h1{flex:1;font-size:18px;margin:0}
-select,input,button{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit}
-button{cursor:pointer;font-weight:600;border:none}
-.btn{background:var(--accent);color:#fff}
+.wrap{max-width:680px;margin:0 auto;padding:16px 12px 100px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+header h1{flex:1;font-size:20px;margin:0;font-weight:700}
+select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
+input::placeholder{color:var(--muted)}
+button{cursor:pointer;font-weight:700;border:none}
+.btn{background:var(--accent);color:#fff;font-size:16px}
 .btn-ghost{background:transparent;border:1px solid var(--line)}
 .btn-danger{background:var(--danger);color:#fff}
-.grid{display:grid;gap:8px}
+.grid{display:grid;gap:10px}
 .grid-2{grid-template-columns:1fr 1fr}
-.grid-3{grid-template-columns:1fr 1fr 1fr}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.card h3{margin:0 0 10px;font-size:15px}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.kpi{padding:12px}
-.kpi.label{font-size:11px;color:var(--muted);text-transform:uppercase}
-.kpi.val{font-size:22px;font-weight:700;margin-top:4px}
-.item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--card)}
-.item small{color:var(--muted)}
-.actions{display:flex;gap:6px}
-.actions button{padding:6px 10px;font-size:12px;width:auto}
-.badge{font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(34,197,94,.2);color:var(--ok)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.card h3{margin:0 0 12px;font-size:16px;font-weight:700}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{padding:16px;text-align:center}
+.kpi.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.kpi.val{font-size:26px;font-weight:800;margin-top:6px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.item b{font-size:15px}
+.item small{color:var(--muted);font-size:13px;line-height:1.4}
+.actions{display:flex;gap:8px}
+.actions button{padding:8px 12px;font-size:14px;width:auto;border-radius:8px}
+.badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
 .badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
 .badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
-.footer{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;padding:10px 16px;background:var(--card);border:1px solid var(--line);border-radius:20px}
-.footer button{border:none;background:none;font-size:20px;color:var(--muted)}
+.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.footer button{border:none;background:none;font-size:24px;color:var(--muted)}
 .footer button.active{color:var(--accent)}
-.empty{color:var(--muted);text-align:center;padding:20px 0;font-size:13px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
+.empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
 .modal.active{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:480px;max-height:90vh;overflow:auto}
-.modal-actions{display:flex;gap:8px;margin-top:10px}
-.alert{border-color:var(--warn);background:rgba(245,158,11,.08)}
-.urgent{border-color:var(--danger);background:rgba(239,68,68,.1)}
+.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:420px}
+.modal-box h3{margin:0 0 16px;font-size:18px}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+.alert{border-left:4px solid var(--warn)}
+.urgent{border-left:4px solid var(--danger)}
+.label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
 </style>
 </head>
 <body>
@@ -61,21 +64,28 @@ button{cursor:pointer;font-weight:600;border:none}
       <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
       <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
       <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
-      <div class="card kpi" id="cardOleo"><div class="label">Próx Manutenção</div><div class="val" id="proxOleo">--</div></div>
+      <div class="card kpi" id="cardProx"><div class="label">Próx Manutenção</div><div class="val" id="proxManut">--</div></div>
     </div>
   </section>
 
   <!-- VEÍCULOS -->
   <section id="veiculos" style="display:none">
     <div class="card">
-      <h3>Novo Veículo</h3>
-      <input id="vNome" placeholder="Modelo ex: Biz 125">
-      <div class="grid grid-3">
-        <input id="vAno" type="number" placeholder="Ano">
-        <input id="vKmCompra" type="number" placeholder="Km compra">
-        <input id="vKmDia" type="number" placeholder="Km/dia" value="30">
+      <h3>➕ Novo Veículo</h3>
+      <label class="label">Modelo</label>
+      <input id="vNome" placeholder="Ex: Honda Lead 110">
+
+      <div class="grid grid-2">
+        <div><label class="label">Ano</label><input id="vAno" type="number" placeholder="2010"></div>
+        <div><label class="label">Data Aquisição</label><input id="vData" type="date"></div>
       </div>
-      <button class="btn" onclick="addVeiculo()">Salvar</button>
+
+      <div class="grid grid-2">
+        <div><label class="label">Km na compra</label><input id="vKmCompra" type="number" placeholder="93667"></div>
+        <div><label class="label">Km por dia</label><input id="vKmDia" type="number" placeholder="30"></div>
+      </div>
+
+      <button class="btn" onclick="addVeiculo()">Salvar Veículo</button>
     </div>
     <div id="listaVeiculos"></div>
   </section>
@@ -83,14 +93,21 @@ button{cursor:pointer;font-weight:600;border:none}
   <!-- ABASTECER -->
   <section id="abastecer" style="display:none">
     <div class="card">
-      <h3>Novo Abastecimento</h3>
+      <h3>⛽ Novo Abastecimento</h3>
+      <label class="label">Data</label>
       <input id="aData" type="date">
-      <input id="aKm" type="number" placeholder="Km odômetro">
-      <div class="grid grid-3">
-        <input id="aLitros" type="number" step="0.01" placeholder="Litros">
-        <input id="aValorL" type="number" step="0.001" placeholder="R$/L">
-        <input id="aTotal" type="number" step="0.01" placeholder="Total R$">
+
+      <label class="label">Km Odômetro</label>
+      <input id="aKm" type="number" placeholder="Ex: 94000">
+
+      <div class="grid grid-2">
+        <div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01" placeholder="5.5"></div>
+        <div><label class="label">R$ por Litro</label><input id="aValorL" type="number" step="0.001" placeholder="6.29"></div>
       </div>
+
+      <label class="label">Total R$</label>
+      <input id="aTotal" type="number" step="0.01" placeholder="34.60" readonly>
+
       <button class="btn" onclick="addAbast()">Salvar</button>
     </div>
     <div id="listaAbast"></div>
@@ -99,13 +116,18 @@ button{cursor:pointer;font-weight:600;border:none}
   <!-- MANUTENÇÃO -->
   <section id="manutencao" style="display:none">
     <div class="card">
-      <h3>Nova Manutenção</h3>
-      <input id="mTipo" placeholder="Ex: Troca de óleo, Pastilha freio">
+      <h3>🔧 Nova Manutenção</h3>
+      <label class="label">Tipo de Serviço</label>
+      <input id="mTipo" placeholder="Ex: Troca de óleo, Pastilha">
+
       <div class="grid grid-2">
-        <input id="mKm" type="number" placeholder="Km da troca">
-        <input id="mIntervalo" type="number" placeholder="Próx. troca em km">
+        <div><label class="label">Km da troca</label><input id="mKm" type="number" placeholder="94000"></div>
+        <div><label class="label">Intervalo km</label><input id="mIntervalo" type="number" placeholder="5000"></div>
       </div>
-      <input id="mValor" type="number" step="0.01" placeholder="Valor R$">
+
+      <label class="label">Valor R$</label>
+      <input id="mValor" type="number" step="0.01" placeholder="120.00">
+
       <button class="btn" onclick="addManut()">Salvar</button>
     </div>
     <div id="listaManut"></div>
@@ -113,8 +135,8 @@ button{cursor:pointer;font-weight:600;border:none}
 
   <!-- CONFIG -->
   <section id="config" style="display:none">
-    <div class="card"><h3>Aparência</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Tema Claro/Escuro</button></div>
-    <div class="card"><h3 style="color:var(--danger)">Resetar App</h3><button class="btn-danger" onclick="resetApp()">🚨 Apagar Tudo</button></div>
+    <div class="card"><h3>🎨 Aparência</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Trocar Tema</button></div>
+    <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
   </section>
 </div>
 
@@ -139,7 +161,7 @@ button{cursor:pointer;font-weight:600;border:none}
 </div>
 
 <script>
-const KEY='combApp_v2';
+const KEY='combApp_v3';
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null};
 let edit={tipo:null,id:null};
 
@@ -147,9 +169,10 @@ function load(){
   const raw=localStorage.getItem(KEY);
   if(raw) db=JSON.parse(raw);
   if(!db.veiculos.length){
-    db.veiculos.push({id:1,nome:'Biz 125',ano:2022,kmCompra:0,kmDia:30,kmSemana:210});
+    db.veiculos.push({id:1,nome:'Honda Lead',ano:2010,dataAquisicao:new Date().toISOString().split('T')[0],kmCompra:93667,kmDia:30,kmSemana:210});
     db.ativo=1; save();
   }
+  vData.valueAsDate=new Date();
   renderVeiculosSelect(); renderAll(); loadTema(); aData.valueAsDate=new Date();
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
@@ -168,29 +191,51 @@ function renderVeiculosSelect(){
   selVeiculo.onchange=e=>{db.ativo=+e.target.value; save(); renderAll();}
 }
 function addVeiculo(){
-  if(!vNome.value.trim()) return alert('Digite o modelo');
-  db.veiculos.push({id:Date.now(),nome:vNome.value,ano:+vAno.value||0,kmCompra:+vKmCompra.value||0,kmDia:+vKmDia.value||30,kmSemana:(+vKmDia.value||30)*7});
+  if(!vNome.value.trim()||!vData.value) return alert('Preencha modelo e data');
+  db.veiculos.push({
+    id:Date.now(),
+    nome:vNome.value,
+    ano:+vAno.value||0,
+    dataAquisicao:vData.value,
+    kmCompra:+vKmCompra.value||0,
+    kmDia:+vKmDia.value||30,
+    kmSemana:(+vKmDia.value||30)*7
+  });
   db.ativo=db.veiculos.at(-1).id;
-  vNome.value=vAno.value=vKmCompra.value=''; save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
+  vNome.value=vAno.value=vKmCompra.value='';
+  save(); renderVeiculosSelect(); renderVeiculos(); renderAll();
 }
 function renderVeiculos(){
-  listaVeiculos.innerHTML=db.veiculos.map(v=>`
-    <div class="item">
-      <div><b>${v.nome} ${v.ano}</b><br><small>${v.kmCompra}km • ${v.kmDia}km/dia • ${v.kmSemana}km/semana</small></div>
+  listaVeiculos.innerHTML=db.veiculos.map(v=>{
+    const dias = Math.floor((new Date()-new Date(v.dataAquisicao))/86400000);
+    return `<div class="item">
+      <div>
+        <b>${v.nome} ${v.ano}</b><br>
+        <small>Desde ${new Date(v.dataAquisicao).toLocaleDateString('pt-BR')} • ${dias} dias<br>${v.kmCompra}km • ${v.kmDia}km/dia</small>
+      </div>
       <div class="actions">
         <button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>
         ${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}
       </div>
-    </div>
-  `).join('')||'<div class="empty">Sem veículos</div>';
+    </div>`;
+  }).join('')||'<div class="empty">Nenhum veículo cadastrado</div>';
 }
 function editVeiculo(id){
   const v=db.veiculos.find(x=>x.id==id); edit={tipo:'veiculo',id};
-  modalBody.innerHTML=`<input id="eNome" value="${v.nome}"><div class="grid grid-3"><input id="eAno" type="number" value="${v.ano}"><input id="eKmCompra" type="number" value="${v.kmCompra}"><input id="eKmDia" type="number" value="${v.kmDia}"></div>`;
+  modalBody.innerHTML=`
+    <label class="label">Modelo</label><input id="eNome" value="${v.nome}">
+    <div class="grid grid-2">
+      <div><label class="label">Ano</label><input id="eAno" type="number" value="${v.ano}"></div>
+      <div><label class="label">Data Aquisição</label><input id="eData" type="date" value="${v.dataAquisicao}"></div>
+    </div>
+    <div class="grid grid-2">
+      <div><label class="label">Km compra</label><input id="eKmCompra" type="number" value="${v.kmCompra}"></div>
+      <div><label class="label">Km/dia</label><input id="eKmDia" type="number" value="${v.kmDia}"></div>
+    </div>`;
   modal.classList.add('active');
 }
 function delVeiculo(id){
-  if(!confirm('Apagar veículo e dados?')) return;
+  if(!confirm('Apagar veículo e todos os dados?')) return;
   db.veiculos=db.veiculos.filter(v=>v.id!=id);
   db.abastecimentos=db.abastecimentos.filter(a=>a.veiculo!=id);
   db.manutencoes=db.manutencoes.filter(m=>m.veiculo!=id);
@@ -200,7 +245,7 @@ function delVeiculo(id){
 // ABASTECER
 aLitros.oninput=aValorL.oninput=()=>aTotal.value=(aLitros.value*aValorL.value).toFixed(2);
 function addAbast(){
-  if(!aData.value||!aKm.value||!aLitros.value) return alert('Preencha tudo');
+  if(!aData.value||!aKm.value||!aLitros.value) return alert('Preencha data, km e litros');
   db.abastecimentos.push({id:Date.now(),veiculo:db.ativo,data:aData.value,km:+aKm.value,litros:+aLitros.value,valor:+aTotal.value,valorL:+aValorL.value});
   aData.value=aKm.value=aLitros.value=aValorL.value=aTotal.value=''; aData.valueAsDate=new Date();
   save(); renderAbast(); renderAll();
@@ -209,41 +254,36 @@ function renderAbast(){
   const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
   listaAbast.innerHTML=list.map(a=>`
     <div class="item">
-      <div><b>${new Date(a.data).toLocaleDateString('pt-BR')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valor.toFixed(2)}</small></div>
+      <div>
+        <b>${new Date(a.data).toLocaleDateString('pt-BR')}</b><br>
+        <small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small>
+      </div>
       <div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
     </div>
-  `).join('')||'<div class="empty">Sem abastecimentos</div>';
+  `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
 }
 function editAbast(id){
   const a=db.abastecimentos.find(x=>x.id==id); edit={tipo:'abast',id};
-  modalBody.innerHTML=`<input id="eData" type="date" value="${a.data}"><input id="eKm" type="number" value="${a.km}"><div class="grid grid-3"><input id="eLitros" step="0.01" type="number" value="${a.litros}"><input id="eValorL" step="0.001" type="number" value="${a.valorL}"><input id="eTotal" step="0.01" type="number" value="${a.valor}"></div>`;
+  modalBody.innerHTML=`<label class="label">Data</label><input id="eData" type="date" value="${a.data}"><label class="label">Km</label><input id="eKm" type="number" value="${a.km}"><div class="grid grid-2"><div><label class="label">Litros</label><input id="eLitros" step="0.01" type="number" value="${a.litros}"></div><div><label class="label">R$/L</label><input id="eValorL" step="0.001" type="number" value="${a.valorL}"></div></div><label class="label">Total</label><input id="eTotal" step="0.01" type="number" value="${a.valor}" readonly>`;
   eLitros.oninput=eValorL.oninput=()=>eTotal.value=(eLitros.value*eValorL.value).toFixed(2);
   modal.classList.add('active');
 }
 function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAbast(); renderAll();}}
 
-// MANUTENÇÃO - CAMPOS LIVRES
+// MANUTENÇÃO
 function addManut(){
   const tipo = mTipo.value.trim();
   const km = +mKm.value;
   const intervalo = +mIntervalo.value;
   if(!tipo ||!km ||!intervalo) return alert('Preencha tipo, km e intervalo');
-  db.manutencoes.push({
-    id:Date.now(),
-    veiculo:db.ativo,
-    tipo,
-    km,
-    intervalo,
-    proxKm: km + intervalo,
-    valor:+mValor.value||0
-  });
+  db.manutencoes.push({id:Date.now(),veiculo:db.ativo,tipo,km,intervalo,proxKm:km+intervalo,valor:+mValor.value||0});
   mTipo.value=mKm.value=mIntervalo.value=mValor.value='';
   save(); renderManut(); renderAll();
 }
 function renderManut(){
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const kmAtual=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>b.km-a.km)[0]?.km||v.kmCompra;
-  const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>b.km-a.km);
+  const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>a.proxKm-b.proxKm);
 
   listaManut.innerHTML=list.map(m=>{
     const faltam=m.proxKm-kmAtual;
@@ -253,24 +293,27 @@ function renderManut(){
     else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
 
     return `<div class="item ${cls}">
-      <div><b>${m.tipo}</b> ${badge}<br><small>Feito ${m.km}km • Intervalo ${m.intervalo}km • Próxima ${m.proxKm}km • Faltam ${faltam}km ~${dias}d</small></div>
+      <div>
+        <b>${m.tipo}</b> ${badge}<br>
+        <small>Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km ~ ${dias} dias</small>
+      </div>
       <div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div>
     </div>`;
-  }).join('')||'<div class="empty">Sem manutenções</div>';
+  }).join('')||'<div class="empty">Nenhuma manutenção cadastrada</div>';
 
-  // Atualiza card do painel com a manutenção mais próxima
   if(list.length){
-    const prox = list.sort((a,b)=>a.proxKm-b.proxKm)[0];
+    const prox = list[0];
     const faltam = prox.proxKm - kmAtual;
-    cardOleo.className='card kpi '+(faltam<=0?'urgent':faltam<=500?'alert':'');
-    proxOleo.innerHTML = faltam<=0? 'VENCIDA' : faltam+'km<br><small>~'+dias+'d</small>';
+    const dias = Math.ceil(faltam/v.kmDia);
+    cardProx.className='card kpi '+(faltam<=0?'urgent':faltam<=500?'alert':'');
+    proxManut.innerHTML = faltam<=0? 'VENCIDA' : faltam+'km<br><small>~'+dias+'d</small>';
   } else {
-    proxOleo.textContent = '--';
+    proxManut.textContent = '--';
   }
 }
 function editManut(id){
   const m=db.manutencoes.find(x=>x.id==id); edit={tipo:'manut',id};
-  modalBody.innerHTML=`<input id="eTipo" value="${m.tipo}" placeholder="Tipo"><div class="grid grid-2"><input id="eKm" type="number" value="${m.km}" placeholder="Km"><input id="eIntervalo" type="number" value="${m.intervalo}" placeholder="Intervalo km"></div><input id="eValor" type="number" value="${m.valor}" placeholder="Valor">`;
+  modalBody.innerHTML=`<label class="label">Tipo</label><input id="eTipo" value="${m.tipo}"><div class="grid grid-2"><div><label class="label">Km</label><input id="eKm" type="number" value="${m.km}"></div><div><label class="label">Intervalo</label><input id="eIntervalo" type="number" value="${m.intervalo}"></div></div><label class="label">Valor</label><input id="eValor" type="number" value="${m.valor}">`;
   modal.classList.add('active');
 }
 function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
@@ -280,7 +323,7 @@ function closeModal(){modal.classList.remove('active'); edit={tipo:null,id:null}
 function saveEdit(){
   if(edit.tipo=='veiculo'){
     const v=db.veiculos.find(x=>x.id==edit.id);
-    Object.assign(v,{nome:eNome.value,ano:+eAno.value,kmCompra:+eKmCompra.value,kmDia:+eKmDia.value,kmSemana:+eKmDia.value*7});
+    Object.assign(v,{nome:eNome.value,ano:+eAno.value,dataAquisicao:eData.value,kmCompra:+eKmCompra.value,kmDia:+eKmDia.value,kmSemana:+eKmDia.value*7});
   }
   if(edit.tipo=='abast'){
     const a=db.abastecimentos.find(x=>x.id==edit.id);
