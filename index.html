@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Combustível App</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root{
   --bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;
@@ -11,7 +12,7 @@
 }
 body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
+body{margin:0;background:var(--bg);color:var(--text);transition:.2s;touch-action:pan-y}
 .wrap{max-width:680px;margin:0 auto;padding:16px 12px 100px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 header h1{flex:1;font-size:20px;margin:0;font-weight:700}
@@ -38,7 +39,7 @@ button{cursor:pointer;font-weight:700;border:none}
 .badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
 .badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
 .badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
-.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:10}
 .footer button{border:none;background:none;font-size:24px;color:var(--muted)}
 .footer button.active{color:var(--accent)}
 .empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
@@ -54,10 +55,11 @@ button{cursor:pointer;font-weight:700;border:none}
 .dias-semana{display:flex;gap:6px;margin:8px 0}
 .dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
 .dia-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chart-container{position:relative;height:200px;margin-top:10px}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="appContainer">
   <header>
     <h1 id="title">Painel</h1>
     <select id="selVeiculo"></select>
@@ -66,13 +68,21 @@ button{cursor:pointer;font-weight:700;border:none}
   <!-- PAINEL -->
   <section id="painel">
     <div class="card info-card">
-      <small style="color:var(--muted)">💡 Km Atual atualiza só nos dias que você roda. Próximo abastecimento baseado na autonomia</small>
+      <small style="color:var(--muted)">💡 Km Atual atualiza só se não houver abastecimento hoje. Baseado no seu km/dia</small>
     </div>
     <div class="kpis">
       <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
       <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
       <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
       <div class="card kpi info-card" id="cardAbast"><div class="label">Próx Abastecimento</div><div class="val" id="proxAbast">--</div></div>
+      <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
+    </div>
+
+    <div class="card">
+      <h3>📊 Consumo Mensal km/l</h3>
+      <div class="chart-container">
+        <canvas id="graficoConsumo"></canvas>
+      </div>
     </div>
   </section>
 
@@ -103,7 +113,7 @@ button{cursor:pointer;font-weight:700;border:none}
       <input id="mTipo" placeholder="Ex: Troca de óleo, Pastilha">
       <div class="grid grid-2">
         <div><label class="label">Km da troca</label><input id="mKm" type="number" placeholder="94000"></div>
-        <div><label class="label">Intervalo km</label><input id="mIntervalo" type="number" placeholder="5000"></div>
+        <div><label class="label">Intervalo km</label><input id="mIntervalo" type="number" placeholder="4000"></div>
       </div>
       <label class="label">Valor R$</label>
       <input id="mValor" type="number" step="0.01" placeholder="120.00">
@@ -124,7 +134,7 @@ button{cursor:pointer;font-weight:700;border:none}
       </div>
       <div class="grid grid-3">
         <div><label class="label">Km compra</label><input id="vKmCompra" type="number" placeholder="93667"></div>
-        <div><label class="label">Km/dia</label><input id="vKmDia" type="number" placeholder="30"></div>
+        <div><label class="label">Km/dia</label><input id="vKmDia" type="number" placeholder="35"></div>
         <div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1" placeholder="6.5"></div>
       </div>
       <label class="label">Dias que você roda na semana</label>
@@ -150,7 +160,7 @@ button{cursor:pointer;font-weight:700;border:none}
 </div>
 
 <nav class="footer">
-  <button onclick="show('painel')" class="active">🏠</button>
+  <button onclick="show('painel')" class="active">🛣️</button>
   <button onclick="show('abastecer')">⛽</button>
   <button onclick="show('manutencao')">🔧</button>
   <button onclick="show('veiculos')">🏍️</button>
@@ -170,15 +180,13 @@ button{cursor:pointer;font-weight:700;border:none}
 </div>
 
 <script>
-const KEY='combApp_v6';
+const KEY='combApp_v7';
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null};
 let edit={tipo:null,id:null};
-let diasSelecionados = [1,2,3,4,5]; // Padrão Seg-Sex
+let diasSelecionados = [1,2,3,4,5];
+let grafico = null;
 
-function dataHoje(){
-  return new Date().toLocaleDateString('en-CA');
-}
-
+function dataHoje(){return new Date().toLocaleDateString('en-CA');}
 function formatarData(yyyy_mm_dd){
   if(!yyyy_mm_dd) return '--';
   const [ano, mes, dia] = yyyy_mm_dd.split('-');
@@ -189,15 +197,33 @@ function load(){
   const raw=localStorage.getItem(KEY);
   if(raw) db=JSON.parse(raw);
   if(!db.veiculos.length){
-    db.veiculos.push({id:1,nome:'Honda Lead',ano:2010,dataAquisicao:dataHoje(),kmCompra:93667,kmDia:30,kmSemana:150,tanque:6.5,diasSemana:[1,2,3,4,5]});
+    db.veiculos.push({id:1,nome:'Honda Lead',ano:2010,dataAquisicao:dataHoje(),kmCompra:93667,kmDia:35,kmSemana:175,tanque:6.5,diasSemana:[1,2,3,4,5]});
     db.ativo=1; save();
   }
   vData.value = dataHoje();
   setupDiasSemana();
+  setupSwipe();
   renderVeiculosSelect(); renderAll(); loadTema(); aData.value = dataHoje();
 }
 
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+
+// SWIPE MENU
+function setupSwipe(){
+  let startX = 0;
+  const container = document.getElementById('appContainer');
+  container.addEventListener('touchstart', e=>{startX = e.touches[0].clientX});
+  container.addEventListener('touchend', e=>{
+    const endX = e.changedTouches[0].clientX;
+    const diff = startX - endX;
+    if(Math.abs(diff) > 50){
+      const telas = ['painel','abastecer','manutencao','veiculos','config'];
+      const atual = telas.findIndex(t=>document.getElementById(t).style.display=='block');
+      if(diff > 0 && atual < telas.length-1) show(telas[atual+1]);
+      if(diff < 0 && atual > 0) show(telas[atual-1]);
+    }
+  });
+}
 
 function setupDiasSemana(){
   document.querySelectorAll('.dia-btn').forEach(btn=>{
@@ -214,8 +240,9 @@ function show(t){
   ['painel','abastecer','manutencao','veiculos','config'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById(t).style.display='block';
   document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  event?.target?.classList.add('active');
   title.textContent=t.charAt(0).toUpperCase()+t.slice(1);
+  if(t=='painel') setTimeout(renderGrafico, 100);
 }
 
 function contarDiasUteis(dataInicio, dataFim, diasSemana){
@@ -229,9 +256,14 @@ function contarDiasUteis(dataInicio, dataFim, diasSemana){
   return count;
 }
 
+// KM ATUAL CORRIGIDO - só soma se não abasteceu hoje
 function getKmAtual(v){
   const abs = db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'))[0];
   if(!abs) return v.kmCompra;
+
+  // Se o último abastecimento foi hoje, não soma km/dia
+  if(abs.data == dataHoje()) return abs.km;
+
   const diasUteis = contarDiasUteis(abs.data, dataHoje(), v.diasSemana || [1,2,3,4,5]);
   return abs.km + (v.kmDia * diasUteis);
 }
@@ -245,7 +277,7 @@ function addVeiculo(){
   if(!vNome.value.trim()||!vData.value) return alert('Preencha modelo e data');
   db.veiculos.push({
     id:Date.now(),nome:vNome.value,ano:+vAno.value||0,dataAquisicao:vData.value,
-    kmCompra:+vKmCompra.value||0,kmDia:+vKmDia.value||30,kmSemana:(+vKmDia.value||30)*diasSelecionados.length,
+    kmCompra:+vKmCompra.value||0,kmDia:+vKmDia.value||35,kmSemana:(+vKmDia.value||35)*diasSelecionados.length,
     tanque:+vTanque.value||0,diasSemana:[...diasSelecionados]
   });
   db.ativo=db.veiculos.at(-1).id;
@@ -265,11 +297,8 @@ function renderVeiculos(){
 function editVeiculo(id){
   const v=db.veiculos.find(x=>x.id==id); edit={tipo:'veiculo',id};
   diasSelecionados = v.diasSemana || [1,2,3,4,5];
-
   modalBody.innerHTML=`<label class="label">Modelo</label><input id="eNome" value="${v.nome}"><div class="grid grid-2"><div><label class="label">Ano</label><input id="eAno" type="number" value="${v.ano}"></div><div><label class="label">Data Aquisição</label><input id="eData" type="date" value="${v.dataAquisicao}"></div></div><div class="grid grid-3"><div><label class="label">Km compra</label><input id="eKmCompra" type="number" value="${v.kmCompra}"></div><div><label class="label">Km/dia</label><input id="eKmDia" type="number" value="${v.kmDia}"></div><div><label class="label">Tanque L</label><input id="eTanque" type="number" step="0.1" value="${v.tanque||''}"></div></div><label class="label">Dias que roda</label><div class="dias-semana" id="diasEdit"></div>`;
-
   modal.classList.add('active');
-
   setTimeout(()=>{
     const container = document.getElementById('diasEdit');
     ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((nome,i)=>{
@@ -301,10 +330,7 @@ function renderAbast(){
   const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'));
   listaAbast.innerHTML=list.map(a=>`
     <div class="item">
-      <div>
-        <b>${formatarData(a.data)}</b><br>
-        <small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small>
-      </div>
+      <div><b>${formatarData(a.data)}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small></div>
       <div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
     </div>
   `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
@@ -321,8 +347,8 @@ function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimento
 function addManut(){
   const tipo = mTipo.value.trim();
   const km = +mKm.value;
-  const intervalo = +mIntervalo.value;
-  if(!tipo ||!km ||!intervalo) return alert('Preencha tipo, km e intervalo');
+  const intervalo = +mIntervalo.value || 4000;
+  if(!tipo ||!km) return alert('Preencha tipo e km');
   db.manutencoes.push({id:Date.now(),veiculo:db.ativo,tipo,km,intervalo,proxKm:km+intervalo,valor:+mValor.value||0});
   mTipo.value=mKm.value=mIntervalo.value=mValor.value='';
   save(); renderManut(); renderAll();
@@ -339,6 +365,19 @@ function renderManut(){
     else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
     return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km ~ ${diasUteis} dias úteis</small></div><div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
   }).join('')||'<div class="empty">Nenhuma manutenção cadastrada</div>';
+
+  // Card Próxima Troca Óleo - Manual Honda 4000km
+  const trocasOleo = list.filter(m=>m.tipo.toLowerCase().includes('óleo')||m.tipo.toLowerCase().includes('oleo'));
+  if(trocasOleo.length){
+    const ultimaOleo = trocasOleo.sort((a,b)=>b.km-a.km)[0];
+    const proxOleoKm = ultimaOleo.proxKm;
+    const faltamOleo = proxOleoKm - kmAtual;
+    let clsOleo = '';
+    if(faltamOleo<=0) clsOleo='urgent';
+    else if(faltamOleo<=300) clsOleo='alert';
+    cardOleo.className = 'card kpi ' + clsOleo;
+    proxOleo.innerHTML = faltamOleo<=0? 'VENCIDA' : faltamOleo+'km<br><small>~'+Math.ceil(faltamOleo/v.kmDia)+'d</small>';
+  }
 }
 function editManut(id){
   const m=db.manutencoes.find(x=>x.id==id); edit={tipo:'manut',id};
@@ -346,6 +385,51 @@ function editManut(id){
   modal.classList.add('active');
 }
 function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
+
+// GRÁFICO CONSUMO MENSAL
+function renderGrafico(){
+  const v=db.veiculos.find(x=>x.id==db.ativo);
+  const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data+'T00:00:00')-new Date(b.data+'T00:00:00'));
+
+  const meses = {};
+  for(let i=1;i<abs.length;i++){
+    const mes = abs[i].data.substring(0,7);
+    const km = abs[i].km - abs[i-1].km;
+    const kml = km / abs[i].litros;
+    if(!meses[mes]) meses[mes] = [];
+    meses[mes].push(kml);
+  }
+
+  const labels = Object.keys(meses).map(m=>m.split('-')[1]+'/'+m.split('-')[0]);
+  const dados = Object.values(meses).map(arr=>arr.reduce((a,b)=>a+b)/arr.length);
+
+  const ctx = document.getElementById('graficoConsumo');
+  if(grafico) grafico.destroy();
+
+  grafico = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'km/l',
+        data: dados,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {legend: {display: false}},
+      scales: {
+        y: {beginAtZero: true, grid: {color: 'rgba(148,163,184,0.2)'}},
+        x: {grid: {color: 'rgba(148,163,184,0.2)'}}
+      }
+    }
+  });
+}
 
 // MODAL
 function closeModal(){modal.classList.remove('active'); edit={tipo:null,id:null}}
@@ -361,7 +445,7 @@ function saveEdit(){
   if(edit.tipo=='manut'){
     const m=db.manutencoes.find(x=>x.id==edit.id);
     const novoKm = +eKm.value;
-    const novoIntervalo = +eIntervalo.value;
+    const novoIntervalo = +eIntervalo.value || 4000;
     Object.assign(m,{tipo:eTipo.value,km:novoKm,intervalo:novoIntervalo,proxKm:novoKm+novoIntervalo,valor:+eValor.value});
   }
   save(); closeModal(); renderAll();
@@ -408,6 +492,7 @@ function renderAll(){
   }
 
   renderVeiculos(); renderAbast(); renderManut();
+  if(document.getElementById('painel').style.display!='none') renderGrafico();
 }
 
 // TEMA + RESET
