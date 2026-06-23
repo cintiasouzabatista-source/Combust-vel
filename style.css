@@ -248,3 +248,38 @@ header button {
 .aba.active{
   display:block;
 }
+/* Garante que o container principal tenha um respiro */
+main {
+    padding: 16px;
+    max-width: 600px; /* Limita a largura em telas grandes para não ficar esticado */
+    margin: 0 auto;   /* Centraliza o app na tela */
+}
+
+/* Ajuste do Grid de Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+    gap: 16px; /* Espaçamento entre os cards */
+    margin-bottom: 20px;
+}
+
+/* Card como container flexível */
+.card {
+    background: var(--card);
+    padding: 20px; /* Mais respiro interno */
+    border-radius: 16px; /* Bordas mais suaves */
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sombra para profundidade */
+}
+
+/* Inputs dentro dos cards */
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: white;
+    box-sizing: border-box; /* Essencial: impede que o padding aumente o tamanho do input */
+}
