@@ -41,13 +41,34 @@ function addManut() {
 
 function addVeiculo() {
     const nome = document.getElementById("vNome").value;
-    if(nome) {
-        veiculos.push({id: Date.now(), nome});
-        localStorage.setItem("veiculos", JSON.stringify(veiculos));
-        location.reload();
-    }
-}
+    const anoModelo = document.getElementById("vAnoModelo").value;
+    const kmInicial = document.getElementById("vKmInicial").value;
+    const dataAquisicao = document.getElementById("vDataAquisição").value;
 
+    if (!nome) {
+        alert("O nome do veículo é obrigatório.");
+        return;
+    }
+
+    const novoVeiculo = {
+        id: Date.now(),
+        nome,
+        anoModelo,
+        kmInicial,
+        dataAquisicao
+    };
+
+    veiculos.push(novoVeiculo);
+    localStorage.setItem("veiculos", JSON.stringify(veiculos));
+    
+    // Limpar campos
+    document.getElementById("vNome").value = "";
+    document.getElementById("vAnoModelo").value = "";
+    document.getElementById("vKmInicial").value = "";
+    document.getElementById("vDataAquisição").value = "";
+
+    location.reload(); // Recarrega para atualizar o select
+}
 function mudarVeiculo() {
     localStorage.setItem("veiculoAtual", document.getElementById("selectVeiculo").value);
     location.reload();
