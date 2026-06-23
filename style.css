@@ -232,3 +232,12 @@ header button {
     grid-template-columns: 1fr;
   }
 }
+/* CONTROLE DAS ABAS */
+
+.aba{
+  display:none;
+}
+
+.aba.active{
+  display:block;
+}
