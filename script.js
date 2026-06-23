@@ -82,7 +82,37 @@ function excluir(tipo, index) {
         render();
     }
 }
+// Adicione esta função ao seu script.js
+function renderVeiculos() {
+    const container = document.getElementById("listaVeiculos");
+    if (!container) return; // Se não estiver na aba de veículos, ignora
 
+    container.innerHTML = veiculos.map(v => `
+        <div class="item">
+            <div>
+                <strong>${v.nome}</strong><br>
+                <small>${v.anoModelo || 'Sem ano'} | Km Inicial: ${v.kmInicial || 0}</small>
+            </div>
+            <button class="btn-del" onclick="excluirVeiculo(${v.id})">Excluir</button>
+        </div>
+    `).join('');
+}
+
+function excluirVeiculo(id) {
+    if (veiculos.length === 1) {
+        alert("Você precisa de pelo menos um veículo cadastrado.");
+        return;
+    }
+    veiculos = veiculos.filter(v => v.id !== id);
+    localStorage.setItem("veiculos", JSON.stringify(veiculos));
+    location.reload(); // Recarrega para limpar seletores
+}
+
+// IMPORTANTE: Adicione a chamada dentro do seu render() existente:
+function render() {
+    // ... seu código de renderização anterior ...
+    renderVeiculos(); 
+}
 function resetarApp() {
     if(confirm("Deseja apagar TUDO?")) { localStorage.clear(); location.reload(); }
 }
