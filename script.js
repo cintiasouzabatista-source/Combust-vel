@@ -42,24 +42,35 @@ function toggleTheme() {
 
 // ===== ABAS =====
 
-function trocarAba(nome) {
+function trocarAba(nome){
 
-    document.querySelectorAll(".aba")
-        .forEach(el => el.classList.remove("active"));
+    // esconder todas as abas
+    document.querySelectorAll(".aba").forEach(aba=>{
+        aba.classList.remove("active");
+    });
 
-    document.querySelectorAll(".tabs button")
-        .forEach(el => el.classList.remove("active"));
+    // desativar todos os botões
+    document.querySelectorAll(".tabs button").forEach(btn=>{
+        btn.classList.remove("active");
+    });
 
-    document.getElementById(nome)
-        .classList.add("active");
+    // ativar a aba escolhida
+    const aba = document.getElementById(nome);
 
-    const botoes = document.querySelectorAll(".tabs button");
+    if(aba){
+        aba.classList.add("active");
+    }
 
-    if (nome === "painel") botoes[0].classList.add("active");
+    // ativar o botão correto
+    document.querySelectorAll(".tabs button").forEach(btn=>{
 
-    if (nome === "abastecer") botoes[1].classList.add("active");
+        const onclick = btn.getAttribute("onclick");
 
-    if (nome === "manutencao") botoes[2].classList.add("active");
+        if(onclick && onclick.includes(nome)){
+            btn.classList.add("active");
+        }
+
+    });
 }
 
 // ===== SALVAR ABASTECIMENTO =====
