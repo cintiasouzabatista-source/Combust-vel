@@ -61,7 +61,7 @@ button{cursor:pointer;font-weight:600;border:none}
       <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
       <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
       <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
-      <div class="card kpi" id="cardOleo"><div class="label">Próx Óleo</div><div class="val" id="proxOleo">--</div></div>
+      <div class="card kpi" id="cardOleo"><div class="label">Próx Manutenção</div><div class="val" id="proxOleo">--</div></div>
     </div>
   </section>
 
@@ -100,16 +100,12 @@ button{cursor:pointer;font-weight:600;border:none}
   <section id="manutencao" style="display:none">
     <div class="card">
       <h3>Nova Manutenção</h3>
-      <select id="mTipo">
-        <option value="Óleo Motor|5000">Óleo Motor 5000km</option>
-        <option value="Correia|24000">Correia CVT 24000km</option>
-        <option value="Vela|8000">Vela 8000km</option>
-        <option value="Freio|10000">Pastilha Freio 10000km</option>
-      </select>
+      <input id="mTipo" placeholder="Ex: Troca de óleo, Pastilha freio">
       <div class="grid grid-2">
         <input id="mKm" type="number" placeholder="Km da troca">
-        <input id="mValor" type="number" step="0.01" placeholder="Valor R$">
+        <input id="mIntervalo" type="number" placeholder="Próx. troca em km">
       </div>
+      <input id="mValor" type="number" step="0.01" placeholder="Valor R$">
       <button class="btn" onclick="addManut()">Salvar</button>
     </div>
     <div id="listaManut"></div>
@@ -143,7 +139,7 @@ button{cursor:pointer;font-weight:600;border:none}
 </div>
 
 <script>
-const KEY='combApp_v1';
+const KEY='combApp_v2';
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null};
 let edit={tipo:null,id:null};
 
@@ -226,28 +222,55 @@ function editAbast(id){
 }
 function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAbast(); renderAll();}}
 
-// MANUTENÇÃO
+// MANUTENÇÃO - CAMPOS LIVRES
 function addManut(){
-  const [tipo,int]=mTipo.value.split('|');
-  if(!mKm.value) return alert('Digite o km');
-  db.manutencoes.push({id:Date.now(),veiculo:db.ativo,tipo,km:+mKm.value,proxKm:+mKm.value+ +int,valor:+mValor.value||0});
-  mKm.value=mValor.value=''; save(); renderManut(); renderAll();
+  const tipo = mTipo.value.trim();
+  const km = +mKm.value;
+  const intervalo = +mIntervalo.value;
+  if(!tipo ||!km ||!intervalo) return alert('Preencha tipo, km e intervalo');
+  db.manutencoes.push({
+    id:Date.now(),
+    veiculo:db.ativo,
+    tipo,
+    km,
+    intervalo,
+    proxKm: km + intervalo,
+    valor:+mValor.value||0
+  });
+  mTipo.value=mKm.value=mIntervalo.value=mValor.value='';
+  save(); renderManut(); renderAll();
 }
 function renderManut(){
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const kmAtual=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>b.km-a.km)[0]?.km||v.kmCompra;
   const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>b.km-a.km);
+
   listaManut.innerHTML=list.map(m=>{
-    const faltam=m.proxKm-kmAtual; const dias=Math.ceil(faltam/v.kmDia);
+    const faltam=m.proxKm-kmAtual;
+    const dias=Math.ceil(faltam/v.kmDia);
     let cls='',badge='';
     if(faltam<=0){cls='urgent'; badge='<span class="badge danger">VENCIDA</span>'}
     else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
-    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>Feito ${m.km}km • Próxima ${m.proxKm}km • Faltam ${faltam}km ~${dias}d</small></div><div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
+
+    return `<div class="item ${cls}">
+      <div><b>${m.tipo}</b> ${badge}<br><small>Feito ${m.km}km • Intervalo ${m.intervalo}km • Próxima ${m.proxKm}km • Faltam ${faltam}km ~${dias}d</small></div>
+      <div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div>
+    </div>`;
   }).join('')||'<div class="empty">Sem manutenções</div>';
+
+  // Atualiza card do painel com a manutenção mais próxima
+  if(list.length){
+    const prox = list.sort((a,b)=>a.proxKm-b.proxKm)[0];
+    const faltam = prox.proxKm - kmAtual;
+    cardOleo.className='card kpi '+(faltam<=0?'urgent':faltam<=500?'alert':'');
+    proxOleo.innerHTML = faltam<=0? 'VENCIDA' : faltam+'km<br><small>~'+dias+'d</small>';
+  } else {
+    proxOleo.textContent = '--';
+  }
 }
 function editManut(id){
   const m=db.manutencoes.find(x=>x.id==id); edit={tipo:'manut',id};
-  modalBody.innerHTML=`<select disabled><option>${m.tipo}</option></select><div class="grid grid-2"><input id="eKm" type="number" value="${m.km}"><input id="eValor" type="number" value="${m.valor}"></div>`;
+  modalBody.innerHTML=`<input id="eTipo" value="${m.tipo}" placeholder="Tipo"><div class="grid grid-2"><input id="eKm" type="number" value="${m.km}" placeholder="Km"><input id="eIntervalo" type="number" value="${m.intervalo}" placeholder="Intervalo km"></div><input id="eValor" type="number" value="${m.valor}" placeholder="Valor">`;
   modal.classList.add('active');
 }
 function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
@@ -265,7 +288,9 @@ function saveEdit(){
   }
   if(edit.tipo=='manut'){
     const m=db.manutencoes.find(x=>x.id==edit.id);
-    Object.assign(m,{km:+eKm.value,valor:+eValor.value,proxKm:m.proxKm-m.km+ +eKm.value});
+    const novoKm = +eKm.value;
+    const novoIntervalo = +eIntervalo.value;
+    Object.assign(m,{tipo:eTipo.value,km:novoKm,intervalo:novoIntervalo,proxKm:novoKm+novoIntervalo,valor:+eValor.value});
   }
   save(); closeModal(); renderAll();
   if(edit.tipo=='veiculo') renderVeiculos();
@@ -277,11 +302,10 @@ function saveEdit(){
 function renderAll(){
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>a.km-b.km);
-  const man=db.manutencoes.filter(m=>m.veiculo==db.ativo);
 
   const kmAtual=abs.at(-1)?.km||v.kmCompra;
-  kmAtual.textContent=kmAtual+' km';
-  gasto.textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
+  document.getElementById('kmAtual').textContent=kmAtual+' km';
+  document.getElementById('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
 
   let kml='--';
   if(abs.length>1){
@@ -289,14 +313,7 @@ function renderAll(){
     for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
     kml=(km/litros).toFixed(1)+' km/l';
   }
-  kml.textContent=kml;
-
-  const oleo=man.filter(m=>m.tipo.includes('Óleo')).sort((a,b)=>b.km-a.km)[0];
-  if(oleo){
-    const faltam=oleo.proxKm-kmAtual; const dias=Math.ceil(faltam/v.kmDia);
-    cardOleo.className='card kpi '+(faltam<=0?'urgent':faltam<=500?'alert':'');
-    proxOleo.innerHTML=faltam<=0?'VENCIDA':faltam+'km<br><small>~'+dias+'d</small>';
-  }
+  document.getElementById('kml').textContent=kml;
 
   renderVeiculos(); renderAbast(); renderManut();
 }
@@ -312,5 +329,3 @@ load();
 </script>
 </body>
 </html>
-
-
