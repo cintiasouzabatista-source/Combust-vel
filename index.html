@@ -170,14 +170,19 @@ button{cursor:pointer;font-weight:700;border:none}
 </div>
 
 <script>
-const KEY='combApp_v5';
+const KEY='combApp_v6';
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null};
 let edit={tipo:null,id:null};
 let diasSelecionados = [1,2,3,4,5]; // Padrão Seg-Sex
 
 function dataHoje(){
-  // Corrige fuso horário - retorna YYYY-MM-DD no horário local
   return new Date().toLocaleDateString('en-CA');
+}
+
+function formatarData(yyyy_mm_dd){
+  if(!yyyy_mm_dd) return '--';
+  const [ano, mes, dia] = yyyy_mm_dd.split('-');
+  return `${dia}/${mes}/${ano}`;
 }
 
 function load(){
@@ -213,11 +218,10 @@ function show(t){
   title.textContent=t.charAt(0).toUpperCase()+t.slice(1);
 }
 
-// CONTA SÓ DIAS ÚTEIS SELECIONADOS
 function contarDiasUteis(dataInicio, dataFim, diasSemana){
   let count = 0;
-  let data = new Date(dataInicio);
-  const fim = new Date(dataFim);
+  let data = new Date(dataInicio + 'T00:00:00');
+  const fim = new Date(dataFim + 'T00:00:00');
   while(data <= fim){
     if(diasSemana.includes(data.getDay())) count++;
     data.setDate(data.getDate() + 1);
@@ -225,9 +229,8 @@ function contarDiasUteis(dataInicio, dataFim, diasSemana){
   return count;
 }
 
-// CALCULA KM ATUAL CONSIDERANDO DIAS QUE RODA
 function getKmAtual(v){
-  const abs = db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(b.data)-new Date(a.data))[0];
+  const abs = db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'))[0];
   if(!abs) return v.kmCompra;
   const diasUteis = contarDiasUteis(abs.data, dataHoje(), v.diasSemana || [1,2,3,4,5]);
   return abs.km + (v.kmDia * diasUteis);
@@ -254,7 +257,7 @@ function renderVeiculos(){
     const dias = contarDiasUteis(v.dataAquisicao, dataHoje(), v.diasSemana);
     const nomesDias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].filter((d,i)=>v.diasSemana.includes(i)).join(',');
     return `<div class="item">
-      <div><b>${v.nome} ${v.ano}</b><br><small>Desde ${new Date(v.dataAquisicao).toLocaleDateString('pt-BR')} • ${dias} dias úteis<br>${v.kmCompra}km • ${v.kmDia}km/dia • ${nomesDias} • Tanque ${v.tanque||'?'}L</small></div>
+      <div><b>${v.nome} ${v.ano}</b><br><small>Desde ${formatarData(v.dataAquisicao)} • ${dias} dias úteis<br>${v.kmCompra}km • ${v.kmDia}km/dia • ${nomesDias} • Tanque ${v.tanque||'?'}L</small></div>
       <div class="actions"><button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}</div>
     </div>`;
   }).join('')||'<div class="empty">Nenhum veículo cadastrado</div>';
@@ -267,7 +270,6 @@ function editVeiculo(id){
 
   modal.classList.add('active');
 
-  // Monta botões de dias na edição
   setTimeout(()=>{
     const container = document.getElementById('diasEdit');
     ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((nome,i)=>{
@@ -296,8 +298,16 @@ function addAbast(){
   save(); renderAbast(); renderAll();
 }
 function renderAbast(){
-  const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
-  listaAbast.innerHTML=list.map(a=>`<div class="item"><div><b>${new Date(a.data).toLocaleDateString('pt-BR')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small></div><div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div></div>`).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
+  const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data+'T00:00:00')-new Date(a.data+'T00:00:00'));
+  listaAbast.innerHTML=list.map(a=>`
+    <div class="item">
+      <div>
+        <b>${formatarData(a.data)}</b><br>
+        <small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small>
+      </div>
+      <div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
+    </div>
+  `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
 }
 function editAbast(id){
   const a=db.abastecimentos.find(x=>x.id==id); edit={tipo:'abast',id};
@@ -360,10 +370,10 @@ function saveEdit(){
   if(edit.tipo=='manut') renderManut();
 }
 
-// PAINEL COM LÓGICA NOVA
+// PAINEL
 function renderAll(){
   const v=db.veiculos.find(x=>x.id==db.ativo);
-  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>a.km-b.km);
+  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data+'T00:00:00')-new Date(b.data+'T00:00:00'));
 
   const kmAtual=getKmAtual(v);
   document.getElementById('kmAtual').textContent=kmAtual+' km';
