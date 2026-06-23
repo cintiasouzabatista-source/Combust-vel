@@ -19,7 +19,6 @@ function trocarAba(aba) {
     const secao = document.getElementById(aba);
     if (secao) secao.classList.add('active');
     
-    // Busca o botão pelo atributo onclick para marcar como ativo
     document.querySelectorAll('.tabs button').forEach(b => {
         if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(aba)) {
             b.classList.add('active');
