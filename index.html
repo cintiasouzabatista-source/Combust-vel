@@ -2,9 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Meus Veículos</title>
-    <meta name="theme-color" content="#2563eb">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Garagem</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,66 +11,55 @@
 
 <header>
     <h1><i class="fas fa-car"></i> Garagem</h1>
+    <select id="selectVeiculo" onchange="mudarVeiculo()"></select>
     <button onclick="toggleTheme()"><i id="theme-icon" class="fas fa-moon"></i></button>
 </header>
 
 <nav class="tabs">
-    <button class="active" onclick="trocarAba('painel')"><i class="fas fa-chart-line"></i> Painel</button>
-    <button onclick="trocarAba('abastecer')"><i class="fas fa-gas-pump"></i> Abastecer</button>
-    <button onclick="trocarAba('manutencao')"><i class="fas fa-wrench"></i> Manutenção</button>
-    <select id="selectVeiculo" onchange="mudarVeiculo()"></select>
-
-<button onclick="trocarAba('veiculos')"><i class="fas fa-car"></i> Veículos</button>
-
-<section id="veiculos" class="aba">
-    <div class="card">
-        <h3>Gerenciar Veículos</h3>
-        <input id="vNome" type="text" placeholder="Apelido do Veículo (ex: Palio)">
-        <button class="btn" onclick="salvarVeiculo()">Salvar Veículo</button>
-    </div>
-    <div id="listaVeiculos"></div>
-    <div class="card" style="margin-top: 20px;">
-        <button class="btn" style="background:#ef4444" onclick="resetarApp()">Resetar Todo o App</button>
-    </div>
-</section>
+    <button class="active" onclick="trocarAba('painel')">Painel</button>
+    <button onclick="trocarAba('abastecer')">Abastecer</button>
+    <button onclick="trocarAba('manutencao')">Manutenção</button>
+    <button onclick="trocarAba('veiculos')">Veículos</button>
 </nav>
 
 <main>
     <section id="painel" class="aba active">
         <div class="kpi-grid">
-            <div class="card"><p>Média Geral</p><h2 id="mediaGeral">0 km/L</h2></div>
-            <div class="card"><p>Total Gasto</p><h2 id="totalGasto">R$ 0,00</h2></div>
-            <div class="card"><p>Km Atual</p><h2 id="kmAtual">0 km</h2></div>
-            <div class="card" id="cardOleo"><p>Próx. Troca Óleo</p><h2 id="proxOleo">-</h2></div>
+            <div class="card"><p>Média</p><h2 id="mediaGeral">0</h2></div>
+            <div class="card"><p>Gasto Total</p><h2 id="totalGasto">R$ 0</h2></div>
         </div>
-        <div class="card">
-            <h3>Últimos Abastecimentos</h3>
-            <div id="ultimosAbast"></div>
-        </div>
-        <div class="card"><button class="btn" onclick="exportarCSV()"><i class="fas fa-download"></i> Exportar CSV</button></div>
+        <div id="listaPainel"></div>
     </section>
 
     <section id="abastecer" class="aba">
         <div class="card">
-            <h3>Novo Abastecimento</h3>
             <input id="aData" type="date">
-            <input id="aKm" type="number" placeholder="Km odômetro">
-            <div class="grid-3">
-                <input id="aLitros" type="number" step="0.01" placeholder="Litros">
-                <input id="aValorL" type="number" step="0.001" placeholder="R$/L">
-                <input id="aTotal" type="number" step="0.01" placeholder="Total R$">
-            </div>
-            <select id="aTipo">
-                <option value="Gasolina">Gasolina</option>
-                <option value="Etanol">Etanol</option>
-                <option value="Diesel">Diesel</option>
-            </select>
-            <button class="btn" onclick="addAbast()"><i class="fas fa-plus"></i> Salvar</button>
+            <input id="aKm" type="number" placeholder="Km">
+            <input id="aLitros" type="number" placeholder="Litros">
+            <input id="aTotal" type="number" placeholder="Total R$">
+            <button class="btn" onclick="addAbast()">Salvar</button>
         </div>
         <div id="listaAbast"></div>
     </section>
 
-   <section id="manutencao" class="aba">
+    <section id="manutencao" class="aba">
+        <div class="card">
+            <input id="mTipo" type="text" placeholder="Tipo (ex: Troca de óleo)">
+            <input id="mKm" type="number" placeholder="Km">
+            <input id="mCusto" type="number" placeholder="Custo R$">
+            <input id="mObs" type="text" placeholder="Observação">
+            <button class="btn" onclick="addManut()">Salvar</button>
+        </div>
+        <div id="listaManut"></div>
+    </section>
+
+    <section id="veiculos" class="aba">
+        <div class="card">
+            <input id="vNome" type="text" placeholder="Nome do veículo">
+            <button class="btn" onclick="addVeiculo()">+ Cadastrar Veículo</button>
+        </div>
+        <button class="btn-del" onclick="resetarApp()">RESETAR TUDO</button>
+    </section>
 </main>
 <script src="script.js"></script>
 </body>
