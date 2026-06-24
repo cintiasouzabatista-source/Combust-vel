@@ -6,121 +6,64 @@
 <title>Combustível App</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-:root{
-  --bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;
-  --accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155;
-}
+:root{--bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155}
 body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{margin:0;background:var(--bg);color:var(--text);transition:.2s;touch-action:pan-y}
+body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
 .wrap{max-width:680px;margin:0 auto;padding:16px 12px 100px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 header h1{flex:1;font-size:20px;margin:0;font-weight:700}
 select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
-input::placeholder{color:var(--muted)}
-button{cursor:pointer;font-weight:700;border:none}
-.btn{background:var(--accent);color:#fff;font-size:16px}
-.btn-ghost{background:transparent;border:1px solid var(--line)}
-.btn-danger{background:var(--danger);color:#fff}
-.grid{display:grid;gap:10px}
-.grid-2{grid-template-columns:1fr 1fr}
-.grid-3{grid-template-columns:1fr 1fr 1fr}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.card h3{margin:0 0 12px;font-size:16px;font-weight:700}
+.btn{background:var(--accent);color:#fff;font-weight:700;border:none}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn-danger{background:var(--danger);color:#fff;border:none}
+.grid{display:grid;gap:10px}.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi{padding:16px;text-align:center}
-.kpi.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.kpi.val{font-size:26px;font-weight:800;margin-top:6px}
+.kpi{padding:16px;text-align:center}.kpi.label{font-size:12px;color:var(--muted)}.kpi.val{font-size:26px;font-weight:800;margin-top:6px}
 .item{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
-.item b{font-size:15px}
-.item small{color:var(--muted);font-size:13px;line-height:1.4}
-.actions{display:flex;gap:8px}
-.actions button{padding:8px 12px;font-size:14px;width:auto;border-radius:8px}
-.badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
-.badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
-.badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
-.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:10}
-.footer button{border:none;background:none;font-size:24px;color:var(--muted)}
-.footer button.active{color:var(--accent)}
-.empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;padding:0;z-index:999}
-.modal.active{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto;transition:transform.3s}
-.modal.minimized{position:fixed;bottom:0;left:0;right:0;align-items:flex-end;padding:0;background:transparent}
-.modal.minimized.modal-box{border-radius:16px 16px 0 0;max-height:60px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.item small{color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px}.actions button{padding:8px 12px;font-size:14px;width:auto}
+.footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;z-index:10}
+.footer button{border:none;background:none;font-size:24px;color:var(--muted)}.footer button.active{color:var(--accent)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:999}
+.modal.active{display:flex}.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
+.modal.minimized.modal-box{max-height:60px;border-radius:16px 16px 0 0}
 .modal.minimized.modal-body,.modal.minimized.modal-actions{display:none}
-.minimized-header{flex:1;display:flex;align-items:center;gap:10px;cursor:pointer}
-.minimized-header span{font-weight:700}
-.modal-box h3{margin:0 0 16px;font-size:18px}
-.modal-actions{display:flex;gap:10px;margin-top:16px}
-.modal-header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.modal-min-btn{padding:8px;border:none;background:transparent;color:var(--muted);font-size:20px}
-.alert{border-left:4px solid var(--warn)}
-.urgent{border-left:4px solid var(--danger)}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
-.info-card{background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05));border-color:rgba(59,130,246,.3)}
-.dias-semana{display:flex;gap:6px;margin:8px 0}
-.dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
-.dia-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dias-semana{display:flex;gap:6px;margin:8px 0}.dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
+.dia-btn.active{background:var(--accent);color:#fff}
 .chart-container{position:relative;height:200px;margin-top:10px}
-@media(min-width:768px){
- .modal{align-items:center}
- .modal-box{border-radius:20px}
- .modal.minimized{display:none}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+.alert{border-left:4px solid var(--warn)}.urgent{border-left:4px solid var(--danger)}
 </style>
 </head>
 <body>
 <div class="wrap" id="appContainer">
-  <header>
-    <h1 id="title">Painel</h1>
-    <select id="selVeiculo"></select>
-  </header>
+  <header><h1 id="title">Painel</h1><select id="selVeiculo"></select></header>
 
   <section id="painel">
-    <div class="card info-card">
-      <small style="color:var(--muted)">💡 Km Atual atualiza só se não houver abastecimento hoje. Baseado no seu km/dia</small>
-    </div>
     <div class="kpis">
       <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
       <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
       <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
-      <div class="card kpi info-card" id="cardAbast"><div class="label">Próx Abastecimento</div><div class="val" id="proxAbast">--</div></div>
+      <div class="card kpi" id="cardAbast"><div class="label">Próx Abastecimento</div><div class="val" id="proxAbast">--</div></div>
       <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
     </div>
-    <div class="card">
-      <h3>Consumo Mensal km/l</h3>
-      <div class="chart-container"><canvas id="graficoConsumo"></canvas></div>
-    </div>
+    <div class="card"><h3>Consumo Mensal km/l</h3><div class="chart-container"><canvas id="graficoConsumo"></canvas></div></div>
   </section>
 
-  <section id="abastecer" style="display:none">
-    <button class="btn" onclick="openModal('abast')">Novo Abastecimento</button>
-    <div id="listaAbast"></div>
-  </section>
-
-  <section id="manutencao" style="display:none">
-    <button class="btn" onclick="openModal('manut')">Nova Manutenção</button>
-    <div id="listaManut"></div>
-  </section>
-
-  <section id="veiculos" style="display:none">
-    <button class="btn" onclick="openModal('veiculo')">Novo Veículo</button>
-    <div id="listaVeiculos"></div>
-  </section>
-
+  <section id="abastecer" style="display:none"><button class="btn" onclick="openModal('abast')">Novo Abastecimento</button><div id="listaAbast"></div></section>
+  <section id="manutencao" style="display:none"><button class="btn" onclick="openModal('manut')">Nova Manutenção</button><div id="listaManut"></div></section>
+  <section id="veiculos" style="display:none"><button class="btn" onclick="openModal('veiculo')">Novo Veículo</button><div id="listaVeiculos"></div></section>
   <section id="config" style="display:none">
-    <div class="card" style="padding:16px">
-      <h2 style="margin:0 0 16px">⚙️ Configurações</h2>
+    <div class="card">
+      <h2>⚙️ Configurações</h2>
       <label class="label">Tema</label>
-      <select id="selTema">
-        <option value="dark">Escuro</option>
-        <option value="light">Claro</option>
-      </select>
-      <div style="height:1px;background:var(--line);margin:20px 0"></div>
-      <h3 style="margin:0 0 12px;font-size:16px">🏍️ Gerenciar Veículos</h3>
+      <select id="selTema"><option value="dark">Escuro</option><option value="light">Claro</option></select>
+      <h3 style="margin-top:20px">🏍️ Gerenciar Veículos</h3>
       <div id="listaVeiculosConfig"></div>
-      <div style="height:1px;background:var(--line);margin:20px 0"></div>
-      <button onclick="resetApp()" class="btn-danger" style="width:100%">🗑️ Resetar App</button>
+      <button onclick="resetApp()" class="btn-danger" style="margin-top:20px;width:100%">🗑️ Resetar App</button>
     </div>
   </section>
 </div>
@@ -133,59 +76,91 @@ button{cursor:pointer;font-weight:700;border:none}
   <button onclick="show('config')">⚙️</button>
 </nav>
 
-<!-- Modais aqui... cola os 4 modais do código anterior -->
+<div class="modal" id="modal-veiculo">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+      <h3>Cadastrar</h3>
+      <button onclick="closeModal('veiculo')">↓</button>
+    </div>
+    <div id="modal-body-veiculo">
+      <label class="label">Modelo</label><input id="vNome" placeholder="Honda Lead 110">
+      <div class="grid grid-2"><div><label class="label">Ano</label><input id="vAno" type="number"></div><div><label class="label">Data</label><input id="vData" type="date"></div></div>
+      <div class="grid grid-3"><div><label class="label">Km compra</label><input id="vKmCompra" type="number"></div><div><label class="label">Km/dia</label><input id="vKmDia" type="number" value="35"></div><div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1"></div></div>
+      <label class="label">Dias que roda</label>
+      <div class="dias-semana" id="diasSemana">
+        <button type="button" class="dia-btn active" data-dia="1">Seg</button>
+        <button type="button" class="dia-btn active" data-dia="2">Ter</button>
+        <button type="button" class="dia-btn active" data-dia="3">Qua</button>
+        <button type="button" class="dia-btn active" data-dia="4">Qui</button>
+        <button type="button" class="dia-btn active" data-dia="5">Sex</button>
+        <button type="button" class="dia-btn" data-dia="6">Sáb</button>
+        <button type="button" class="dia-btn" data-dia="0">Dom</button>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('veiculo')">Cancelar</button><button class="btn" onclick="addVeiculo()">Salvar</button></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-abast">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>⛽Abastecimento</h3><button onclick="closeModal('abast')">↓</button></div>
+    <div id="modal-body-abast">
+      <label class="label">Data</label><input id="aData" type="date">
+      <label class="label">Km</label><input id="aKm" type="number">
+      <div class="grid grid-2"><div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01"></div><div><label class="label">R$/L</label><input id="aValorL" type="number" step="0.001"></div></div>
+      <label class="label">Total</label><input id="aTotal" readonly>
+    </div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('abast')">Cancelar</button><button class="btn" onclick="addAbast()">Salvar</button></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-manut">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>🔧Manutenção</h3><button onclick="closeModal('manut')">↓</button></div>
+    <div id="modal-body-manut">
+      <label class="label">Data</label><input id="mData" type="date">
+      <label class="label">Tipo</label><input id="mTipo" placeholder="Troca de óleo">
+      <div class="grid grid-2"><div><label class="label">Km</label><input id="mKm" type="number"></div><div><label class="label">Intervalo</label><input id="mIntervalo" type="number" value="4000"></div></div>
+      <label class="label">Valor</label><input id="mValor" type="number" step="0.01">
+    </div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('manut')">Cancelar</button><button class="btn" onclick="addManut()">Salvar</button></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-edit">
+  <div class="modal-box"><h3>Editar</h3><div id="modalBody"></div>
+  <div class="modal-actions"><button class="btn-ghost" onclick="closeModalEdit()">Cancelar</button><button class="btn" onclick="saveEdit()">Salvar</button></div></div>
+</div>
 
 <script>
 const KEY_ATUAL='combApp_v8';
-const KEYS_ANTIGAS=['combApp_v7','combApp_v6','combApp_v5','combApp_v4','combApp_v3','combApp_v2','combApp'];
 const $ = id => document.getElementById(id);
-
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark'};
 let edit={tipo:null,id:null};
 let diasSelecionados = [1,2,3,4,5];
 let grafico = null;
-let modalTimers = {};
 
-function isMobile(){return window.innerWidth < 768}
-function dataHoje(){return new Date().toLocaleDateString('en-CA');}
-function formatarData(yyyy_mm_dd){
-  if(!yyyy_mm_dd) return '--';
-  const [ano, mes, dia] = yyyy_mm_dd.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
-
-document.addEventListener('DOMContentLoaded', load); // <- ESPERA HTML CARREGAR
+document.addEventListener('DOMContentLoaded', () => {
+  load();
+});
 
 function load(){
-  let raw = localStorage.getItem(KEY_ATUAL);
-  if(!raw){
-    for(let keyAntiga of KEYS_ANTIGAS){
-      raw = localStorage.getItem(keyAntiga);
-      if(raw){localStorage.setItem(KEY_ATUAL, raw); break;}
-    }
-  }
+  const raw = localStorage.getItem(KEY_ATUAL);
   if(raw) db = JSON.parse(raw);
   if(!db.tema) db.tema = 'dark';
 
-  if(!db.veiculos.length){
-    setTimeout(()=>openModal('veiculo'), 500);
-  }
+  $('vData').value = new Date().toISOString().split('T')[0];
+  $('mData').value = new Date().toISOString().split('T')[0];
+  $('aData').value = new Date().toISOString().split('T')[0];
 
-  $('vData').value = dataHoje();
-  $('mData').value = dataHoje();
-  $('aData').value = dataHoje();
   setupDiasSemana();
-  setupSwipe();
   renderVeiculosSelect();
   renderAll();
-
   applyTheme();
   $('selTema').value = db.tema;
-  $('selTema').onchange = e => {
-    db.tema = e.target.value;
-    applyTheme();
-    save();
-  };
+  $('selTema').onchange = e => {db.tema = e.target.value; applyTheme(); save();};
+
+  if(!db.veiculos.length) setTimeout(()=>openModal('veiculo'), 500);
 }
 
 function save(){localStorage.setItem(KEY_ATUAL,JSON.stringify(db))}
@@ -195,33 +170,82 @@ function show(t){
   ['painel','abastecer','manutencao','veiculos','config'].forEach(s=>$(s).style.display='none');
   $(t).style.display='block';
   document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
-  event?.target?.classList.add('active');
+  event.target.classList.add('active');
   $('title').textContent=t.charAt(0).toUpperCase()+t.slice(1);
   if(t=='painel') setTimeout(renderGrafico, 100);
 }
 
-function openModal(tipo){
-  const modal = $('modal-'+tipo);
-  modal.classList.add('active');
-  modal.classList.remove('minimized');
-  if(modalTimers){clearTimeout(modalTimers); modalTimers=null}
-}
-
+function openModal(tipo){$('modal-'+tipo).classList.add('active')}
 function closeModal(tipo){
-  const modal = $('modal-'+tipo);
-  modal.classList.remove('active','minimized');
-  if(modalTimers){clearTimeout(modalTimers); modalTimers=null}
-  if(tipo=='veiculo'){
-    $('vNome').value=$('vAno').value=$('vKmCompra').value=$('vTanque').value='';
-    diasSelecionados=[1,2,3,4,5];
-    setupDiasSemana();
-  }
+  $('modal-'+tipo).classList.remove('active');
+  if(tipo=='veiculo'){$('vNome').value=$('vAno').value=$('vKmCompra').value=$('vTanque').value=''; diasSelecionados=[1,2,3,4,5]; setupDiasSemana();}
+}
+function closeModalEdit(){$('modal-edit').classList.remove('active'); edit={tipo:null,id:null}}
+
+function setupDiasSemana(){
+  document.querySelectorAll('#diasSemana.dia-btn').forEach(btn=>{
+    btn.onclick = ()=>{btn.classList.toggle('active'); diasSelecionados = Array.from(document.querySelectorAll('#diasSemana.dia-btn.active')).map(b=>+b.dataset.dia)}
+  });
 }
 
-// ...cola aqui todas as outras funções: setupSwipe, renderAll, renderVeiculos, addVeiculo, delVeiculo, etc
-// APENAS 1 função delVeiculo, não 2
+function renderVeiculosSelect(){
+  $('selVeiculo').innerHTML=db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
+  $('selVeiculo').onchange=e=>{db.ativo=+e.target.value; save(); renderAll();}
+}
 
-load(); // <- remove essa linha se usou DOMContentLoaded acima
+function addVeiculo(){
+  if(!$('vNome').value.trim()||!$('vData').value) return alert('Preencha modelo e data');
+  db.veiculos.push({id:Date.now(),nome:$('vNome').value,ano:+$('vAno').value||0,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,kmDia:+$('vKmDia').value||35,tanque:+$('vTanque').value||0,diasSemana:[...diasSelecionados]});
+  db.ativo=db.veiculos.at(-1).id; save(); closeModal('veiculo'); renderVeiculosSelect(); renderAll();
+}
+
+function delVeiculo(id){
+  if(!confirm('Apagar veículo e todos os dados?')) return;
+  db.veiculos = db.veiculos.filter(v=>v.id!=id);
+  db.abastecimentos = db.abastecimentos.filter(a=>a.veiculo!=id);
+  db.manutencoes = db.manutencoes.filter(m=>m.veiculo!=id);
+  db.ativo = db.veiculos.length? db.veiculos[0].id : null;
+  save(); renderVeiculosSelect(); renderAll();
+}
+
+function addAbast(){
+  if(!$('aData').value||!$('aKm').value||!$('aLitros').value) return alert('Preencha tudo');
+  db.abastecimentos.push({id:Date.now(),veiculo:db.ativo,data:$('aData').value,km:+$('aKm').value,litros:+$('aLitros').value,valor:+$('aTotal').value,valorL:+$('aValorL').value});
+  $('aData').value=$('aKm').value=$('aLitros').value=$('aValorL').value=$('aTotal').value=''; $('aData').value = new Date().toISOString().split('T')[0];
+  save(); closeModal('abast'); renderAll();
+}
+
+function renderAll(){
+  if(!db.ativo ||!db.veiculos.length) return;
+  const v=db.veiculos.find(x=>x.id==db.ativo);
+  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data)-new Date(b.data));
+  const kmAtual = abs.length? abs.at(-1).km : v.kmCompra;
+  $('kmAtual').textContent=kmAtual+' km';
+  $('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
+  let kml=0;
+  if(abs.length>1){
+    let km=0,litros=0;
+    for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
+    kml=km/litros; $('kml').textContent=kml.toFixed(1)+' km/l';
+  }
+  renderVeiculos();
+}
+
+function renderVeiculos(){
+  const html = db.veiculos.map(v=>`<div class="item"><div><b>${v.nome}</b><br><small>${v.ano} • ${v.kmCompra}km</small></div><div class="actions"><button class="btn-ghost" onclick="delVeiculo(${v.id})">🗑️</button></div></div>`).join('');
+  $('listaVeiculos').innerHTML = html || '<div class="empty">Nenhum veículo</div>';
+  $('listaVeiculosConfig').innerHTML = html || '<div class="empty">Nenhum veículo</div>';
+}
+
+function renderGrafico(){/*simplificado pra testar*/}
+function addManut(){}
+function renderManut(){}
+function editManut(){}
+function delManut(){}
+function editAbast(){}
+function delAbast(){}
+function saveEdit(){}
+function resetApp(){if(confirm('Apagar tudo?')){localStorage.removeItem(KEY_ATUAL); location.reload()}}
 </script>
 </body>
 </html>
