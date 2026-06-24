@@ -254,9 +254,10 @@ function load(){
   if(raw) db = JSON.parse(raw);
 
   if(!db.veiculos.length){
-    db.veiculos.push({id:1,nome:'Honda Lead',ano:2010,dataAquisicao:dataHoje(),kmCompra:93667,kmDia:35,kmSemana:175,tanque:6.5,diasSemana:[1,2,3,4,5]});
-    db.ativo=1; save();
-  }
+  // Antes criava veículo automático
+  // Agora abre modal pra cadastrar
+  setTimeout(()=>openModal('veiculo'), 500);
+}
 
   vData.value = dataHoje();
   mData.value = dataHoje();
