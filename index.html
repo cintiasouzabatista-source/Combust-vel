@@ -109,10 +109,27 @@ button{cursor:pointer;font-weight:700;border:none}
     <div id="listaVeiculos"></div>
   </section>
 
-  <section id="config" style="display:none">
-    <div class="card"><h3>Modo</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Tema</button></div>
-    <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
-  </section>
+ <section id="config" style="display:none">
+  <div class="card" style="padding:16px">
+    <h2 style="margin:0 0 12px">⚙️ Configurações</h2>
+    
+    <label>Tema</label>
+    <select id="selTema" style="margin-bottom:16px">
+      <option value="dark">Escuro</option>
+      <option value="light">Claro</option>
+    </select>
+
+    <div style="height:1px;background:var(--line);margin:16px 0"></div>
+
+    <h3 style="margin:0 0 12px;font-size:16px">🏍️ Veículos</h3>
+    <button onclick="openModal('veiculo')" class="btn" style="width:100%;margin-bottom:12px">+ Novo Veículo</button>
+    <div id="listaVeiculos"></div>
+
+    <div style="height:1px;background:var(--line);margin:16px 0"></div>
+
+    <button onclick="resetApp()" class="btn-danger" style="width:100%">🗑️ Resetar App</button>
+  </div>
+</section>
 </div>
 
 <nav class="footer">
