@@ -6,7 +6,6 @@
 <title>Combustível App</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  
 :root{--bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155}
 body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
@@ -15,44 +14,32 @@ body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 header h1{flex:1;font-size:20px;margin:0;font-weight:700}
 select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
-.btn{background:var(--accent);color:#fff;font-weight:700;border:none}
-  .btn-theme {
-    width: 100%;
-    padding: 14px;
-    background: var(--card);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-}
-
-.btn-theme:active {
-    transform: scale(0.98);
-}
-.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
-.btn-danger{background:var(--danger);color:#fff;border:none}
+input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,0.3)}
+.btn{background:var(--accent);color:#fff;font-weight:700;border:none;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text);cursor:pointer}
+.btn-danger{background:var(--danger);color:#fff;border:none;cursor:pointer}
 .grid{display:grid;gap:10px}.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr 1fr}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi{padding:16px;text-align:center}.kpi.label{font-size:12px;color:var(--muted)}.kpi.val{font-size:26px;font-weight:800;margin-top:6px}
+.kpi{padding:16px;text-align:center}.kpi.label{font-size:12px;color:var(--muted);text-transform:uppercase}.kpi.val{font-size:26px;font-weight:800;margin-top:6px}
 .item{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
-.item small{color:var(--muted);font-size:13px}
-.actions{display:flex;gap:8px}.actions button{padding:8px 12px;font-size:14px;width:auto}
+.item b{font-size:15px}.item small{color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px}.actions button{padding:8px 12px;font-size:14px;width:auto;border-radius:8px}
+.badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
+.badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
+.badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
 .footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;z-index:10}
-.footer button{border:none;background:none;font-size:24px;color:var(--muted)}.footer button.active{color:var(--accent)}
+.footer button{border:none;background:none;font-size:24px;color:var(--muted);cursor:pointer}.footer button.active{color:var(--accent)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:999}
 .modal.active{display:flex}.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
-.modal.minimized.modal-box{max-height:60px;border-radius:16px 16px 0 0}
-.modal.minimized.modal-body,.modal.minimized.modal-actions{display:none}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
 .dias-semana{display:flex;gap:6px;margin:8px 0}.dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
 .dia-btn.active{background:var(--accent);color:#fff}
 .chart-container{position:relative;height:200px;margin-top:10px}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .alert{border-left:4px solid var(--warn)}.urgent{border-left:4px solid var(--danger)}
+.info-card{background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05));border-color:rgba(59,130,246,.3)}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
 </style>
 </head>
 <body>
@@ -63,25 +50,44 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
     <div class="kpis">
       <div class="card kpi"><div class="label">Média</div><div class="val" id="kml">--</div></div>
       <div class="card kpi"><div class="label">Gasto Total</div><div class="val" id="gasto">R$ 0</div></div>
-      <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0</div></div>
-      <div class="card kpi" id="cardAbast"><div class="label">Próx Abastecimento</div><div class="val" id="proxAbast">--</div></div>
+      <div class="card kpi"><div class="label">Km Atual</div><div class="val" id="kmAtual">0 km</div></div>
+      <div class="card kpi info-card" id="cardAbast"><div class="label">Próx Abastecimento</div><div class="val" id="proxAbast">--</div></div>
       <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
     </div>
     <div class="card"><h3>Consumo Mensal km/l</h3><div class="chart-container"><canvas id="graficoConsumo"></canvas></div></div>
   </section>
 
-  <section id="abastecer" style="display:none"><button class="btn" onclick="openModal('abast')">Novo Abastecimento</button><div id="listaAbast"></div></section>
-  <section id="manutencao" style="display:none"><button class="btn" onclick="openModal('manut')">Nova Manutenção</button><div id="listaManut"></div></section>
-  <section id="veiculos" style="display:none"><button class="btn" onclick="openModal('veiculo')">Novo Veículo</button><div id="listaVeiculos"></div></section>
+  <section id="abastecer" style="display:none">
+    <button class="btn" onclick="openModal('abast')">Novo Abastecimento</button>
+    <div id="listaAbast" style="margin-top:14px"></div>
+  </section>
+
+  <section id="manutencao" style="display:none">
+    <button class="btn" onclick="openModal('manut')">Nova Manutenção</button>
+    <div id="listaManut" style="margin-top:14px"></div>
+  </section>
+
+  <section id="veiculos" style="display:none">
+    <button class="btn" onclick="openModal('veiculo')">Novo Veículo</button>
+    <div id="listaVeiculos" style="margin-top:14px"></div>
+  </section>
+
   <section id="config" style="display:none">
     <div class="card">
-      <h2>⚙️ Configurações</h2>
-     <label>Tema</label>
-<button class="btn-theme" onclick="toggleTheme()">
-    <span id="theme-text">🌙 Escuro</span>
-</button>
+      <h2 style="margin-top:0">⚙️ Configurações</h2>
+      <label class="label">Tema</label>
+      <select id="selTema"><option value="dark">Escuro</option><option value="light">Claro</option></select>
+
       <h3 style="margin-top:20px">🏍️ Gerenciar Veículos</h3>
       <div id="listaVeiculosConfig"></div>
+
+      <h3 style="margin-top:20px">💾 Backup</h3>
+      <button onclick="exportarJSON()" class="btn" style="margin-bottom:8px;width:100%">📤 Exportar Backup</button>
+      <label class="btn btn-ghost" style="width:100%;display:block;text-align:center;cursor:pointer">
+        📥 Importar Backup
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+      </label>
+
       <button onclick="resetApp()" class="btn-danger" style="margin-top:20px;width:100%">🗑️ Resetar App</button>
     </div>
   </section>
@@ -97,23 +103,15 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
 
 <div class="modal" id="modal-veiculo">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-      <h3>Cadastrar</h3>
-      <button onclick="closeModal('veiculo')">↓</button>
-    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>Cadastrar Veículo</h3><button class="btn-ghost" onclick="closeModal('veiculo')" style="padding:8px">✕</button></div>
     <div id="modal-body-veiculo">
-      <label class="label">Modelo</label><input id="vNome" placeholder="Honda Lead 110">
-      <div class="grid grid-2"><div><label class="label">Ano</label><input id="vAno" type="number"></div><div><label class="label">Data</label><input id="vData" type="date"></div></div>
-      <div class="grid grid-3"><div><label class="label">Km compra</label><input id="vKmCompra" type="number"></div><div><label class="label">Km/dia</label><input id="vKmDia" type="number" value="35"></div><div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1"></div></div>
+      <label class="label">Modelo</label><input id="vNome" placeholder="Ex: Honda Lead 110">
+      <div class="grid grid-2"><div><label class="label">Ano</label><input id="vAno" type="number" placeholder="2010"></div><div><label class="label">Data Aquisição</label><input id="vData" type="date"></div></div>
+      <div class="grid grid-3"><div><label class="label">Km compra</label><input id="vKmCompra" type="number" placeholder="93667"></div><div><label class="label">Km/dia</label><input id="vKmDia" type="number" value="35"></div><div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1" placeholder="6.5"></div></div>
       <label class="label">Dias que roda</label>
       <div class="dias-semana" id="diasSemana">
-        <button type="button" class="dia-btn active" data-dia="1">Seg</button>
-        <button type="button" class="dia-btn active" data-dia="2">Ter</button>
-        <button type="button" class="dia-btn active" data-dia="3">Qua</button>
-        <button type="button" class="dia-btn active" data-dia="4">Qui</button>
-        <button type="button" class="dia-btn active" data-dia="5">Sex</button>
-        <button type="button" class="dia-btn" data-dia="6">Sáb</button>
-        <button type="button" class="dia-btn" data-dia="0">Dom</button>
+        <button type="button" class="dia-btn" data-dia="1">Seg</button><button type="button" class="dia-btn" data-dia="2">Ter</button><button type="button" class="dia-btn" data-dia="3">Qua</button>
+        <button type="button" class="dia-btn" data-dia="4">Qui</button><button type="button" class="dia-btn" data-dia="5">Sex</button><button type="button" class="dia-btn" data-dia="6">Sáb</button><button type="button" class="dia-btn" data-dia="0">Dom</button>
       </div>
     </div>
     <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('veiculo')">Cancelar</button><button class="btn" onclick="addVeiculo()">Salvar</button></div>
@@ -122,12 +120,12 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
 
 <div class="modal" id="modal-abast">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>Abastecimento</h3><button onclick="closeModal('abast')">↓</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>⛽ Novo Abastecimento</h3><button class="btn-ghost" onclick="closeModal('abast')" style="padding:8px">✕</button></div>
     <div id="modal-body-abast">
       <label class="label">Data</label><input id="aData" type="date">
-      <label class="label">Km</label><input id="aKm" type="number">
-      <div class="grid grid-2"><div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01"></div><div><label class="label">R$/L</label><input id="aValorL" type="number" step="0.001"></div></div>
-      <label class="label">Total</label><input id="aTotal" readonly>
+      <label class="label">Km Odômetro</label><input id="aKm" type="number" placeholder="94000">
+      <div class="grid grid-2"><div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01" placeholder="5.5"></div><div><label class="label">R$ por Litro</label><input id="aValorL" type="number" step="0.001" placeholder="6.29"></div></div>
+      <label class="label">Total R$</label><input id="aTotal" readonly placeholder="Calcula automático">
     </div>
     <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('abast')">Cancelar</button><button class="btn" onclick="addAbast()">Salvar</button></div>
   </div>
@@ -135,66 +133,48 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
 
 <div class="modal" id="modal-manut">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>Manutenção</h3><button onclick="closeModal('manut')">↓</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>🔧 Nova Manutenção</h3><button class="btn-ghost" onclick="closeModal('manut')" style="padding:8px">✕</button></div>
     <div id="modal-body-manut">
       <label class="label">Data</label><input id="mData" type="date">
-      <label class="label">Tipo</label><input id="mTipo" placeholder="Troca de óleo">
-      <div class="grid grid-2"><div><label class="label">Km</label><input id="mKm" type="number"></div><div><label class="label">Intervalo</label><input id="mIntervalo" type="number" value="4000"></div></div>
-      <label class="label">Valor</label><input id="mValor" type="number" step="0.01">
+      <label class="label">Tipo de Serviço</label><input id="mTipo" placeholder="Ex: Troca de óleo">
+      <div class="grid grid-2"><div><label class="label">Km da troca</label><input id="mKm" type="number" placeholder="94000"></div><div><label class="label">Intervalo km</label><input id="mIntervalo" type="number" value="4000"></div></div>
+      <label class="label">Valor R$</label><input id="mValor" type="number" step="0.01" placeholder="120.00">
     </div>
     <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('manut')">Cancelar</button><button class="btn" onclick="addManut()">Salvar</button></div>
   </div>
 </div>
 
 <div class="modal" id="modal-edit">
-  <div class="modal-box"><h3>Editar</h3><div id="modalBody"></div>
-  <div class="modal-actions"><button class="btn-ghost" onclick="closeModalEdit()">Cancelar</button><button class="btn" onclick="saveEdit()">Salvar</button></div></div>
+  <div class="modal-box"><h3 id="modalTitle">Editar</h3><div id="modalBody"></div><div class="modal-actions"><button class="btn-ghost" onclick="closeModalEdit()">Cancelar</button><button class="btn" onclick="saveEdit()">Salvar</button></div></div>
 </div>
 
 <script>
-const KEY_ATUAL='combApp_v8';
+const KEY_ATUAL='combApp_v9';
 const $ = id => document.getElementById(id);
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark'};
 let edit={tipo:null,id:null};
-let diasSelecionados = [1,2,3,4,5];
+let diasSelecionados = [1][2][3][4][5];
 let grafico = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  load();
-});
-function toggleTheme() {
-    document.body.classList.toggle('light');
-    const isLight = document.body.classList.contains('light');
-    
-    // Troca ícone e texto do botão
-    document.getElementById('theme-text').textContent = isLight ? '☀️ Claro' : '🌙 Escuro';
-    document.getElementById('theme-icon').className = isLight ? 'fas fa-sun' : 'fas fa-moon';
-    
-    // Salva preferência
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-}
+document.addEventListener('DOMContentLoaded', load);
 
-// Carrega tema salvo ao abrir
-if (localStorage.getItem('theme') === 'light') {
-    document.body.classList.add('light');
-    document.getElementById('theme-text').textContent = '☀️ Claro';
-}
 function load(){
   const raw = localStorage.getItem(KEY_ATUAL);
   if(raw) db = JSON.parse(raw);
   if(!db.tema) db.tema = 'dark';
 
-  $('vData').value = new Date().toISOString().split('T')[0];
-  $('mData').value = new Date().toISOString().split('T')[0];
-  $('aData').value = new Date().toISOString().split('T')[0];
+  const hoje = new Date().toISOString().split('T')[0];
+  $('vData').value = hoje;
+  $('mData').value = hoje;
+  $('aData').value = hoje;
 
   setupDiasSemana();
+  setupTotalAutomatico();
   renderVeiculosSelect();
   renderAll();
   applyTheme();
   $('selTema').value = db.tema;
   $('selTema').onchange = e => {db.tema = e.target.value; applyTheme(); save();};
-
   if(!db.veiculos.length) setTimeout(()=>openModal('veiculo'), 500);
 }
 
@@ -210,17 +190,25 @@ function show(t){
   if(t=='painel') setTimeout(renderGrafico, 100);
 }
 
-function openModal(tipo){$('modal-'+tipo).classList.add('active')}
+function openModal(tipo){$(`modal-${tipo}`).classList.add('active')}
 function closeModal(tipo){
-  $('modal-'+tipo).classList.remove('active');
-  if(tipo=='veiculo'){$('vNome').value=$('vAno').value=$('vKmCompra').value=$('vTanque').value=''; diasSelecionados=[1,2,3,4,5]; setupDiasSemana();}
+  $(`modal-${tipo}`).classList.remove('active');
+  if(tipo=='veiculo'){$('vNome').value=$('vAno').value=$('vKmCompra').value=$('vTanque').value=''; diasSelecionados=[1][2][3][4][5]; setupDiasSemana();}
 }
 function closeModalEdit(){$('modal-edit').classList.remove('active'); edit={tipo:null,id:null}}
 
 function setupDiasSemana(){
   document.querySelectorAll('#diasSemana.dia-btn').forEach(btn=>{
+    const dia = +btn.dataset.dia;
+    if(diasSelecionados.includes(dia)) btn.classList.add('active');
     btn.onclick = ()=>{btn.classList.toggle('active'); diasSelecionados = Array.from(document.querySelectorAll('#diasSemana.dia-btn.active')).map(b=>+b.dataset.dia)}
   });
+}
+
+function setupTotalAutomatico(){
+  $('aLitros').oninput = $('aValorL').oninput = () => {
+    $('aTotal').value = (($('aLitros').value * $('aValorL').value) || 0).toFixed(2);
+  }
 }
 
 function renderVeiculosSelect(){
@@ -243,43 +231,149 @@ function delVeiculo(id){
   save(); renderVeiculosSelect(); renderAll();
 }
 
+function editVeiculo(id){
+  const v = db.veiculos.find(x=>x.id==id);
+  edit = {tipo:'veiculo', id};
+  diasSelecionados = v.diasSemana || [1,2,3,4,5];
+  $('modalBody').innerHTML = `<label class="label">Modelo</label><input id="eNome" value="${v.nome}"><div class="grid grid-2"><div><label class="label">Ano</label><input id="eAno" type="number" value="${v.ano}"></div><div><label class="label">Data</label><input id="eData" type="date" value="${v.dataAquisicao}"></div></div><div class="grid grid-3"><div><label class="label">Km compra</label><input id="eKmCompra" type="number" value="${v.kmCompra}"></div><div><label class="label">Km/dia</label><input id="eKmDia" type="number" value="${v.kmDia}"></div><div><label class="label">Tanque L</label><input id="eTanque" type="number" step="0.1" value="${v.tanque||''}"></div></div><label class="label">Dias que roda</label><div class="dias-semana" id="diasEdit"></div>`;
+  $('modal-edit').classList.add('active');
+  setTimeout(()=>{
+    const container = $('diasEdit');
+    ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((nome,i)=>{
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='dia-btn'; btn.dataset.dia=i; btn.textContent=nome;
+      if(diasSelecionados.includes(i)) btn.classList.add('active');
+      btn.onclick = ()=>{btn.classList.toggle('active'); diasSelecionados = Array.from(container.querySelectorAll('.dia-btn.active')).map(b=>+b.dataset.dia)};
+      container.appendChild(btn);
+    });
+  },0);
+}
+
+function saveEdit(){
+  if(edit.tipo=='veiculo'){
+    const v = db.veiculos.find(x=>x.id==edit.id);
+    v.nome=$('eNome').value; v.ano=+$('eAno').value; v.dataAquisicao=$('eData').value;
+    v.kmCompra=+$('eKmCompra').value; v.kmDia=+$('eKmDia').value; v.tanque=+$('eTanque').value;
+    v.diasSemana=[...diasSelecionados];
+  }
+  save(); closeModalEdit(); renderAll();
+}
+
 function addAbast(){
-  if(!$('aData').value||!$('aKm').value||!$('aLitros').value) return alert('Preencha tudo');
+  if(!$('aData').value||!$('aKm').value||!$('aLitros').value) return alert('Preencha data, km e litros');
   db.abastecimentos.push({id:Date.now(),veiculo:db.ativo,data:$('aData').value,km:+$('aKm').value,litros:+$('aLitros').value,valor:+$('aTotal').value,valorL:+$('aValorL').value});
   $('aData').value=$('aKm').value=$('aLitros').value=$('aValorL').value=$('aTotal').value=''; $('aData').value = new Date().toISOString().split('T')[0];
   save(); closeModal('abast'); renderAll();
 }
 
+function renderAbast(){
+  const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  $('listaAbast').innerHTML=list.map(a=>`
+    <div class="item">
+      <div><b>${a.data.split('-').reverse().join('/')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small></div>
+      <div class="actions"><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
+    </div>
+  `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
+}
+
+function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAll();}}
+
+function addManut(){
+  const tipo = $('mTipo').value.trim();
+  const km = +$('mKm').value;
+  if(!tipo ||!km ||!$('mData').value) return alert('Preencha data, tipo e km');
+  db.manutencoes.push({id:Date.now(),veiculo:db.ativo,data:$('mData').value,tipo,km,intervalo:+$('mIntervalo').value||4000,proxKm:km+(+$('mIntervalo').value||4000),valor:+$('mValor').value||0});
+  $('mData').value=new Date().toISOString().split('T')[0];
+  $('mTipo').value=$('mKm').value=$('mIntervalo').value=$('mValor').value='';
+  save(); closeModal('manut'); renderAll();
+}
+
+function renderManut(){
+  const v=db.veiculos.find(x=>x.id==db.ativo);
+  if(!v) return;
+  const kmAtual = getKmAtual(v);
+  const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  $('listaManut').innerHTML=list.map(m=>{
+    const faltam=m.proxKm-kmAtual;
+    let cls='',badge='';
+    if(faltam<=0){cls='urgent'; badge='<span class="badge danger">VENCIDA</span>'}
+    else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
+    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>${m.data.split('-').reverse().join('/')} • Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km</small></div><div class="actions"><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
+  }).join('')||'<div class="empty">Nenhuma manutenção cadastrada</div>';
+
+  const trocasOleo = list.filter(m=>m.tipo.toLowerCase().includes('óleo'));
+  if(trocasOleo.length){
+    const ultima = trocasOleo.sort((a,b)=>b.km-a.km)[0];
+    const faltam = ultima.proxKm - kmAtual;
+    $('cardOleo').className = 'card kpi ' + (faltam<=0?'urgent':faltam<=300?'alert':'');
+    $('proxOleo').innerHTML = faltam<=0? 'VENCIDA' : faltam+'km';
+  }
+}
+
+function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderAll();}}
+
+function getKmAtual(v){
+  const abs = db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(b.data)-new Date(a.data))[0];
+  if(!abs) return v.kmCompra;
+  return abs.km; // simplificado
+}
+
+function renderGrafico(){}
+
 function renderAll(){
   if(!db.ativo ||!db.veiculos.length) return;
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data)-new Date(b.data));
-  const kmAtual = abs.length? abs.at(-1).km : v.kmCompra;
+
+  const kmAtual = getKmAtual(v);
   $('kmAtual').textContent=kmAtual+' km';
   $('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
+
   let kml=0;
   if(abs.length>1){
     let km=0,litros=0;
     for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
     kml=km/litros; $('kml').textContent=kml.toFixed(1)+' km/l';
   }
-  renderVeiculos();
+
+  renderVeiculos(); renderAbast(); renderManut();
 }
 
 function renderVeiculos(){
-  const html = db.veiculos.map(v=>`<div class="item"><div><b>${v.nome}</b><br><small>${v.ano} • ${v.kmCompra}km</small></div><div class="actions"><button class="btn-ghost" onclick="delVeiculo(${v.id})">🗑️</button></div></div>`).join('');
+  const html = db.veiculos.map(v=>`
+    <div class="item">
+      <div><b>${v.nome}</b><br><small>${v.ano} • ${v.kmCompra}km • Tanque ${v.tanque}L</small></div>
+      <div class="actions"><button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button><button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button></div>
+    </div>
+  `).join('');
   $('listaVeiculos').innerHTML = html || '<div class="empty">Nenhum veículo</div>';
   $('listaVeiculosConfig').innerHTML = html || '<div class="empty">Nenhum veículo</div>';
 }
 
-function renderGrafico(){/*simplificado pra testar*/}
-function addManut(){}
-function renderManut(){}
-function editManut(){}
-function delManut(){}
-function editAbast(){}
-function delAbast(){}
-function saveEdit(){}
+function exportarJSON(){
+  const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `backup_combustivel_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importarJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      if(confirm('Substituir todos os dados atuais?')){
+        db = JSON.parse(e.target.result);
+        save();
+        location.reload();
+      }
+    }catch(err){alert('Arquivo inválido!')}
+  };
+  reader.readAsText(file);
+}
+
 function resetApp(){if(confirm('Apagar tudo?')){localStorage.removeItem(KEY_ATUAL); location.reload()}}
 </script>
 </body>
