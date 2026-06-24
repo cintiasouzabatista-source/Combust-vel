@@ -374,7 +374,7 @@ function maximizeModal(tipo){
   body.style.display='block';
 
   // Restaura header
-  const titulo = tipo=='veiculo'?'🏍️ Novo Veículo':tipo=='abast'?'⛽ Novo Abastecimento':'🔧 Nova Manutenção';
+  const titulo = tipo=='veiculo'?'Novo Veículo':tipo=='abast'?'Novo Abastecimento':'Nova Manutenção';
   const headerTop = modal.querySelector('.modal-header-top');
   headerTop.innerHTML = `<h3>${titulo}</h3><button class="modal-min-btn" onclick="minimizeModal('${tipo}')">↓</button>`;
 
