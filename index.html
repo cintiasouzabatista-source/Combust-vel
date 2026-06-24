@@ -615,7 +615,12 @@ function renderAll(){
 function loadTema(){if(localStorage.getItem('tema')=='light') document.body.classList.add('light')}
 function toggleTema(){document.body.classList.toggle('light'); localStorage.setItem('tema',document.body.classList.contains('light')?'light':'dark')}
 function resetApp(){
-  if(confirm('Apagar tudo?')&&confirm('Tem certeza?')){localStorage.clear(); location.reload()}
+  if(confirm('Apagar tudo?')&&confirm('Tem certeza?')){
+    // Apaga todas as versões pra não restaurar via migração
+    localStorage.removeItem(KEY_ATUAL);
+    KEYS_ANTIGAS.forEach(k => localStorage.removeItem(k));
+    location.reload();
+  }
 }
 
 // Fecha modal ao tocar fora só no mobile
