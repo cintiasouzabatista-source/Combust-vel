@@ -89,44 +89,44 @@ button{cursor:pointer;font-weight:700;border:none}
       <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
     </div>
     <div class="card">
-      <h3>📊 Consumo Mensal km/l</h3>
+      <h3>Consumo Mensal km/l</h3>
       <div class="chart-container"><canvas id="graficoConsumo"></canvas></div>
     </div>
   </section>
 
   <section id="abastecer" style="display:none">
-    <button class="btn" onclick="openModal('abast')">⛽ Novo Abastecimento</button>
+    <button class="btn" onclick="openModal('abast')">Novo Abastecimento</button>
     <div id="listaAbast"></div>
   </section>
 
   <section id="manutencao" style="display:none">
-    <button class="btn" onclick="openModal('manut')">🔧 Nova Manutenção</button>
+    <button class="btn" onclick="openModal('manut')">Nova Manutenção</button>
     <div id="listaManut"></div>
   </section>
 
   <section id="veiculos" style="display:none">
-    <button class="btn" onclick="openModal('veiculo')">🏍️ Novo Veículo</button>
+    <button class="btn" onclick="openModal('veiculo')">Novo Veículo</button>
     <div id="listaVeiculos"></div>
   </section>
 
   <section id="config" style="display:none">
-    <div class="card"><h3>🎨 Aparência</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Trocar Tema</button></div>
+    <div class="card"><h3>Modo</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Tema</button></div>
     <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
   </section>
 </div>
 
 <nav class="footer">
-  <button onclick="show('painel')" class="active">🛣️</button>
+  <button onclick="show('painel')" class="active">🚟</button>
   <button onclick="show('abastecer')">⛽</button>
   <button onclick="show('manutencao')">🔧</button>
-  <button onclick="show('veiculos')">🏍️</button>
+  <button onclick="show('veiculos')">🛞</button>
   <button onclick="show('config')">⚙️</button>
 </nav>
 
 <div class="modal" id="modal-veiculo">
   <div class="modal-box">
     <div class="modal-header-top">
-      <h3>🏍️ Novo Veículo</h3>
+      <h3>🛞Novo Veículo</h3>
       <button class="modal-min-btn" onclick="minimizeModal('veiculo')">↓</button>
     </div>
     <div class="modal-body" id="modal-body-veiculo">
@@ -162,7 +162,7 @@ button{cursor:pointer;font-weight:700;border:none}
 <div class="modal" id="modal-abast">
   <div class="modal-box">
     <div class="modal-header-top">
-      <h3>⛽ Novo Abastecimento</h3>
+      <h3>⛽Novo Abastecimento</h3>
       <button class="modal-min-btn" onclick="minimizeModal('abast')">↓</button>
     </div>
     <div class="modal-body" id="modal-body-abast">
@@ -187,7 +187,7 @@ button{cursor:pointer;font-weight:700;border:none}
 <div class="modal" id="modal-manut">
   <div class="modal-box">
     <div class="modal-header-top">
-      <h3>🔧 Nova Manutenção</h3>
+      <h3>🔧Nova Manutenção</h3>
       <button class="modal-min-btn" onclick="minimizeModal('manut')">↓</button>
     </div>
     <div class="modal-body" id="modal-body-manut">
