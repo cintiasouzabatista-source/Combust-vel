@@ -301,7 +301,17 @@ function setupSwipe(){
     }
   });
 }
-
+// Tema
+$('selTema').value = db.tema;
+$('selTema').onchange = e => {
+  db.tema = e.target.value;
+  applyTheme();
+  save();
+};
+  function applyTheme(){
+  document.body.classList.toggle('light', db.tema==='light');
+}
+  
 function setupDiasSemana(){
   document.querySelectorAll('#diasSemana.dia-btn').forEach(btn=>{
     const dia = +btn.dataset.dia;
