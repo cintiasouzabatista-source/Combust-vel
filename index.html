@@ -410,20 +410,21 @@ function addVeiculo(){
   save(); closeModal('veiculo'); renderVeiculosSelect(); renderVeiculos(); renderAll();
 }
 
-function renderVeiculos(){
-  listaVeiculos.innerHTML=db.veiculos.map(v=>{
-    const dias = contarDiasUteis(v.dataAquisicao, dataHoje(), v.diasSemana);
-    const nomesDias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].filter((d,i)=>v.diasSemana.includes(i)).join(',');
-    return `<div class="item">
-      <div><b>${v.nome} ${v.ano}</b><br><small>Desde ${formatarData(v.dataAquisicao)} • ${dias} dias úteis<br>${v.kmCompra}km • ${v.kmDia}km/dia • ${nomesDias} • Tanque ${v.tanque||'?'}L</small></div>
-      <div class="actions">
-        <button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>
-        <button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>
-      </div>
-    </div>`;
-  }).join('')||'<div class="empty">Nenhum veículo cadastrado</div>';
-}
+function delVeiculo(id){
+  if(!confirm('Apagar veículo e todos os dados? Isso não tem volta.')) return;
 
+  db.veiculos = db.veiculos.filter(v => v.id!= id);
+  db.abastecimentos = db.abastecimentos.filter(a => a.veiculo!= id);
+  db.manutencoes = db.manutencoes.filter(m => m.veiculo!= id);
+
+  // Se apagou todos, zera o ativo. Senão pega o primeiro da lista
+  db.ativo = db.veiculos.length > 0? db.veiculos[0].id : null;
+
+  save();
+  renderVeiculosSelect();
+  renderVeiculos();
+  renderAll();
+}
 function editVeiculo(id){
   const v=db.veiculos.find(x=>x.id==id); edit={tipo:'veiculo',id};
   diasSelecionados = v.diasSemana || [1,2,3,4,5];
