@@ -418,7 +418,7 @@ function renderVeiculos(){
       <div><b>${v.nome} ${v.ano}</b><br><small>Desde ${formatarData(v.dataAquisicao)} • ${dias} dias úteis<br>${v.kmCompra}km • ${v.kmDia}km/dia • ${nomesDias} • Tanque ${v.tanque||'?'}L</small></div>
       <div class="actions">
         <button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>
-        ${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}
+        <button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>
       </div>
     </div>`;
   }).join('')||'<div class="empty">Nenhum veículo cadastrado</div>';
