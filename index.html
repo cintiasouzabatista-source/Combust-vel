@@ -206,8 +206,21 @@ function setupDiasSemana(){
 }
 
 function setupTotalAutomatico(){
-  $('aLitros').oninput = $('aValorL').oninput = () => {
-    $('aTotal').value = (($('aLitros').value * $('aValorL').value) || 0).toFixed(2);
+  // Calcula total no modal novo
+  const calcTotal = () => {
+    const litros = parseFloat($('aLitros').value) || 0;
+    const valorL = parseFloat($('aValorL').value) || 0;
+    $('aTotal').value = (litros * valorL).toFixed(2);
+  };
+  
+  $('aLitros').addEventListener('input', calcTotal);
+  $('aValorL').addEventListener('input', calcTotal);
+
+  // Calcula total no modal de edição tb
+  window.calcTotalEdit = () => {
+    const litros = parseFloat($('eLitros').value) || 0;
+    const valorL = parseFloat($('eValorL').value) || 0;
+    $('eTotal').value = (litros * valorL).toFixed(2);
   }
 }
 
@@ -236,8 +249,10 @@ function editVeiculo(id){
   edit = {tipo:'veiculo', id};
   diasSelecionados = v.diasSemana || [1,2,3,4,5];
   $('modalBody').innerHTML = `<label class="label">Modelo</label><input id="eNome" value="${v.nome}"><div class="grid grid-2"><div><label class="label">Ano</label><input id="eAno" type="number" value="${v.ano}"></div><div><label class="label">Data</label><input id="eData" type="date" value="${v.dataAquisicao}"></div></div><div class="grid grid-3"><div><label class="label">Km compra</label><input id="eKmCompra" type="number" value="${v.kmCompra}"></div><div><label class="label">Km/dia</label><input id="eKmDia" type="number" value="${v.kmDia}"></div><div><label class="label">Tanque L</label><input id="eTanque" type="number" step="0.1" value="${v.tanque||''}"></div></div><label class="label">Dias que roda</label><div class="dias-semana" id="diasEdit"></div>`;
-  $('modal-edit').classList.add('active');
-  setTimeout(()=>{
+ setTimeout(()=>{
+  $('eLitros').addEventListener('input', calcTotalEdit);
+  $('eValorL').addEventListener('input', calcTotalEdit);
+}, 0);
     const container = $('diasEdit');
     ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((nome,i)=>{
       const btn = document.createElement('button');
