@@ -36,7 +36,7 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:999;padding:16px}
 .modal.active{display:flex}.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
-.chart-container{position:relative;height:260px;margin-top:12px;padding:10px 0}
+.chart-container{position:relative;height:300px;margin-top:12px;padding:10px 0}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .alert{border-left:4px solid var(--warn)}.urgent{border-left:4px solid var(--danger);animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
@@ -62,15 +62,7 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
       <div class="card kpi info-card" id="cardAbast"><div class="label">Autonomia</div><div class="val" id="proxAbast">--</div></div>
       <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
     </div>
-    <div class="card"><h3 style="margin-top:0">Consumo km/l por mês</h3><div class="chart-container"><canvas id="graficoConsumo"></canvas></div></div>
-    <div class="card">
-    <h3>Gasto por Período</h3>
-    <div class="tabs-grafico">
-        <button class="active" onclick="mostrarGrafico('semana')">Semanal</button>
-        <button onclick="mostrarGrafico('mes')">Mensal</button>
-    </div>
-    <canvas id="graficoGasto" width="400" height="200"></canvas>
-</div>
+    <div class="card"><h3 style="margin-top:0">Consumo km/l - Semana/Mês/Ano</h3><div class="chart-container"><canvas id="graficoConsumo"></canvas></div></div>
   </section>
 
   <section id="abastecer" class="section" style="display:none">
@@ -255,82 +247,7 @@ function show(t){
   if(t=='painel') setTimeout(renderGrafico,200);
   window.scrollTo({top:0,behavior:'smooth'});
 }
-let tipoGrafico = 'semana';
 
-function mostrarGrafico(tipo) {
-    tipoGrafico = tipo;
-    document.querySelectorAll('.tabs-grafico button').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    desenharGrafico();
-}
-
-function desenharGrafico() {
-    const canvas = document.getElementById('graficoGasto');
-    const ctx = canvas.getContext('2d');
-    const isLight = document.body.classList.contains('light');
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Agrupa dados
-    const dados = tipoGrafico === 'semana'? agruparPorSemana() : agruparPorMes();
-    if (!dados.length) return;
-
-    const maxValor = Math.max(...dados.map(d => d.valor));
-    const barWidth = canvas.width / dados.length * 0.6;
-    const cor = isLight? '#2563eb' : '#3b82f6';
-
-    dados.forEach((d, i) => {
-        const barHeight = (d.valor / maxValor) * (canvas.height - 40);
-        const x = (canvas.width / dados.length) * i + barWidth * 0.2;
-        const y = canvas.height - barHeight - 20;
-
-        // Barra
-        ctx.fillStyle = cor;
-        ctx.fillRect(x, y, barWidth, barHeight);
-
-        // Valor
-        ctx.fillStyle = isLight? '#0f172a' : '#f1f5f9';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('R$' + d.valor.toFixed(0), x + barWidth/2, y - 5);
-
-        // Label
-        ctx.fillText(d.label, x + barWidth/2, canvas.height - 5);
-    });
-}
-
-function agruparPorSemana() {
-    const grupos = {};
-    abastecimentos.forEach(a => {
-        const data = new Date(a.data);
-        const semana = `S${getWeekNumber(data)}`;
-        grupos[semana] = (grupos[semana] || 0) + a.total;
-    });
-    return Object.entries(grupos).slice(-6).map(([k,v]) => ({label: k, valor: v}));
-}
-
-function agruparPorMes() {
-    const grupos = {};
-    abastecimentos.forEach(a => {
-        const mes = new Date(a.data).toLocaleDateString('pt-BR', {month: 'short'});
-        grupos[mes] = (grupos[mes] || 0) + a.total;
-    });
-    return Object.entries(grupos).map(([k,v]) => ({label: k, valor: v}));
-}
-
-function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-}
-
-// Chama o gráfico quando calcula KPIs
-const calcularKPIsOriginal = calcularKPIs;
-calcularKPIs = function() {
-    calcularKPIsOriginal();
-    desenharGrafico();
-}
 function setupDiasSemana(){
   document.querySelectorAll('.dia-btn').forEach(btn=>{
     const dia=+btn.dataset.dia;
@@ -458,6 +375,14 @@ function renderAll(){
   renderAbast(); renderManut(); renderVeiculos(); renderGrafico();
 }
 
+function getWeekNum(d){
+  const date=new Date(d);
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate()+3-(date.getDay()+6)%7);
+  const week1=new Date(date.getFullYear(),0,4);
+  return 1+Math.round(((date-week1)/86400000-3+(week1.getDay()+6)%7)/7);
+}
+
 function renderGrafico(){
   const canvas=$('graficoConsumo');
   if(!canvas) return;
@@ -478,19 +403,40 @@ function renderGrafico(){
     return;
   }
 
-  const dados=[];
+  const dadosSemana={}, dadosMes={}, dadosAno={};
+
   for(let i=1;i<abs.length;i++){
     const km=abs[i].km-abs[i-1].km;
     const kml=km/abs[i].litros;
-    const mes=abs[i].data.substring(0,7);
-    dados.push({mes,kml});
+    const data=new Date(abs[i].data);
+    const ano=data.getFullYear();
+    const mes=String(data.getMonth()+1).padStart(2,'0');
+    const semana=getWeekNum(abs[i].data);
+
+    const keySemana=`${ano}-S${semana}`;
+    const keyMes=`${ano}-${mes}`;
+    const keyAno=`${ano}`;
+
+    if(!dadosSemana[keySemana]) dadosSemana[keySemana]=[];
+    if(!dadosMes[keyMes]) dadosMes[keyMes]=[];
+    if(!dadosAno[keyAno]) dadosAno[keyAno]=[];
+
+    dadosSemana[keySemana].push(kml);
+    dadosMes[keyMes].push(kml);
+    dadosAno[keyAno].push(kml);
   }
 
-  const meses=[...new Set(dados.map(d=>d.mes))];
-  const medias=meses.map(m=>{
-    const vals=dados.filter(d=>d.mes==m).map(d=>d.kml);
-    return vals.reduce((a,b)=>a+b,0)/vals.length;
-  });
+  const labelsSemana=Object.keys(dadosSemana).slice(-12);
+  const mediasSemana=labelsSemana.map(k=>dadosSemana[k].reduce((a,b)=>a+b,0)/dadosSemana[k].length);
+
+  const labelsMes=Object.keys(dadosMes);
+  const mediasMes=labelsMes.map(k=>dadosMes[k].reduce((a,b)=>a+b,0)/dadosMes[k].length);
+
+  const labelsAno=Object.keys(dadosAno);
+  const mediasAno=labelsAno.map(k=>dadosAno[k].reduce((a,b)=>a+b,0)/dadosAno[k].length);
+
+  const labels=[...labelsSemana.map(l=>'Sem '+l.split('-S')[1]),...labelsMes.map(l=>l.split('-')[1]+'/'+l.split('-')[0]),...labelsAno];
+  const medias=[...mediasSemana,...mediasMes,...mediasAno];
 
   const gridColor=db.tema==='dark'?'rgba(148,163,184,0.2)':'rgba(100,116,139,0.2)';
   const textColor=db.tema==='dark'?'#94a3b8':'#64748b';
@@ -498,22 +444,22 @@ function renderGrafico(){
   grafico=new Chart(ctx,{
     type:'bar',
     data:{
-      labels:meses.map(m=>m.split('-')[1]+'/'+m.split('-')[0]),
+      labels:labels,
       datasets:[{
         label:'km/l',
         data:medias,
         backgroundColor:'#3b82f6',
-        borderRadius:8
+        borderRadius:6,
+        barThickness:20
       }]
     },
     options:{
-      indexAxis:'y',
       responsive:true,
       maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
-        x:{beginAtZero:true,grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
-        y:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}}
+        y:{beginAtZero:true,grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
+        x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:9},maxRotation:45,minRotation:45}}
       }
     }
   });
