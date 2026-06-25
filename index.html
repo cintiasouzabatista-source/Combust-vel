@@ -19,6 +19,7 @@ button{cursor:pointer;font-weight:700;border:none}
 .btn{background:var(--accent);color:#fff;font-size:16px}
 .btn-ghost{background:transparent;border:1px solid var(--line)}
 .btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:8px 12px;font-size:14px;width:auto;border-radius:8px}
 .grid{display:grid;gap:10px}
 .grid-2{grid-template-columns:1fr 1fr}
 .grid-3{grid-template-columns:1fr 1fr 1fr}
@@ -32,7 +33,6 @@ button{cursor:pointer;font-weight:700;border:none}
 .item b{font-size:15px}
 .item small{color:var(--muted);font-size:13px;line-height:1.4}
 .actions{display:flex;gap:8px}
-.actions button{padding:8px 12px;font-size:14px;width:auto;border-radius:8px}
 .badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
 .badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
 .badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
@@ -40,11 +40,6 @@ button{cursor:pointer;font-weight:700;border:none}
 .footer button{border:none;background:none;font-size:24px;color:var(--muted)}
 .footer button.active{color:var(--accent)}
 .empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
-.modal.active{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:420px}
-.modal-box h3{margin:0 0 16px;font-size:18px}
-.modal-actions{display:flex;gap:10px;margin-top:16px}
 .alert{border-left:4px solid var(--warn)}
 .urgent{border-left:4px solid var(--danger)}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
@@ -52,7 +47,9 @@ button{cursor:pointer;font-weight:700;border:none}
 .dias-semana{display:flex;gap:6px;margin:8px 0}
 .dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
 .dia-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.chart-container{position:relative;height:200px;margin-top:10px}
+.chart-container{position:relative;height:220px;margin-top:10px}
+.inline-edit{display:none;margin-top:10px;padding:12px;border:1px dashed var(--line);border-radius:12px}
+.inline-edit.active{display:block}
 </style>
 </head>
 <body>
@@ -74,7 +71,7 @@ button{cursor:pointer;font-weight:700;border:none}
       <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
     </div>
     <div class="card">
-      <h3>📊 Consumo Mensal km/l</h3>
+      <h3>📊 Consumo km/l</h3>
       <div class="chart-container"><canvas id="graficoConsumo"></canvas></div>
     </div>
   </section>
@@ -144,17 +141,17 @@ button{cursor:pointer;font-weight:700;border:none}
     <div id="listaVeiculos"></div>
   </section>
 
-<section id="config" style="display:none">
-  <div class="card">
-    <h3>💾 Backup</h3>
-    <label class="label">Exportar dados</label>
-    <button class="btn" onclick="exportarJSON()">📤 Baixar.json</button>
-    <label class="label" style="margin-top:16px">Importar dados</label>
-    <input type="file" id="fileImport" accept=".json" onchange="importarJSON(event)">
-    <small style="color:var(--muted);display:block;margin-top:6px">Importar substitui TODOS os dados atuais</small>
-  </div>
-  <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
-</section>
+  <section id="config" style="display:none">
+    <div class="card">
+      <h3>💾 Backup</h3>
+      <label class="label">Exportar dados</label>
+      <button class="btn" onclick="exportarJSON()">📤 Baixar.json</button>
+      <label class="label" style="margin-top:16px">Importar dados</label>
+      <input type="file" id="fileImport" accept=".json" onchange="importarJSON(event)">
+      <small style="color:var(--muted);display:block;margin-top:6px">Importar substitui TODOS os dados atuais</small>
+    </div>
+    <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
+  </section>
 </div>
 
 <nav class="footer">
@@ -165,22 +162,10 @@ button{cursor:pointer;font-weight:700;border:none}
   <button onclick="show('config')">⚙️</button>
 </nav>
 
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <h3 id="modalTitle">Editar</h3>
-    <div id="modalBody"></div>
-    <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn" onclick="saveEdit()">Salvar</button>
-    </div>
-  </div>
-</div>
-
 <script>
 const KEY_ATUAL='combApp_v8';
 const KEYS_ANTIGAS=['combApp_v7','combApp_v6','combApp_v5','combApp_v4','combApp_v3','combApp_v2','combApp'];
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark',modoKm:'dia',kmDiaPadrao:35,kmMesPadrao:800,alertaOleoKm:500};
-let edit={tipo:null,id:null};
 let diasSelecionados = [1,2,3,4,5];
 let grafico = null;
 let abaAtual = 'painel';
@@ -193,46 +178,8 @@ function formatarData(yyyy_mm_dd){
   return `${dia}/${mes}/${ano}`;
 }
 
-function save(){
-  localStorage.setItem(KEY_ATUAL, JSON.stringify(db));
-}
-function exportarJSON(){
-  const dados = JSON.stringify(db, null, 2);
-  const blob = new Blob([dados], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'combustivel_backup_' + new Date().toISOString().split('T')[0] + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
+function save(){localStorage.setItem(KEY_ATUAL, JSON.stringify(db));}
 
-function importarJSON(event){
-  const file = event.target.files[0];
-  if(!file) return;
-
-  if(!confirm('Isso vai APAGAR todos os dados atuais e substituir pelo backup. Continuar?')) {
-    event.target.value = '';
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e){
-    try{
-      const dados = JSON.parse(e.target.result);
-      if(!dados.veiculos ||!dados.abastecimentos){
-        alert('Arquivo inválido. Selecione um backup gerado por este app.');
-        return;
-      }
-      db = dados;
-      save();
-      location.reload();
-    }catch(err){
-      alert('Erro ao ler arquivo: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
 function load(){
   let raw = localStorage.getItem(KEY_ATUAL);
   if(!raw){
@@ -241,13 +188,11 @@ function load(){
       if(raw){
         localStorage.setItem(KEY_ATUAL, raw);
         localStorage.removeItem(k);
-        console.log('Dados migrados de', k);
         break;
       }
     }
   }
   if(raw) db = JSON.parse(raw);
-
   if(!db.tema) db.tema = 'dark';
   if(!db.modoKm) db.modoKm = 'dia';
   if(!db.kmDiaPadrao) db.kmDiaPadrao = 35;
@@ -267,18 +212,8 @@ function load(){
 }
 
 function applyTheme(){
-  if(db.tema==='light'){
-    document.documentElement.classList.add('light');
-  } else {
-    document.documentElement.classList.remove('light');
-  }
-}
-
-function toggleTema(){
-  db.tema = db.tema==='dark'? 'light' : 'dark';
-  applyTheme();
-  save();
-  setTimeout(renderGrafico, 100);
+  if(db.tema==='light') document.documentElement.classList.add('light');
+  else document.documentElement.classList.remove('light');
 }
 
 function show(t){
@@ -294,14 +229,19 @@ function show(t){
 }
 
 function setupSwipe(){
-  let startX = 0;
-  document.getElementById('appContainer').addEventListener('touchstart', e => startX = e.touches[0].clientX);
+  let startX = 0, startY = 0;
+  document.getElementById('appContainer').addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
   document.getElementById('appContainer').addEventListener('touchend', e => {
-    const diff = e.changedTouches[0].clientX - startX;
+    const diffX = e.changedTouches[0].clientX - startX;
+    const diffY = e.changedTouches[0].clientY - startY;
+    if(Math.abs(diffY) > Math.abs(diffX)) return; // ignora swipe vertical
     const abas = ['painel','abastecer','manutencao','veiculos','config'];
     const idx = abas.indexOf(abaAtual);
-    if(diff > 50 && idx > 0) show(abas[idx-1]);
-    if(diff < -50 && idx < abas.length-1) show(abas[idx+1]);
+    if(diffX > 60 && idx > 0) show(abas[idx-1]);
+    if(diffX < -60 && idx < abas.length-1) show(abas[idx+1]);
   });
 }
 
@@ -365,18 +305,38 @@ function renderVeiculos(){
     const nomesDias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].filter((d,i)=>v.diasSemana.includes(i)).join(',');
     return `<div class="item">
       <div><b>${v.nome} ${v.ano}</b><br><small>Desde ${formatarData(v.dataAquisicao)} • ${dias} dias úteis<br>${v.kmCompra}km • ${v.kmDia}km/dia • ${nomesDias} • Tanque ${v.tanque||'?'}L</small></div>
-      <div class="actions"><button class="btn-ghost" onclick="editVeiculo(${v.id})">✏️</button>${db.veiculos.length>1?`<button class="btn-danger" onclick="delVeiculo(${v.id})">🗑️</button>`:''}</div>
-    </div>`;
+      <div class="actions">
+        <button class="btn-ghost btn-sm" onclick="toggleEditVeiculo(${v.id})">✏️</button>
+        ${db.veiculos.length>1?`<button class="btn-danger btn-sm" onclick="delVeiculo(${v.id})">🗑️</button>`:''}
+      </div>
+    </div>
+    <div id="editV${v.id}" class="inline-edit"></div>`;
   }).join('');
 }
 
-function editVeiculo(id){
-  const v=db.veiculos.find(x=>x.id==id); edit={tipo:'veiculo',id};
+function toggleEditVeiculo(id){
+  const box = $('editV'+id);
+  if(box.classList.contains('active')){box.classList.remove('active'); return;}
+  document.querySelectorAll('.inline-edit').forEach(b=>b.classList.remove('active'));
+  const v=db.veiculos.find(x=>x.id==id);
   diasSelecionados = v.diasSemana || [1,2,3,4,5];
-  $('modalBody').innerHTML=`<label class="label">Modelo</label><input id="eNome" value="${v.nome}"><div class="grid grid-2"><div><label class="label">Ano</label><input id="eAno" type="number" value="${v.ano}"></div><div><label class="label">Data Aquisição</label><input id="eData" type="date" value="${v.dataAquisicao}"></div></div><div class="grid grid-3"><div><label class="label">Km compra</label><input id="eKmCompra" type="number" value="${v.kmCompra}"></div><div><label class="label">Km/dia</label><input id="eKmDia" type="number" value="${v.kmDia}"></div><div><label class="label">Tanque L</label><input id="eTanque" type="number" step="0.1" value="${v.tanque||''}"></div></div><label class="label">Dias que roda</label><div class="dias-semana" id="diasEdit"></div>`;
-  $('modal').classList.add('active');
+  box.innerHTML = `<div class="grid grid-2">
+    <div><label class="label">Modelo</label><input id="eNome${id}" value="${v.nome}"></div>
+    <div><label class="label">Ano</label><input id="eAno${id}" type="number" value="${v.ano}"></div>
+    <div><label class="label">Data</label><input id="eData${id}" type="date" value="${v.dataAquisicao}"></div>
+    <div><label class="label">Km compra</label><input id="eKm${id}" type="number" value="${v.kmCompra}"></div>
+    <div><label class="label">Km/dia</label><input id="eKmDia${id}" type="number" value="${v.kmDia}"></div>
+    <div><label class="label">Tanque L</label><input id="eTanque${id}" type="number" step="0.1" value="${v.tanque||''}"></div>
+  </div>
+  <label class="label">Dias que roda</label>
+  <div class="dias-semana" id="diasEdit${id}"></div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" onclick="saveEditVeiculo(${id})">Salvar</button>
+    <button class="btn-ghost" onclick="toggleEditVeiculo(${id})">Cancelar</button>
+  </div>`;
+  box.classList.add('active');
   setTimeout(()=>{
-    const container = document.getElementById('diasEdit');
+    const container = $('diasEdit'+id);
     ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach((nome,i)=>{
       const btn = document.createElement('button');
       btn.type='button'; btn.className='dia-btn'; btn.dataset.dia=i; btn.textContent=nome;
@@ -385,6 +345,12 @@ function editVeiculo(id){
       container.appendChild(btn);
     });
   },0);
+}
+
+function saveEditVeiculo(id){
+  const v=db.veiculos.find(x=>x.id==id);
+  Object.assign(v,{nome:$('eNome'+id).value,ano:+$('eAno'+id).value,dataAquisicao:$('eData'+id).value,kmCompra:+$('eKm'+id).value,kmDia:+$('eKmDia'+id).value,kmSemana:+$('eKmDia'+id).value*diasSelecionados.length,tanque:+$('eTanque'+id).value||0,diasSemana:[...diasSelecionados]});
+  save(); toggleEditVeiculo(id); renderVeiculosSelect(); renderAll();
 }
 
 function delVeiculo(id){
@@ -410,16 +376,39 @@ function renderAbast(){
   $('listaAbast').innerHTML=list.map(a=>`
     <div class="item">
       <div><b>${formatarData(a.data)}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small></div>
-      <div class="actions"><button class="btn-ghost" onclick="editAbast(${a.id})">✏️</button><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
+      <div class="actions">
+        <button class="btn-ghost btn-sm" onclick="toggleEditAbast(${a.id})">✏️</button>
+        <button class="btn-danger btn-sm" onclick="delAbast(${a.id})">🗑️</button>
+      </div>
     </div>
+    <div id="editA${a.id}" class="inline-edit"></div>
   `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
 }
 
-function editAbast(id){
-  const a=db.abastecimentos.find(x=>x.id==id); edit={tipo:'abast',id};
-  $('modalBody').innerHTML=`<label class="label">Data</label><input id="eData" type="date" value="${a.data}"><label class="label">Km</label><input id="eKm" type="number" value="${a.km}"><div class="grid grid-2"><div><label class="label">Litros</label><input id="eLitros" step="0.01" type="number" value="${a.litros}"></div><div><label class="label">R$/L</label><input id="eValorL" step="0.001" type="number" value="${a.valorL}"></div></div><label class="label">Total</label><input id="eTotal" step="0.01" type="number" value="${a.valor}" readonly>`;
-  $('eLitros').oninput=$('eValorL').oninput=()=>$('eTotal').value=($('eLitros').value*$('eValorL').value).toFixed(2);
-  $('modal').classList.add('active');
+function toggleEditAbast(id){
+  const box = $('editA'+id);
+  if(box.classList.contains('active')){box.classList.remove('active'); return;}
+  document.querySelectorAll('.inline-edit').forEach(b=>b.classList.remove('active'));
+  const a=db.abastecimentos.find(x=>x.id==id);
+  box.innerHTML = `<div class="grid grid-2">
+    <div><label class="label">Data</label><input id="eData${id}" type="date" value="${a.data}"></div>
+    <div><label class="label">Km</label><input id="eKm${id}" type="number" value="${a.km}"></div>
+    <div><label class="label">Litros</label><input id="eLitros${id}" step="0.01" type="number" value="${a.litros}"></div>
+    <div><label class="label">R$/L</label><input id="eValorL${id}" step="0.001" type="number" value="${a.valorL}"></div>
+  </div>
+  <label class="label">Total</label><input id="eTotal${id}" step="0.01" type="number" value="${a.valor}" readonly>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" onclick="saveEditAbast(${id})">Salvar</button>
+    <button class="btn-ghost" onclick="toggleEditAbast(${id})">Cancelar</button>
+  </div>`;
+  box.classList.add('active');
+  $('eLitros'+id).oninput=$('eValorL'+id).oninput=()=>$('eTotal'+id).value=($('eLitros'+id).value*$('eValorL'+id).value).toFixed(2);
+}
+
+function saveEditAbast(id){
+  const a=db.abastecimentos.find(x=>x.id==id);
+  Object.assign(a,{data:$('eData'+id).value,km:+$('eKm'+id).value,litros:+$('eLitros'+id).value,valor:+$('eTotal'+id).value,valorL:+$('eValorL'+id).value});
+  save(); toggleEditAbast(id); renderAbast(); renderAll();
 }
 
 function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAbast(); renderAll();}}
@@ -429,16 +418,7 @@ function addManut(){
   const km = +$('mKm').value;
   const intervalo = +$('mIntervalo').value || 4000;
   if(!tipo ||!km ||!$('mData').value) return alert('Preencha data, tipo e km');
-  db.manutencoes.push({
-    id:Date.now(),
-    veiculo:db.ativo,
-    data:$('mData').value,
-    tipo,
-    km,
-    intervalo,
-    proxKm:km+intervalo,
-    valor:+$('mValor').value||0
-  });
+  db.manutencoes.push({id:Date.now(),veiculo:db.ativo,data:$('mData').value,tipo,km,intervalo,proxKm:km+intervalo,valor:+$('mValor').value||0});
   $('mData').value=dataHoje();
   $('mTipo').value=$('mKm').value=$('mIntervalo').value=$('mValor').value='';
   save(); renderManut(); renderAll();
@@ -456,7 +436,7 @@ function renderManut(){
     let cls='',badge='';
     if(faltam<=0){cls='urgent'; badge='<span class="badge danger">VENCIDA</span>'}
     else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
-    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>${formatarData(m.data)} • Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km ~ ${diasUteis} dias úteis</small></div><div class="actions"><button class="btn-ghost" onclick="editManut(${m.id})">✏️</button><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
+    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>${formatarData(m.data)} • Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km ~ ${diasUteis} dias úteis</small></div><div class="actions"><button class="btn-ghost btn-sm" onclick="toggleEditManut(${m.id})">✏️</button><button class="btn-danger btn-sm" onclick="delManut(${m.id})">🗑️</button></div></div><div id="editM${m.id}" class="inline-edit"></div>`;
   }).join('')||'<div class="empty">Nenhuma manutenção cadastrada</div>';
 
   const trocasOleo = list.filter(m=>m.tipo.toLowerCase().includes('óleo')||m.tipo.toLowerCase().includes('oleo'));
@@ -472,11 +452,31 @@ function renderManut(){
   }
 }
 
-function editManut(id){
-  const m=db.manutencoes.find(x=>x.id==id); edit={tipo:'manut',id};
-  const dataAtual = m.data || dataHoje();
-  $('modalBody').innerHTML=`<label class="label">Data</label><input id="eData" type="date" value="${dataAtual}"><label class="label">Tipo</label><input id="eTipo" value="${m.tipo}"><div class="grid grid-2"><div><label class="label">Km</label><input id="eKm" type="number" value="${m.km}"></div><div><label class="label">Intervalo</label><input id="eIntervalo" type="number" value="${m.intervalo}"></div></div><label class="label">Valor</label><input id="eValor" type="number" value="${m.valor}">`;
-  $('modal').classList.add('active');
+function toggleEditManut(id){
+  const box = $('editM'+id);
+  if(box.classList.contains('active')){box.classList.remove('active'); return;}
+  document.querySelectorAll('.inline-edit').forEach(b=>b.classList.remove('active'));
+  const m=db.manutencoes.find(x=>x.id==id);
+  box.innerHTML = `<div class="grid grid-2">
+    <div><label class="label">Data</label><input id="eData${id}" type="date" value="${m.data}"></div>
+    <div><label class="label">Tipo</label><input id="eTipo${id}" value="${m.tipo}"></div>
+    <div><label class="label">Km</label><input id="eKm${id}" type="number" value="${m.km}"></div>
+    <div><label class="label">Intervalo</label><input id="eIntervalo${id}" type="number" value="${m.intervalo}"></div>
+  </div>
+  <label class="label">Valor</label><input id="eValor${id}" type="number" value="${m.valor}">
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" onclick="saveEditManut(${id})">Salvar</button>
+    <button class="btn-ghost" onclick="toggleEditManut(${id})">Cancelar</button>
+  </div>`;
+  box.classList.add('active');
+}
+
+function saveEditManut(id){
+  const m=db.manutencoes.find(x=>x.id==id);
+  const novoKm = +$('eKm'+id).value;
+  const novoIntervalo = +$('eIntervalo'+id).value || 4000;
+  Object.assign(m,{data:$('eData'+id).value,tipo:$('eTipo'+id).value,km:novoKm,intervalo:novoIntervalo,proxKm:novoKm+novoIntervalo,valor:+$('eValor'+id).value});
+  save(); toggleEditManut(id); renderManut(); renderAll();
 }
 
 function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
@@ -498,7 +498,7 @@ function renderGrafico(){
     ctx.font='14px sans-serif';
     ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted');
     ctx.textAlign='center';
-    ctx.fillText('Cadastre 2+ abastecimentos para ver o gráfico', canvas.width/2, canvas.height/2);
+    ctx.fillText('Cadastre 2+ abastecimentos', canvas.width/2, canvas.height/2);
     return;
   }
 
@@ -511,7 +511,6 @@ function renderGrafico(){
   }
 
   const dadosSemana={}, dadosMes={};
-
   for(let i=1;i<abs.length;i++){
     const km=abs[i].km-abs[i-1].km;
     const kml=km/abs[i].litros;
@@ -519,15 +518,12 @@ function renderGrafico(){
     const ano=data.getFullYear();
     const mes=String(data.getMonth()+1).padStart(2,'0');
     const semana=getWeekNum(abs[i].data);
-
     const keySemana=`${ano}-S${semana}`;
     const keyMes=`${ano}-${mes}`;
-
     if(!dadosSemana[keySemana]) dadosSemana[keySemana]=[];
     if(!dadosMes[keyMes]) dadosMes[keyMes]=[];
-
     dadosSemana[keySemana].push(kml);
-    dadosMes[keyMes].push(kml);
+        dadosMes[keyMes].push(kml);
   }
 
   const labelsSemana=Object.keys(dadosSemana).slice(-8);
@@ -553,38 +549,16 @@ function renderGrafico(){
       ]
     },
     options:{
+      indexAxis: 'y', // <- GRÁFICO DEITADO
       responsive:true,
       maintainAspectRatio:false,
       plugins:{legend:{display:true, labels:{color:textColor, boxWidth:12, font:{size:11}}}},
       scales:{
-        y:{beginAtZero:true, grid:{color:gridColor}, ticks:{color:textColor, font:{size:11}}},
-        x:{grid:{color:gridColor}, ticks:{color:textColor, font:{size:9}, maxRotation:45, minRotation:45}}
+        x:{beginAtZero:true, grid:{color:gridColor}, ticks:{color:textColor, font:{size:11}}},
+        y:{grid:{color:gridColor}, ticks:{color:textColor, font:{size:10}}}
       }
     }
   });
-}
-
-function closeModal(){$('modal').classList.remove('active'); edit={tipo:null,id:null}}
-
-function saveEdit(){
-  if(edit.tipo=='veiculo'){
-    const v=db.veiculos.find(x=>x.id==edit.id);
-    Object.assign(v,{nome:$('eNome').value,ano:+$('eAno').value,dataAquisicao:$('eData').value,kmCompra:+$('eKmCompra').value,kmDia:+$('eKmDia').value,kmSemana:+$('eKmDia').value*diasSelecionados.length,tanque:+$('eTanque').value||0,diasSemana:[...diasSelecionados]});
-  }
-  if(edit.tipo=='abast'){
-    const a=db.abastecimentos.find(x=>x.id==edit.id);
-    Object.assign(a,{data:$('eData').value,km:+$('eKm').value,litros:+$('eLitros').value,valor:+$('eTotal').value,valorL:+$('eValorL').value});
-  }
-  if(edit.tipo=='manut'){
-    const m=db.manutencoes.find(x=>x.id==edit.id);
-    const novoKm = +$('eKm').value;
-    const novoIntervalo = +$('eIntervalo').value || 4000;
-    Object.assign(m,{data:$('eData').value,tipo:$('eTipo').value,km:novoKm,intervalo:novoIntervalo,proxKm:novoKm+novoIntervalo,valor:+$('eValor').value});
-  }
-  save(); closeModal(); renderAll();
-   if(edit.tipo=='veiculo') renderVeiculos();
-  if(edit.tipo=='abast') renderAbast();
-  if(edit.tipo=='manut') renderManut();
 }
 
 function renderAll(){
@@ -635,6 +609,42 @@ function renderAll(){
   if($('painel').style.display!='none') renderGrafico();
 }
 
+function exportarJSON(){
+  const dados = JSON.stringify(db, null, 2);
+  const blob = new Blob([dados], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'combustivel_backup_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(!confirm('Isso vai APAGAR todos os dados atuais e substituir pelo backup. Continuar?')) {
+    event.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const dados = JSON.parse(e.target.result);
+      if(!dados.veiculos ||!dados.abastecimentos){
+        alert('Arquivo inválido. Selecione um backup gerado por este app.');
+        return;
+      }
+      db = dados;
+      save();
+      location.reload();
+    }catch(err){
+      alert('Erro ao ler arquivo: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
 function resetApp(){
   if(confirm('Apagar tudo?')&&confirm('Tem certeza?')){localStorage.clear(); location.reload()}
 }
@@ -643,4 +653,3 @@ load();
 </script>
 </body>
 </html>
-     
