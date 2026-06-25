@@ -144,9 +144,17 @@ button{cursor:pointer;font-weight:700;border:none}
     <div id="listaVeiculos"></div>
   </section>
 
-  <section id="config" style="display:none">
-    <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
-  </section>
+<section id="config" style="display:none">
+  <div class="card">
+    <h3>💾 Backup</h3>
+    <label class="label">Exportar dados</label>
+    <button class="btn" onclick="exportarJSON()">📤 Baixar.json</button>
+    <label class="label" style="margin-top:16px">Importar dados</label>
+    <input type="file" id="fileImport" accept=".json" onchange="importarJSON(event)">
+    <small style="color:var(--muted);display:block;margin-top:6px">Importar substitui TODOS os dados atuais</small>
+  </div>
+  <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
+</section>
 </div>
 
 <nav class="footer">
@@ -188,7 +196,43 @@ function formatarData(yyyy_mm_dd){
 function save(){
   localStorage.setItem(KEY_ATUAL, JSON.stringify(db));
 }
+function exportarJSON(){
+  const dados = JSON.stringify(db, null, 2);
+  const blob = new Blob([dados], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'combustivel_backup_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
+function importarJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  if(!confirm('Isso vai APAGAR todos os dados atuais e substituir pelo backup. Continuar?')) {
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const dados = JSON.parse(e.target.result);
+      if(!dados.veiculos ||!dados.abastecimentos){
+        alert('Arquivo inválido. Selecione um backup gerado por este app.');
+        return;
+      }
+      db = dados;
+      save();
+      location.reload();
+    }catch(err){
+      alert('Erro ao ler arquivo: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
 function load(){
   let raw = localStorage.getItem(KEY_ATUAL);
   if(!raw){
