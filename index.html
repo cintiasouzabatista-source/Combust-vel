@@ -17,19 +17,22 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
 input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,0.3)}
 .btn{background:var(--accent);color:#fff;font-weight:700;border:none;cursor:pointer}
 .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text);cursor:pointer}
-.btn-danger{background:var(--danger);color:#fff;border:none;cursor:pointer}
+.btn-small{padding:8px 12px;font-size:13px;border:none;border-radius:8px;cursor:pointer}
+.btn-edit{background:var(--accent);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
 .grid{display:grid;gap:10px}.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr 1fr}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .kpi{padding:16px;text-align:center}.kpi.label{font-size:12px;color:var(--muted);text-transform:uppercase}.kpi.val{font-size:28px;font-weight:800;margin-top:6px}
 .item{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.item-actions{display:flex;gap:6px}
 .badge{font-size:11px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.2);color:var(--ok);font-weight:700}
 .badge.warn{background:rgba(245,158,11,.2);color:var(--warn)}
 .badge.danger{background:rgba(239,68,68,.2);color:var(--danger)}
 .footer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px;padding:12px 20px;background:var(--card);border:1px solid var(--line);border-radius:24px;z-index:10}
 .footer button{border:none;background:none;font-size:24px;color:var(--muted);cursor:pointer}.footer button.active{color:var(--accent)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:999}
-.modal.active{display:flex}.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:999;padding:16px}
+.modal.active{display:flex}.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
 .chart-container{position:relative;height:220px;margin-top:10px}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
@@ -72,27 +75,17 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
   <section id="config" style="display:none">
     <div class="card">
       <h2 style="margin-top:0">⚙️ Configurações</h2>
-
       <label class="label">Tema</label>
       <select id="selTema"><option value="dark">🌙 Escuro</option><option value="light">☀️ Claro</option></select>
-
       <label class="label" style="margin-top:16px">Km/dia que tu roda</label>
       <input id="cfgKmDia" type="number" value="30">
-      <small style="color:var(--muted)">Usado pra calcular "faltam X dias"</small>
-
       <label class="label" style="margin-top:16px">Alerta óleo - km antes</label>
       <input id="cfgAlertaOleo" type="number" value="300">
-      <small style="color:var(--muted)">300km = fica vermelho antes</small>
-
       <label class="label" style="margin-top:16px">Notificações</label>
       <button class="btn-ghost" onclick="ativarNotificacoes()">🔔 Ativar Alertas</button>
-
       <h3 style="margin-top:20px">💾 Backup</h3>
       <button onclick="exportarJSON()" class="btn" style="margin-bottom:8px;width:100%">📤 Exportar</button>
-      <label class="btn btn-ghost" style="width:100%;display:block;text-align:center;cursor:pointer">
-        📥 Importar
-        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
-      </label>
+      <label class="btn btn-ghost" style="width:100%;display:block;text-align:center;cursor:pointer">📥 Importar<input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
     </div>
   </section>
 </div>
@@ -107,33 +100,36 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 
 <div class="modal" id="modal-veiculo">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>Cadastrar Veículo</h3><button class="btn-ghost" onclick="closeModal('veiculo')">✕</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloVeiculo">Cadastrar Veículo</h3><button class="btn-ghost" onclick="closeModal('veiculo')">✕</button></div>
+    <input type="hidden" id="vId">
     <label class="label">Modelo</label><input id="vNome" placeholder="Honda Lead 110">
     <div class="grid grid-2"><div><label class="label">Ano</label><input id="vAno" type="number" value="2010"></div><div><label class="label">Data Aquisição</label><input id="vData" type="date"></div></div>
-    <div class="grid grid-3"><div><label class="label">Km compra</label><input id="vKmCompra" type="number" value="95000"></div><div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1" value="6.5"></div><div><label class="label">Km reserva</label><input id="vReserva" type="number" step="0.1" value="1.0"></div></div>
-    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('veiculo')">Cancelar</button><button class="btn" onclick="addVeiculo()">Salvar</button></div>
+    <div class="grid grid-3"><div><label class="label">Km compra</label><input id="vKmCompra" type="number"></div><div><label class="label">Tanque L</label><input id="vTanque" type="number" step="0.1"></div><div><label class="label">Km reserva</label><input id="vReserva" type="number" step="0.1"></div></div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('veiculo')">Cancelar</button><button class="btn" onclick="saveVeiculo()">Salvar</button></div>
   </div>
 </div>
 
 <div class="modal" id="modal-abast">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>⛽ Abastecimento</h3><button class="btn-ghost" onclick="closeModal('abast')">✕</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloAbast">⛽ Abastecimento</h3><button class="btn-ghost" onclick="closeModal('abast')">✕</button></div>
+    <input type="hidden" id="aId">
     <label class="label">Data</label><input id="aData" type="date">
     <label class="label">Km Odômetro</label><input id="aKm" type="number">
     <div class="grid grid-2"><div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01"></div><div><label class="label">R$/L</label><input id="aValorL" type="number" step="0.001"></div></div>
     <label class="label">Total R$</label><input id="aTotal" readonly>
-    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('abast')">Cancelar</button><button class="btn" onclick="addAbast()">Salvar</button></div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('abast')">Cancelar</button><button class="btn" onclick="saveAbast()">Salvar</button></div>
   </div>
 </div>
 
 <div class="modal" id="modal-manut">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>🔧 Manutenção</h3><button class="btn-ghost" onclick="closeModal('manut')">✕</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloManut">🔧 Manutenção</h3><button class="btn-ghost" onclick="closeModal('manut')">✕</button></div>
+    <input type="hidden" id="mId">
     <label class="label">Data</label><input id="mData" type="date">
     <label class="label">Tipo</label><input id="mTipo" placeholder="Troca de óleo">
-    <div class="grid grid-2"><div><label class="label">Km da troca</label><input id="mKm" type="number"></div><div><label class="label">Intervalo km</label><input id="mIntervalo" type="number" value="4000"></div></div>
+    <div class="grid grid-2"><div><label class="label">Km da troca</label><input id="mKm" type="number"></div><div><label class="label">Intervalo km</label><input id="mIntervalo" type="number"></div></div>
     <label class="label">Valor R$</label><input id="mValor" type="number" step="0.01">
-    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('manut')">Cancelar</button><button class="btn" onclick="addManut()">Salvar</button></div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('manut')">Cancelar</button><button class="btn" onclick="saveManut()">Salvar</button></div>
   </div>
 </div>
 
@@ -148,30 +144,16 @@ document.addEventListener('DOMContentLoaded', load);
 function load(){
   const raw=localStorage.getItem(KEY);
   if(raw) db=JSON.parse(raw);
-
   const hoje=new Date().toISOString().split('T')[0];
   if($('vData')) $('vData').value=hoje;
   if($('aData')) $('aData').value=hoje;
   if($('mData')) $('mData').value=hoje;
-
   renderVeiculosSelect();
   renderAll();
   applyTheme();
-
-  // TEMA
-  if($('selTema')) {
-    $('selTema').value=db.tema;
-    $('selTema').onchange=e=>{db.tema=e.target.value; applyTheme(); save();}
-  }
-  // CONFIGS
-  if($('cfgKmDia')) {
-    $('cfgKmDia').value=db.kmDiaPadrao;
-    $('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll();}
-  }
-  if($('cfgAlertaOleo')) {
-    $('cfgAlertaOleo').value=db.alertaOleoKm;
-    $('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll();}
-  }
+  if($('selTema')){$('selTema').value=db.tema;$('selTema').onchange=e=>{db.tema=e.target.value; applyTheme(); save()}}
+  if($('cfgKmDia')){$('cfgKmDia').value=db.kmDiaPadrao;$('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll()}}
+  if($('cfgAlertaOleo')){$('cfgAlertaOleo').value=db.alertaOleoKm;$('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll()}}
 }
 
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
@@ -186,8 +168,10 @@ function show(t){
   if(t=='painel') setTimeout(renderGrafico,100);
 }
 
-function openModal(tipo){
+function openModal(tipo, id=null){
   $(`modal-${tipo}`).classList.add('active');
+  limparCampos(tipo);
+  if(id) carregarEdicao(tipo, id);
   if(tipo=='abast'){
     const calc=()=>$('aTotal').value=((parseFloat($('aLitros').value)||0)*(parseFloat($('aValorL').value)||0)).toFixed(2);
     $('aLitros').oninput=calc; $('aValorL').oninput=calc;
@@ -195,26 +179,69 @@ function openModal(tipo){
 }
 function closeModal(tipo){$(`modal-${tipo}`).classList.remove('active')}
 
+function limparCampos(tipo){
+  if(tipo=='veiculo'){ $('vId').value=''; $('tituloVeiculo').textContent='Cadastrar Veículo'; $('vNome').value=''; $('vAno').value='2010'; $('vKmCompra').value=''; $('vTanque').value=''; $('vReserva').value=''; }
+  if(tipo=='abast'){ $('aId').value=''; $('tituloAbast').textContent='⛽ Abastecimento'; $('aData').value=new Date().toISOString().split('T')[0]; $('aKm').value=''; $('aLitros').value=''; $('aValorL').value=''; $('aTotal').value=''; }
+  if(tipo=='manut'){ $('mId').value=''; $('tituloManut').textContent='🔧 Manutenção'; $('mData').value=new Date().toISOString().split('T')[0]; $('mTipo').value=''; $('mKm').value=''; $('mIntervalo').value='4000'; $('mValor').value=''; }
+}
+
+function carregarEdicao(tipo, id){
+  if(tipo=='veiculo'){
+    const v=db.veiculos.find(x=>x.id==id);
+    $('vId').value=v.id; $('tituloVeiculo').textContent='Editar Veículo';
+    $('vNome').value=v.nome; $('vAno').value=v.ano; $('vData').value=v.dataAquisicao;
+    $('vKmCompra').value=v.kmCompra; $('vTanque').value=v.tanque; $('vReserva').value=v.reserva;
+  }
+  if(tipo=='abast'){
+    const a=db.abastecimentos.find(x=>x.id==id);
+    $('aId').value=a.id; $('tituloAbast').textContent='Editar Abastecimento';
+    $('aData').value=a.data; $('aKm').value=a.km; $('aLitros').value=a.litros; $('aValorL').value=a.valorL; $('aTotal').value=a.valor;
+  }
+  if(tipo=='manut'){
+    const m=db.manutencoes.find(x=>x.id==id);
+    $('mId').value=m.id; $('tituloManut').textContent='Editar Manutenção';
+    $('mData').value=m.data; $('mTipo').value=m.tipo; $('mKm').value=m.km; $('mIntervalo').value=m.intervalo; $('mValor').value=m.valor;
+  }
+}
+
 function renderVeiculosSelect(){
   $('selVeiculo').innerHTML=db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
   $('selVeiculo').onchange=e=>{db.ativo=+e.target.value; save(); renderAll();}
 }
 
-function addVeiculo(){
+function saveVeiculo(){
   if(!$('vNome').value.trim()) return alert('Preencha modelo');
-  const novo={id:Date.now(),nome:$('vNome').value,ano:+$('vAno').value||2010,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,tanque:+$('vTanque').value||6.5,reserva:+$('vReserva').value||1};
-  db.veiculos.push(novo); db.ativo=novo.id; save(); closeModal('veiculo'); renderVeiculosSelect(); renderAll();
+  const id=$('vId').value;
+  const obj={nome:$('vNome').value,ano:+$('vAno').value||2010,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,tanque:+$('vTanque').value||6.5,reserva:+$('vReserva').value||1};
+  if(id){
+    Object.assign(db.veiculos.find(v=>v.id==+id), obj);
+  } else {
+    obj.id=Date.now(); db.veiculos.push(obj); db.ativo=obj.id;
+  }
+  save(); closeModal('veiculo'); renderVeiculosSelect(); renderAll();
 }
 
-function addAbast(){
+function saveAbast(){
   if(!$('aData').value||!$('aKm').value||!$('aLitros').value) return alert('Preencha tudo');
-  db.abastecimentos.push({id:Date.now(),veiculo:db.ativo,data:$('aData').value,km:+$('aKm').value,litros:+$('aLitros').value,valor:+$('aTotal').value,valorL:+$('aValorL').value});
+  const id=$('aId').value;
+  const obj={veiculo:db.ativo,data:$('aData').value,km:+$('aKm').value,litros:+$('aLitros').value,valor:+$('aTotal').value,valorL:+$('aValorL').value};
+  if(id){
+    Object.assign(db.abastecimentos.find(a=>a.id==+id), obj);
+  } else {
+    obj.id=Date.now(); db.abastecimentos.push(obj);
+  }
   save(); closeModal('abast'); renderAll(); verificarAlertas();
 }
 
-function addManut(){
+function saveManut(){
   if(!$('mTipo').value.trim()||!$('mKm').value) return alert('Preencha tipo e km');
-  db.manutencoes.push({id:Date.now(),veiculo:db.ativo,data:$('mData').value,tipo:$('mTipo').value,km:+$('mKm').value,intervalo:+$('mIntervalo').value||4000,proxKm:+$('mKm').value+(+$('mIntervalo').value||4000),valor:+$('mValor').value||0});
+  const id=$('mId').value;
+  const obj={veiculo:db.ativo,data:$('mData').value,tipo:$('mTipo').value,km:+$('mKm').value,intervalo:+$('mIntervalo').value||4000,proxKm:+$('mKm').value+(+$('mIntervalo').value||4000),valor:+$('mValor').value||0};
+  if(id){
+    Object.assign(db.manutencoes.find(m=>m.id==+id), obj);
+  } else {
+    obj.id=Date.now(); db.manutencoes.push(obj);
+  }
   save(); closeModal('manut'); renderAll(); verificarAlertas();
 }
 
@@ -235,37 +262,21 @@ function renderAll(){
   if(!db.ativo||!db.veiculos.length) return;
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data)-new Date(b.data));
-
   const kmAtual=getKmAtual(v);
   const media=getMediaKmL(v);
   $('kmAtual').textContent=kmAtual+' km';
   $('kml').textContent=media.toFixed(1)+' km/l';
   $('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
-
   const autonomia=media*v.tanque;
   const diasFaltam=Math.floor(autonomia/db.kmDiaPadrao);
   $('proxAbast').textContent=`${autonomia.toFixed(0)}km ~ ${diasFaltam} dias`;
-
-  if(autonomia<=40){
-    $('cardAbast').className='card kpi urgent';
-    $('proxAbast').innerHTML=`${autonomia.toFixed(0)}km <span class="badge danger">RESERVA!</span>`;
-  } else {
-    $('cardAbast').className='card kpi info-card';
-  }
-
+  if(autonomia<=40){$('cardAbast').className='card kpi urgent';$('proxAbast').innerHTML=`${autonomia.toFixed(0)}km <span class="badge danger">RESERVA!</span>`} else {$('cardAbast').className='card kpi info-card'}
   const manutOleo=db.manutencoes.filter(m=>m.veiculo==db.ativo&&m.tipo.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km)[0];
   if(manutOleo){
     const faltam=manutOleo.proxKm-kmAtual;
-    if(faltam<=db.alertaOleoKm){
-      $('cardOleo').className='card kpi urgent';
-      $('proxOleo').innerHTML=`${faltam}km <span class="badge danger">TROCAR!</span>`;
-    } else {
-      $('cardOleo').className='card kpi';
-      $('proxOleo').textContent=faltam+'km';
-    }
+    if(faltam<=db.alertaOleoKm){$('cardOleo').className='card kpi urgent';$('proxOleo').innerHTML=`${faltam}km <span class="badge danger">TROCAR!</span>`} else {$('cardOleo').className='card kpi';$('proxOleo').textContent=faltam+'km'}
   }
-
-  renderAbast(); renderManut(); renderGrafico();
+  renderAbast(); renderManut(); renderVeiculos(); renderGrafico();
 }
 
 function renderGrafico(){
@@ -273,7 +284,6 @@ function renderGrafico(){
   if(!ctx) return;
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data)-new Date(b.data));
-
   if(grafico) grafico.destroy();
   if(abs.length<2){
     ctx.font='14px sans-serif';
@@ -282,7 +292,6 @@ function renderGrafico(){
     ctx.fillText('Cadastre 2+ abastecimentos para ver o gráfico', ctx.canvas.width/2, ctx.canvas.height/2);
     return;
   }
-
   const dados=[];
   for(let i=1;i<abs.length;i++){
     const km=abs[i].km-abs[i-1].km;
@@ -290,19 +299,17 @@ function renderGrafico(){
     const mes=abs[i].data.substring(0,7);
     dados.push({mes,kml});
   }
-
   const meses=[...new Set(dados.map(d=>d.mes))];
   const medias=meses.map(m=>{
     const vals=dados.filter(d=>d.mes==m).map(d=>d.kml);
     return vals.reduce((a,b)=>a+b,0)/vals.length;
   });
-
-  grafico=new Chart(ctx,{type:'bar',data:{labels:meses.map(m=>m.split('-').reverse().join('/')),datasets:[{label:'km/l',data:medias,backgroundColor:'#3b82f6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  grafico=new Chart(ctx,{type:'line',data:{labels:meses.map(m=>m.split('-').reverse().join('/')),datasets:[{label:'km/l',data:medias,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
 }
 
 function renderAbast(){
   const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
-  $('listaAbast').innerHTML=list.length? list.map(a=>`<div class="item"><div><b>${a.data.split('-').reverse().join('/')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • R$${a.valor.toFixed(2)}</small></div><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>`).join(''):'<div class="empty">Sem abastecimentos</div>';
+  $('listaAbast').innerHTML=list.length? list.map(a=>`<div class="item"><div><b>${a.data.split('-').reverse().join('/')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • R$${a.valor.toFixed(2)}</small></div><div class="item-actions"><button class="btn-small btn-edit" onclick="openModal('abast',${a.id})">✏️</button><button class="btn-small btn-danger" onclick="delAbast(${a.id})">🗑️</button></div></div>`).join(''):'<div class="empty">Sem abastecimentos</div>';
 }
 
 function renderManut(){
@@ -313,36 +320,29 @@ function renderManut(){
     const faltam=m.proxKm-kmAtual;
     const cls=faltam<=db.alertaOleoKm?'urgent':'';
     const badge=faltam<=db.alertaOleoKm?'<span class="badge danger">TROCAR!</span>':'';
-    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>Feito ${m.km}km • Próxima ${m.proxKm}km • Faltam ${faltam}km</small></div><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div>`;
+    return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>Feito ${m.km}km • Próxima ${m.proxKm}km • Faltam ${faltam}km</small></div><div class="item-actions"><button class="btn-small btn-edit" onclick="openModal('manut',${m.id})">✏️</button><button class="btn-small btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
   }).join(''):'<div class="empty">Sem manutenções</div>';
 }
 
-function delAbast(id){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAll();}
-function delManut(id){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderAll();}
+function renderVeiculos(){
+  $('listaVeiculos').innerHTML=db.veiculos.length? db.veiculos.map(v=>`<div class="item ${v.id==db.ativo?'alert':''}"><div><b>${v.nome}</b> ${v.id==db.ativo?'<span class="badge">Ativo</span>':''}<br><small>Ano ${v.ano} • Km compra ${v.kmCompra}km</small></div><div class="item-actions"><button class="btn-small btn-edit" onclick="openModal('veiculo',${v.id})">✏️</button><button class="btn-small btn-danger" onclick="delVeiculo(${v.id})">🗑️</button></div></div>`).join(''):'<div class="empty">Sem veículos</div>';
+}
 
-function pedirPermissaoNotificacao(){
-  if('Notification' in window && Notification.permission==='default'){
-    Notification.requestPermission();
-  }
-}
-function ativarNotificacoes(){
-  pedirPermissaoNotificacao();
-  alert('Alertas ativados!');
-  verificarAlertas();
-}
+function delAbast(id){if(confirm('Excluir?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAll()}}
+function delManut(id){if(confirm('Excluir?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderAll()}}
+function delVeiculo(id){if(confirm('Excluir veículo e todos dados?')){db.veiculos=db.veiculos.filter(v=>v.id!=id); db.abastecimentos=db.abastecimentos.filter(a=>a.veiculo!=id); db.manutencoes=db.manutencoes.filter(m=>m.veiculo!=id); db.ativo=db.veiculos[0]?.id||null; save(); renderVeiculosSelect(); renderAll()}}
+
+function pedirPermissaoNotificacao(){if('Notification' in window && Notification.permission==='default'){Notification.requestPermission()}}
+function ativarNotificacoes(){pedirPermissaoNotificacao(); alert('Alertas ativados!'); verificarAlertas()}
 function verificarAlertas(){
   if(Notification.permission!=='granted') return;
   const v=db.veiculos.find(x=>x.id==db.ativo);
   const kmAtual=getKmAtual(v);
   const media=getMediaKmL(v);
   const autonomia=media*v.tanque;
-  if(autonomia<=40){
-    new Notification('⛽ RESERVA!', {body:`Tanque com só ${autonomia.toFixed(0)}km. Abastece logo!`});
-  }
+  if(autonomia<=40){new Notification('⛽ RESERVA!', {body:`Tanque com só ${autonomia.toFixed(0)}km. Abastece logo!`})}
   const manutOleo=db.manutencoes.filter(m=>m.veiculo==db.ativo&&m.tipo.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km)[0];
-  if(manutOleo && manutOleo.proxKm-kmAtual<=db.alertaOleoKm){
-    new Notification('🔧 Troca de Óleo!', {body:`Faltam ${manutOleo.proxKm-kmAtual}km pra troca`});
-  }
+  if(manutOleo && manutOleo.proxKm-kmAtual<=db.alertaOleoKm){new Notification('🔧 Troca de Óleo!', {body:`Faltam ${manutOleo.proxKm-kmAtual}km pra troca`})}
 }
 
 function exportarJSON(){
