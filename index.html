@@ -63,6 +63,14 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
       <div class="card kpi" id="cardOleo"><div class="label">Próx Troca Óleo</div><div class="val" id="proxOleo">--</div></div>
     </div>
     <div class="card"><h3 style="margin-top:0">Consumo km/l por mês</h3><div class="chart-container"><canvas id="graficoConsumo"></canvas></div></div>
+    <div class="card">
+    <h3>Gasto por Período</h3>
+    <div class="tabs-grafico">
+        <button class="active" onclick="mostrarGrafico('semana')">Semanal</button>
+        <button onclick="mostrarGrafico('mes')">Mensal</button>
+    </div>
+    <canvas id="graficoGasto" width="400" height="200"></canvas>
+</div>
   </section>
 
   <section id="abastecer" class="section" style="display:none">
@@ -247,7 +255,82 @@ function show(t){
   if(t=='painel') setTimeout(renderGrafico,200);
   window.scrollTo({top:0,behavior:'smooth'});
 }
+let tipoGrafico = 'semana';
 
+function mostrarGrafico(tipo) {
+    tipoGrafico = tipo;
+    document.querySelectorAll('.tabs-grafico button').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    desenharGrafico();
+}
+
+function desenharGrafico() {
+    const canvas = document.getElementById('graficoGasto');
+    const ctx = canvas.getContext('2d');
+    const isLight = document.body.classList.contains('light');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Agrupa dados
+    const dados = tipoGrafico === 'semana'? agruparPorSemana() : agruparPorMes();
+    if (!dados.length) return;
+
+    const maxValor = Math.max(...dados.map(d => d.valor));
+    const barWidth = canvas.width / dados.length * 0.6;
+    const cor = isLight? '#2563eb' : '#3b82f6';
+
+    dados.forEach((d, i) => {
+        const barHeight = (d.valor / maxValor) * (canvas.height - 40);
+        const x = (canvas.width / dados.length) * i + barWidth * 0.2;
+        const y = canvas.height - barHeight - 20;
+
+        // Barra
+        ctx.fillStyle = cor;
+        ctx.fillRect(x, y, barWidth, barHeight);
+
+        // Valor
+        ctx.fillStyle = isLight? '#0f172a' : '#f1f5f9';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('R$' + d.valor.toFixed(0), x + barWidth/2, y - 5);
+
+        // Label
+        ctx.fillText(d.label, x + barWidth/2, canvas.height - 5);
+    });
+}
+
+function agruparPorSemana() {
+    const grupos = {};
+    abastecimentos.forEach(a => {
+        const data = new Date(a.data);
+        const semana = `S${getWeekNumber(data)}`;
+        grupos[semana] = (grupos[semana] || 0) + a.total;
+    });
+    return Object.entries(grupos).slice(-6).map(([k,v]) => ({label: k, valor: v}));
+}
+
+function agruparPorMes() {
+    const grupos = {};
+    abastecimentos.forEach(a => {
+        const mes = new Date(a.data).toLocaleDateString('pt-BR', {month: 'short'});
+        grupos[mes] = (grupos[mes] || 0) + a.total;
+    });
+    return Object.entries(grupos).map(([k,v]) => ({label: k, valor: v}));
+}
+
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+}
+
+// Chama o gráfico quando calcula KPIs
+const calcularKPIsOriginal = calcularKPIs;
+calcularKPIs = function() {
+    calcularKPIsOriginal();
+    desenharGrafico();
+}
 function setupDiasSemana(){
   document.querySelectorAll('.dia-btn').forEach(btn=>{
     const dia=+btn.dataset.dia;
