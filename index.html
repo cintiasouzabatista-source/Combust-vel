@@ -188,70 +188,54 @@ function formatarData(yyyy_mm_dd){
 
 // MIGRAÇÃO AUTOMÁTICA
 function load(){
-  let raw = localStorage.getItem(KEY_ATUAL);
-  if(!raw){
-    for(let keyAntiga of KEYS_ANTIGAS){
-      raw = localStorage.getItem(keyAntiga);
-      if(raw){
-        console.log(`Migrando dados de ${keyAntiga} → ${KEY_ATUAL}`);
-        localStorage.setItem(KEY_ATUAL, raw);
-        break;
-      }
-    }
-  }
+  const raw=localStorage.getItem(KEY);
+  if(raw) db=JSON.parse(raw);
 
-  if(raw) db = JSON.parse(raw);
+  // Força tema dark se não existir
+  if(!db.tema) db.tema='dark';
 
-  if(!db.veiculos.length){
-    db.veiculos.push({id:1,nome:'Honda Lead',ano:2010,dataAquisicao:dataHoje(),kmCompra:93667,kmDia:35,kmSemana:175,tanque:6.5,diasSemana:[1,2,3,4,5]});
-    db.ativo=1; save();
-  }
+  const hoje=new Date().toISOString().split('T')[0];
+  if($('vData')) $('vData').value=hoje;
+  if($('aData')) $('aData').value=hoje;
+  if($('mData')) $('mData').value=hoje;
 
-  vData.value = dataHoje();
-  mData.value = dataHoje();
-  setupDiasSemana();
+  renderVeiculosSelect();
+  applyTheme(); // <- TEM QUE RODAR ANTES DO RENDERALL
+  renderAll();
   setupSwipe();
-  renderVeiculosSelect(); renderAll(); loadTema(); aData.value = dataHoje();
+  setupDiasSemana();
+
+  $('btnTema').onclick=toggleTema;
+  $('cfgModoKm').value=db.modoKm;
+  $('cfgModoKm').onchange=e=>{db.modoKm=e.target.value; atualizarCfgKm(); save(); renderAll()}
+  $('cfgKmDia').value=db.kmDiaPadrao;
+  $('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll()}
+  $('cfgKmMes').value=db.kmMesPadrao;
+  $('cfgKmMes').onchange=e=>{db.kmMesPadrao=+e.target.value; save(); renderAll()}
+  $('cfgAlertaOleo').value=db.alertaOleoKm;
+  $('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll()}
+  atualizarCfgKm();
 }
 
-function save(){localStorage.setItem(KEY_ATUAL,JSON.stringify(db))}
+function applyTheme(){
+  console.log('Tema atual:', db.tema); // pra debug
 
-function setupSwipe(){
-  let startX = 0;
-  const container = document.getElementById('appContainer');
-  container.addEventListener('touchstart', e=>{startX = e.touches[0].clientX});
-  container.addEventListener('touchend', e=>{
-    const endX = e.changedTouches[0].clientX;
-    const diff = startX - endX;
-    if(Math.abs(diff) > 50){
-      const telas = ['painel','abastecer','manutencao','veiculos','config'];
-      const atual = telas.findIndex(t=>document.getElementById(t).style.display=='block');
-      if(diff > 0 && atual < telas.length-1) show(telas[atual+1]);
-      if(diff < 0 && atual > 0) show(telas[atual-1]);
-    }
-  });
+  if(db.tema==='light'){
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
+
+  $('btnTema').style.display = abaAtual==='painel'? 'block' : 'none';
 }
 
-function setupDiasSemana(){
-  document.querySelectorAll('.dia-btn').forEach(btn=>{
-    const dia = +btn.dataset.dia;
-    if(diasSelecionados.includes(dia)) btn.classList.add('active');
-    btn.onclick = ()=>{
-      btn.classList.toggle('active');
-      diasSelecionados = Array.from(document.querySelectorAll('.dia-btn.active')).map(b=>+b.dataset.dia);
-    }
-  });
+function toggleTema(){
+  db.tema = db.tema==='dark'? 'light' : 'dark';
+  console.log('Trocou pra:', db.tema); // pra debug
+  applyTheme();
+  save();
+  setTimeout(renderGrafico, 100);
 }
-
-function show(t){
-  ['painel','abastecer','manutencao','veiculos','config'].forEach(s=>document.getElementById(s).style.display='none');
-  document.getElementById(t).style.display='block';
-  document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
-  event?.target?.classList.add('active');
-  title.textContent=t.charAt(0).toUpperCase()+t.slice(1);
-  if(t=='painel') setTimeout(renderGrafico, 100);
-}
-
 function contarDiasUteis(dataInicio, dataFim, diasSemana){
   let count = 0;
   let data = new Date(dataInicio + 'T00:00:00');
@@ -399,49 +383,107 @@ function editManut(id){
 function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderManut(); renderAll();}}
 
 function renderGrafico(){
-  const v=db.veiculos.find(x=>x.id==db.ativo);
-  const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data+'T00:00:00')-new Date(b.data+'T00:00:00'));
+  const canvas=$('graficoConsumo');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  if(!ctx) return;
 
-  const meses = {};
-  for(let i=1;i<abs.length;i++){
-    const mes = abs[i].data.substring(0,7);
-    const km = abs[i].km - abs[i-1].km;
-    const kml = km / abs[i].litros;
-    if(!meses[mes]) meses[mes] = [];
-    meses[mes].push(kml);
+  const v=db.veiculos.find(x=>x.id==db.ativo);
+  const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data)-new Date(b.data));
+
+  if(grafico){grafico.destroy(); grafico=null;}
+
+  if(abs.length<2){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.font='14px sans-serif';
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted');
+    ctx.textAlign='center';
+    ctx.fillText('Cadastre 2+ abastecimentos para ver o gráfico', canvas.width/2, canvas.height/2);
+    return;
   }
 
-  const labels = Object.keys(meses).map(m=>m.split('-')[1]+'/'+m.split('-')[0]);
-  const dados = Object.values(meses).map(arr=>arr.reduce((a,b)=>a+b)/arr.length);
+  // Função pra pegar semana do ano
+  function getWeekNum(d){
+    const date=new Date(d);
+    date.setHours(0,0,0,0);
+    date.setDate(date.getDate()+3-(date.getDay()+6)%7);
+    const week1=new Date(date.getFullYear(),0,4);
+    return 1+Math.round(((date-week1)/86400000-3+(week1.getDay()+6)%7)/7);
+  }
 
-  const ctx = document.getElementById('graficoConsumo');
-  if(grafico) grafico.destroy();
+  const dadosSemana={}, dadosMes={};
 
-  grafico = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'km/l',
-        data: dados,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.1)',
-        tension: 0.4,
-        fill: true
-      }]
+  // Agrupa por semana e por mês
+  for(let i=1;i<abs.length;i++){
+    const km=abs[i].km-abs[i-1].km;
+    const kml=km/abs[i].litros;
+    const data=new Date(abs[i].data);
+    const ano=data.getFullYear();
+    const mes=String(data.getMonth()+1).padStart(2,'0');
+    const semana=getWeekNum(abs[i].data);
+
+    const keySemana=`${ano}-S${semana}`;
+    const keyMes=`${ano}-${mes}`;
+
+    if(!dadosSemana[keySemana]) dadosSemana[keySemana]=[];
+    if(!dadosMes[keyMes]) dadosMes[keyMes]=[];
+
+    dadosSemana[keySemana].push(kml);
+    dadosMes[keyMes].push(kml);
+  }
+
+  // Pega últimas 8 semanas e últimos 6 meses
+  const labelsSemana=Object.keys(dadosSemana).slice(-8);
+  const mediasSemana=labelsSemana.map(k=>dadosSemana[k].reduce((a,b)=>a+b,0)/dadosSemana[k].length);
+
+  const labelsMes=Object.keys(dadosMes).slice(-6);
+  const mediasMes=labelsMes.map(k=>dadosMes[k].reduce((a,b)=>a+b,0)/dadosMes[k].length);
+
+  // Junta tudo: primeiro semanas, depois meses
+  const labels=[
+   ...labelsSemana.map(l=>'Sem '+l.split('-S')[1]),
+   ...labelsMes.map(l=>l.split('-')[1]+'/'+l.split('-')[0])
+  ];
+  const dataSemana=[...mediasSemana,...Array(mediasMes.length).fill(null)];
+  const dataMes=[...Array(mediasSemana.length).fill(null),...mediasMes];
+
+  const gridColor=db.tema==='dark'?'rgba(148,163,184,0.2)':'rgba(100,116,139,0.2)';
+  const textColor=db.tema==='dark'?'#94a3b8':'#64748b';
+
+  grafico=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[
+        {
+          label:'Semana',
+          data:dataSemana,
+          backgroundColor:'#3b82f6',
+          borderRadius:6,
+          barThickness:16
+        },
+        {
+          label:'Mês',
+          data:dataMes,
+          backgroundColor:'#22c55e',
+          borderRadius:6,
+          barThickness:16
+        }
+      ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {legend: {display: false}},
-      scales: {
-        y: {beginAtZero: true, grid: {color: 'rgba(148,163,184,0.2)'}},
-        x: {grid: {color: 'rgba(148,163,184,0.2)'}}
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true, labels:{color:textColor, boxWidth:12, font:{size:11}}}
+      },
+      scales:{
+        y:{beginAtZero:true, grid:{color:gridColor}, ticks:{color:textColor, font:{size:11}}},
+        x:{grid:{color:gridColor}, ticks:{color:textColor, font:{size:9}, maxRotation:45, minRotation:45}}
       }
     }
   });
 }
-
 function closeModal(){modal.classList.remove('active'); edit={tipo:null,id:null}}
 function saveEdit(){
   if(edit.tipo=='veiculo'){
