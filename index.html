@@ -54,7 +54,7 @@ button{cursor:pointer;font-weight:700;border:none}
 <body>
 <div class="wrap" id="appContainer">
   <header>
-    <h1 id="title">Painel</h1>
+  <h1 id="tituloPagina">Painel</h1>
     <button id="btnTema" class="btn-ghost btn-sm" onclick="toggleTema()" style="width: auto; margin-right: 8px;">🌓</button>
     <select id="selVeiculo"></select>
   </header>
@@ -226,7 +226,7 @@ function show(t){
   $(t).style.display = 'block';
   document.querySelectorAll('.footer button').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.footer button')[['painel','abastecer','manutencao','veiculos','config'].indexOf(t)].classList.add('active');
-  $('title').textContent = t.charAt(0).toUpperCase() + t.slice(1);
+ $('tituloPagina').textContent = t.charAt(0).toUpperCase() + t.slice(1);
   applyTheme();
   if(t == 'painel') setTimeout(renderGrafico, 200);
   window.scrollTo({top:0, behavior:'smooth'});
