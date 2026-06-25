@@ -77,17 +77,14 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
       <h2 style="margin-top:0">⚙️ Configurações</h2>
       <label class="label">Tema</label>
       <select id="selTema"><option value="dark">Escuro</option><option value="light">Claro</option></select>
-
       <h3 style="margin-top:20px">🏍️ Gerenciar Veículos</h3>
       <div id="listaVeiculosConfig"></div>
-
       <h3 style="margin-top:20px">💾 Backup</h3>
       <button onclick="exportarJSON()" class="btn" style="margin-bottom:8px;width:100%">📤 Exportar Backup</button>
       <label class="btn btn-ghost" style="width:100%;display:block;text-align:center;cursor:pointer">
         📥 Importar Backup
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
       </label>
-
       <button onclick="resetApp()" class="btn-danger" style="margin-top:20px;width:100%">🗑️ Resetar App</button>
     </div>
   </section>
@@ -149,12 +146,11 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 </div>
 
 <script>
-const KEY_ATUAL='combApp_v10';
+const KEY_ATUAL='combApp_v11';
 const $ = id => document.getElementById(id);
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark'};
 let edit={tipo:null,id:null};
-let diasSelecionados = [1,2,3,4,5]; // CORRIGIDO - vírgulas
-let grafico = null;
+let diasSelecionados = [1,2,3,4,5];
 
 document.addEventListener('DOMContentLoaded', load);
 
@@ -172,10 +168,12 @@ function load(){
   renderVeiculosSelect();
   renderAll();
   applyTheme();
+
   if($('selTema')) {
     $('selTema').value = db.tema;
     $('selTema').onchange = e => {db.tema = e.target.value; applyTheme(); save();};
   }
+
   if(!db.veiculos.length) setTimeout(()=>openModal('veiculo'), 500);
 }
 
@@ -190,14 +188,11 @@ function show(t){
   document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
   if(event && event.target) event.target.classList.add('active');
   $('title').textContent=t.charAt(0).toUpperCase()+t.slice(1);
-  if(t=='painel') setTimeout(renderGrafico, 100);
 }
 
 function openModal(tipo){
   $(`modal-${tipo}`).classList.add('active');
-
   if(tipo == 'abast'){
-    // Total automático - só liga quando modal abre
     const calcTotal = () => {
       const litros = parseFloat($('aLitros').value) || 0;
       const valorL = parseFloat($('aValorL').value) || 0;
@@ -226,14 +221,21 @@ function setupDiasSemana(){
 }
 
 function renderVeiculosSelect(){
-  $('selVeiculo').innerHTML=db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
-  $('selVeiculo').onchange=e=>{db.ativo=+e.target.value; save(); renderAll();}
+  const sel = $('selVeiculo');
+  sel.innerHTML = db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
+  sel.onchange = e => {db.ativo=+e.target.value; save(); renderAll();}
 }
 
 function addVeiculo(){
   if(!$('vNome').value.trim()||!$('vData').value) return alert('Preencha modelo e data');
-  db.veiculos.push({id:Date.now(),nome:$('vNome').value,ano:+$('vAno').value||0,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,kmDia:+$('vKmDia').value||35,tanque:+$('vTanque').value||0,diasSemana:[...diasSelecionados]});
-  db.ativo=db.veiculos.at(-1).id; save(); closeModal('veiculo'); renderVeiculosSelect(); renderAll();
+  const novo = {id:Date.now(),nome:$('vNome').value,ano:+$('vAno').value||0,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,kmDia:+$('vKmDia').value||35,tanque:+$('vTanque').value||0,diasSemana:[...diasSelecionados]};
+  db.veiculos.push(novo);
+  db.ativo = novo.id; // FORÇA ATIVO
+  save();
+  closeModal('veiculo');
+  renderVeiculosSelect(); // ATUALIZA SELECT
+  renderAll(); // RENDERIZA PAINEL
+  alert('Veículo cadastrado! Agora cadastre um abastecimento.');
 }
 
 function delVeiculo(id){
@@ -282,12 +284,12 @@ function addAbast(){
 
 function renderAbast(){
   const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
-  $('listaAbast').innerHTML=list.map(a=>`
+  $('listaAbast').innerHTML=list.length? list.map(a=>`
     <div class="item">
       <div><b>${a.data.split('-').reverse().join('/')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • Total R$${a.valor.toFixed(2)}</small></div>
       <div class="actions"><button class="btn-danger" onclick="delAbast(${a.id})">🗑️</button></div>
     </div>
-  `).join('')||'<div class="empty">Nenhum abastecimento ainda</div>';
+  `).join('') : '<div class="empty">Nenhum abastecimento ainda</div>';
 }
 
 function delAbast(id){if(confirm('Remover?')){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAll();}}
@@ -307,13 +309,13 @@ function renderManut(){
   if(!v) return;
   const kmAtual = getKmAtual(v);
   const list=db.manutencoes.filter(m=>m.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
-  $('listaManut').innerHTML=list.map(m=>{
+  $('listaManut').innerHTML=list.length? list.map(m=>{
     const faltam=m.proxKm-kmAtual;
     let cls='',badge='';
     if(faltam<=0){cls='urgent'; badge='<span class="badge danger">VENCIDA</span>'}
     else if(faltam<=500){cls='alert'; badge='<span class="badge warn">ATENÇÃO</span>'}
     return `<div class="item ${cls}"><div><b>${m.tipo}</b> ${badge}<br><small>${m.data.split('-').reverse().join('/')} • Feito em ${m.km}km • Próxima em ${m.proxKm}km<br>Faltam ${faltam}km</small></div><div class="actions"><button class="btn-danger" onclick="delManut(${m.id})">🗑️</button></div></div>`;
-  }).join('')||'<div class="empty">Nenhuma manutenção cadastrada</div>';
+  }).join('') : '<div class="empty">Nenhuma manutenção cadastrada</div>';
 
   const trocasOleo = list.filter(m=>m.tipo.toLowerCase().includes('óleo'));
   if(trocasOleo.length){
@@ -328,17 +330,20 @@ function delManut(id){if(confirm('Remover?')){db.manutencoes=db.manutencoes.filt
 
 function getKmAtual(v){
   const abs = db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(b.data)-new Date(a.data))[0];
-  if(!abs) return v.kmCompra;
-  return abs.km;
+  return abs? abs.km : v.kmCompra;
 }
 
-function renderGrafico(){}
-
 function renderAll(){
-  if(!db.ativo ||!db.veiculos.length) return;
+  if(!db.ativo ||!db.veiculos.length) {
+    $('kmAtual').textContent='0 km';
+    $('gasto').textContent='R$ 0';
+    $('kml').textContent='--';
+    return;
+  }
   const v=db.veiculos.find(x=>x.id==db.ativo);
-  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data)-new Date(b.data));
+  if(!v) return;
 
+  const abs=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(a.data)-new Date(b.data));
   const kmAtual = getKmAtual(v);
   $('kmAtual').textContent=kmAtual+' km';
   $('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
@@ -347,7 +352,10 @@ function renderAll(){
   if(abs.length>1){
     let km=0,litros=0;
     for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
-    kml=km/litros; $('kml').textContent=kml.toFixed(1)+' km/l';
+    kml=litros>0? km/litros : 0;
+    $('kml').textContent=kml.toFixed(1)+' km/l';
+  } else {
+    $('kml').textContent='--';
   }
 
   renderVeiculos(); renderAbast(); renderManut();
