@@ -234,20 +234,28 @@ function show(t){
 }
 
 function setupSwipe(){
+  const container = $('appContainer');
+  if(!container) return;
+
+  // Remove listener antigo pra não duplicar
+  container.ontouchstart = null;
+  container.ontouchend = null;
+
   let startX = 0, startY = 0;
-  document.getElementById('appContainer').addEventListener('touchstart', e => {
+  container.ontouchstart = e => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-  });
-  document.getElementById('appContainer').addEventListener('touchend', e => {
+  };
+  container.ontouchend = e => {
     const diffX = e.changedTouches[0].clientX - startX;
     const diffY = e.changedTouches[0].clientY - startY;
-    if(Math.abs(diffY) > Math.abs(diffX)) return;
+    if(Math.abs(diffY) > Math.abs(diffX) || Math.abs(diffX) < 50) return;
+
     const abas = ['painel','abastecer','manutencao','veiculos','config'];
     const idx = abas.indexOf(abaAtual);
     if(diffX > 50 && idx > 0) show(abas[idx-1]);
     if(diffX < -50 && idx < abas.length-1) show(abas[idx+1]);
-  });
+  };
 }
 
 function setupDiasSemana(){
