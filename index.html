@@ -6,10 +6,9 @@
 <title>Combustível App</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-:root{
-  --bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;
-  --accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#1e293b;
-}
+:root{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155}
+html.light{--bg:#f8fafc;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0}
+  
 body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text);transition:.2s;touch-action:pan-y}
@@ -148,7 +147,6 @@ button{cursor:pointer;font-weight:700;border:none}
   </section>
 
   <section id="config" style="display:none">
-    <div class="card"><h3>🎨 Aparência</h3><button class="btn-ghost" onclick="toggleTema()">🌓 Trocar Tema</button></div>
     <div class="card"><h3 style="color:var(--danger)">⚠️ Zona de Perigo</h3><button class="btn-danger" onclick="resetApp()">Apagar Tudo</button></div>
   </section>
 </div>
@@ -172,6 +170,7 @@ button{cursor:pointer;font-weight:700;border:none}
   </div>
 </div>
 
+  
 <script>
 const KEY_ATUAL='combApp_v8';
 const KEYS_ANTIGAS=['combApp_v7','combApp_v6','combApp_v5','combApp_v4','combApp_v3','combApp_v2','combApp'];
