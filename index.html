@@ -187,56 +187,61 @@ function formatarData(yyyy_mm_dd){
 }
 
 // MIGRAÇÃO AUTOMÁTICA
-function load(){
-  const raw=localStorage.getItem(KEY);
-  if(raw) db=JSON.parse(raw);
+
+  function load(){
+  // 1. Busca nos dados antigos primeiro
+  let raw = localStorage.getItem(KEY_ATUAL);
+  if(!raw){
+    for(let k of KEYS_ANTIGAS){
+      raw = localStorage.getItem(k);
+      if(raw){
+        // Migrou! Salva na chave nova
+        localStorage.setItem(KEY_ATUAL, raw);
+        localStorage.removeItem(k);
+        console.log('Dados migrados de', k);
+        break;
+      }
+    }
+  }
+
+  if(raw) db = JSON.parse(raw);
+  else db = {veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark',modoKm:'dia',kmDiaPadrao:35,kmMesPadrao:800,alertaOleoKm:500};
 
   // Força tema dark se não existir
-  if(!db.tema) db.tema='dark';
+  if(!db.tema) db.tema = 'dark';
+  if(!db.modoKm) db.modoKm = 'dia';
+  if(!db.kmDiaPadrao) db.kmDiaPadrao = 35;
+  if(!db.kmMesPadrao) db.kmMesPadrao = 800;
+  if(!db.alertaOleoKm) db.alertaOleoKm = 500;
 
-  const hoje=new Date().toISOString().split('T')[0];
-  if($('vData')) $('vData').value=hoje;
-  if($('aData')) $('aData').value=hoje;
-  if($('mData')) $('mData').value=hoje;
+  const hoje = new Date().toISOString().split('T')[0];
+  if($('vData')) $('vData').value = hoje;
+  if($('aData')) $('aData').value = hoje;
+  if($('mData')) $('mData').value = hoje;
 
   renderVeiculosSelect();
-  applyTheme(); // <- TEM QUE RODAR ANTES DO RENDERALL
+  applyTheme();
   renderAll();
   setupSwipe();
   setupDiasSemana();
-
-  $('btnTema').onclick=toggleTema;
-  $('cfgModoKm').value=db.modoKm;
-  $('cfgModoKm').onchange=e=>{db.modoKm=e.target.value; atualizarCfgKm(); save(); renderAll()}
-  $('cfgKmDia').value=db.kmDiaPadrao;
-  $('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll()}
-  $('cfgKmMes').value=db.kmMesPadrao;
-  $('cfgKmMes').onchange=e=>{db.kmMesPadrao=+e.target.value; save(); renderAll()}
-  $('cfgAlertaOleo').value=db.alertaOleoKm;
-  $('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll()}
-  atualizarCfgKm();
 }
 
 function applyTheme(){
-  console.log('Tema atual:', db.tema); // pra debug
-
   if(db.tema==='light'){
     document.documentElement.classList.add('light');
   } else {
     document.documentElement.classList.remove('light');
   }
-
-  $('btnTema').style.display = abaAtual==='painel'? 'block' : 'none';
+  if($('btnTema')) $('btnTema').style.display = abaAtual==='painel'? 'block' : 'none';
 }
 
 function toggleTema(){
   db.tema = db.tema==='dark'? 'light' : 'dark';
-  console.log('Trocou pra:', db.tema); // pra debug
   applyTheme();
   save();
   setTimeout(renderGrafico, 100);
 }
-function contarDiasUteis(dataInicio, dataFim, diasSemana){
+  function contarDiasUteis(dataInicio, dataFim, diasSemana){
   let count = 0;
   let data = new Date(dataInicio + 'T00:00:00');
   const fim = new Date(dataFim + 'T00:00:00');
@@ -546,8 +551,7 @@ function renderAll(){
   if(document.getElementById('painel').style.display!='none') renderGrafico();
 }
 
-function loadTema(){if(localStorage.getItem('tema')=='light') document.body.classList.add('light')}
-function toggleTema(){document.body.classList.toggle('light'); localStorage.setItem('tema',document.body.classList.contains('light')?'light':'dark')}
+
 function resetApp(){
   if(confirm('Apagar tudo?')&&confirm('Tem certeza?')){localStorage.clear(); location.reload()}
 }
