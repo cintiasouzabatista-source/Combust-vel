@@ -214,10 +214,85 @@ function applyTheme(){
 }
 
 function toggleTema(){
-  db.tema=db.tema==='dark'?'light':'dark';
+  db.tema = db.tema === 'dark' ? 'light' : 'dark';
   applyTheme();
   save();
-  setTimeout(renderGrafico,100);
+
+  renderGrafico();     // gráfico km/l
+  function desenharGrafico() {
+    const canvas = document.getElementById('graficoGasto');
+    const ctx = canvas.getContext('2d');
+
+    const isLight = document.documentElement.classList.contains('light');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const dados = tipoGrafico === 'semana'
+        ? agruparPorSemana()
+        : agruparPorMes();
+
+    if (!dados.length) return;
+
+    const maxValor = Math.max(...dados.map(d => d.valor));
+
+    const margemEsq = 35;
+    const margemInf = 30;
+    const margemTop = 15;
+
+    const larguraGrafico = canvas.width - margemEsq - 10;
+    const alturaGrafico = canvas.height - margemInf - margemTop;
+
+    const passo = larguraGrafico / dados.length;
+    const barWidth = passo * 0.55;
+
+    const corBarra = isLight ? '#2563eb' : '#3b82f6';
+    const corTexto = isLight ? '#0f172a' : '#e2e8f0';
+    const corGrid = isLight
+        ? 'rgba(100,116,139,.15)'
+        : 'rgba(148,163,184,.15)';
+
+    // grid horizontal
+    ctx.strokeStyle = corGrid;
+    ctx.lineWidth = 1;
+
+    for(let i = 0; i <= 4; i++) {
+        const y = margemTop + (alturaGrafico / 4) * i;
+
+        ctx.beginPath();
+        ctx.moveTo(margemEsq, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+
+    dados.forEach((d, i) => {
+
+        const alturaBarra = (d.valor / maxValor) * alturaGrafico;
+
+        const x =
+            margemEsq +
+            passo * i +
+            (passo - barWidth) / 2;
+
+        const y =
+            margemTop +
+            (alturaGrafico - alturaBarra);
+
+        // barra
+        ctx.fillStyle = corBarra;
+        ctx.fillRect(x, y, barWidth, alturaBarra);
+
+        // label inferior
+        ctx.fillStyle = corTexto;
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+
+        ctx.fillText(
+            d.label,
+            x + barWidth / 2,
+            canvas.height - 8
+        );
+    });
+}
 }
 
 function setupSwipe(){
