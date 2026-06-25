@@ -169,6 +169,16 @@ function load(){
   $('aData').value = hoje;
 
   setupDiasSemana();
+  // Total automático abastecimento
+setTimeout(() => {
+  const calcTotal = () => {
+    const litros = parseFloat($('aLitros').value) || 0;
+    const valorL = parseFloat($('aValorL').value) || 0;
+    $('aTotal').value = (litros * valorL).toFixed(2);
+  };
+  if($('aLitros')) $('aLitros').oninput = calcTotal;
+  if($('aValorL')) $('aValorL').oninput = calcTotal;
+}, 100);
   setupTotalAutomatico();
   renderVeiculosSelect();
   renderAll();
