@@ -204,10 +204,11 @@ function load(){
 
   renderVeiculosSelect();
   applyTheme();
-  renderAll();
-  setupSwipe();
-  setupDiasSemana();
-}
+renderAll();
+setTimeout(() => {
+  try { setupSwipe() } catch(e){}
+  try { setupDiasSemana() } catch(e){}
+}, 100);
 
 function applyTheme(){
   if(db.tema==='light') document.documentElement.classList.add('light');
@@ -250,17 +251,19 @@ function setupSwipe(){
 
 function setupDiasSemana(){
   const container = $('diasSemana');
-  if(!container) return;
+  if(!container) return; // sai se não existe
+  
+  if(!diasSelecionados) diasSelecionados = [1,2,3,4,5];
+  
   container.querySelectorAll('.dia-btn').forEach(btn => {
     btn.onclick = () => {
       btn.classList.toggle('active');
       diasSelecionados = Array.from(container.querySelectorAll('.dia-btn.active')).map(b => +b.dataset.dia);
+      if(diasSelecionados.length === 0) diasSelecionados = [1,2,3,4,5];
     };
-    // Adicionada a interrogação ?. aqui para não quebrar se vier vazio:
-    if(diasSelecionados?.includes(+btn.dataset.dia)) btn.classList.add('active');
+    if(diasSelecionados.includes(+btn.dataset.dia)) btn.classList.add('active');
   });
 }
-
 function contarDiasUteis(dataInicio, dataFim, diasSemana){
   let count = 0;
   let data = new Date(dataInicio + 'T00:00:00');
