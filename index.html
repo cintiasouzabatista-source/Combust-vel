@@ -243,8 +243,8 @@ function show(t){
   document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.footer button')[['painel','abastecer','manutencao','veiculos','config'].indexOf(t)].classList.add('active');
   $('title').textContent=t.charAt(0).toUpperCase()+t.slice(1);
-  applyTheme();
-  if(t=='painel') setTimeout(renderGrafico,150);
+  applyTheme(); // <- adiciona esta linha
+  if(t=='painel') setTimeout(renderGrafico,200);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
