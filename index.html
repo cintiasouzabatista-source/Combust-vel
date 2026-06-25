@@ -56,6 +56,7 @@ button{cursor:pointer;font-weight:700;border:none}
 <div class="wrap" id="appContainer">
   <header>
     <h1 id="title">Painel</h1>
+    <button id="btnTema" class="btn-ghost btn-sm" onclick="toggleTema()" style="width: auto; margin-right: 8px;">🌓</button>
     <select id="selVeiculo"></select>
   </header>
 
@@ -212,7 +213,12 @@ function applyTheme(){
   if(db.tema==='light') document.documentElement.classList.add('light');
   else document.documentElement.classList.remove('light');
 }
-
+function toggleTema(){
+  db.tema = db.tema === 'dark' ? 'light' : 'dark';
+  save();
+  applyTheme();
+  if(abaAtual == 'painel') renderGrafico(); // Atualiza as cores do gráfico
+}
 function show(t){
   abaAtual = t;
   ['painel','abastecer','manutencao','veiculos','config'].forEach(s => $(s).style.display = 'none');
@@ -250,7 +256,8 @@ function setupDiasSemana(){
       btn.classList.toggle('active');
       diasSelecionados = Array.from(container.querySelectorAll('.dia-btn.active')).map(b => +b.dataset.dia);
     };
-    if(diasSelecionados.includes(+btn.dataset.dia)) btn.classList.add('active');
+    // Adicionada a interrogação ?. aqui para não quebrar se vier vazio:
+    if(diasSelecionados?.includes(+btn.dataset.dia)) btn.classList.add('active');
   });
 }
 
