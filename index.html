@@ -9,11 +9,12 @@
 :root{--bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155}
 body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{margin:0;background:var(--bg);color:var(--text)}
+body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
 .wrap{max-width:680px;margin:0 auto;padding:16px 12px 100px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 header h1{flex:1;font-size:20px;margin:0;font-weight:700}
 select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
+input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,0.3)}
 .btn{background:var(--accent);color:#fff;font-weight:700;border:none;cursor:pointer}
 .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text);cursor:pointer}
 .btn-danger{background:var(--danger);color:#fff;border:none;cursor:pointer}
@@ -30,8 +31,6 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:999}
 .modal.active{display:flex}.modal-box{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
 .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
-.dias-semana{display:flex;gap:6px;margin:8px 0}.dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
-.dia-btn.active{background:var(--accent);color:#fff}
 .chart-container{position:relative;height:220px;margin-top:10px}
 .empty{color:var(--muted);text-align:center;padding:30px 0}
 .alert{border-left:4px solid var(--warn)}.urgent{border-left:4px solid var(--danger);animation:pulse 1.5s infinite}
@@ -73,12 +72,16 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
   <section id="config" style="display:none">
     <div class="card">
       <h2 style="margin-top:0">⚙️ Configurações</h2>
-      <label class="label">Km/dia que tu roda</label>
-      <input id="cfgKmDia" type="number" value="30" onchange="db.kmDiaPadrao=+this.value; save(); renderAll()">
+
+      <label class="label">Tema</label>
+      <select id="selTema"><option value="dark">🌙 Escuro</option><option value="light">☀️ Claro</option></select>
+
+      <label class="label" style="margin-top:16px">Km/dia que tu roda</label>
+      <input id="cfgKmDia" type="number" value="30">
       <small style="color:var(--muted)">Usado pra calcular "faltam X dias"</small>
 
       <label class="label" style="margin-top:16px">Alerta óleo - km antes</label>
-      <input id="cfgAlertaOleo" type="number" value="300" onchange="db.alertaOleoKm=+this.value; save(); renderAll()">
+      <input id="cfgAlertaOleo" type="number" value="300">
       <small style="color:var(--muted)">300km = fica vermelho antes</small>
 
       <label class="label" style="margin-top:16px">Notificações</label>
@@ -116,7 +119,7 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
   <div class="modal-box">
     <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3>⛽ Abastecimento</h3><button class="btn-ghost" onclick="closeModal('abast')">✕</button></div>
     <label class="label">Data</label><input id="aData" type="date">
-    <label class="label">Km Odômetro</label><input id="aKm" type="number" placeholder="95014">
+    <label class="label">Km Odômetro</label><input id="aKm" type="number">
     <div class="grid grid-2"><div><label class="label">Litros</label><input id="aLitros" type="number" step="0.01"></div><div><label class="label">R$/L</label><input id="aValorL" type="number" step="0.001"></div></div>
     <label class="label">Total R$</label><input id="aTotal" readonly>
     <div class="modal-actions"><button class="btn-ghost" onclick="closeModal('abast')">Cancelar</button><button class="btn" onclick="addAbast()">Salvar</button></div>
@@ -135,10 +138,9 @@ select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid 
 </div>
 
 <script>
-const KEY='combApp_v12';
+const KEY='combApp';
 const $=id=>document.getElementById(id);
 let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark',kmDiaPadrao:30,alertaOleoKm:300};
-let diasSelecionados=[1,2,3,4,5];
 let grafico=null;
 
 document.addEventListener('DOMContentLoaded', load);
@@ -146,19 +148,35 @@ document.addEventListener('DOMContentLoaded', load);
 function load(){
   const raw=localStorage.getItem(KEY);
   if(raw) db=JSON.parse(raw);
+
   const hoje=new Date().toISOString().split('T')[0];
   if($('vData')) $('vData').value=hoje;
   if($('aData')) $('aData').value=hoje;
   if($('mData')) $('mData').value=hoje;
-  if($('cfgKmDia')) $('cfgKmDia').value=db.kmDiaPadrao;
-  if($('cfgAlertaOleo')) $('cfgAlertaOleo').value=db.alertaOleoKm;
-  setupDiasSemana();
+
   renderVeiculosSelect();
   renderAll();
-  pedirPermissaoNotificacao();
+  applyTheme();
+
+  // TEMA
+  if($('selTema')) {
+    $('selTema').value=db.tema;
+    $('selTema').onchange=e=>{db.tema=e.target.value; applyTheme(); save();}
+  }
+  // CONFIGS
+  if($('cfgKmDia')) {
+    $('cfgKmDia').value=db.kmDiaPadrao;
+    $('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll();}
+  }
+  if($('cfgAlertaOleo')) {
+    $('cfgAlertaOleo').value=db.alertaOleoKm;
+    $('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll();}
+  }
 }
 
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function applyTheme(){document.body.classList.toggle('light', db.tema==='light')}
+
 function show(t){
   ['painel','abastecer','manutencao','veiculos','config'].forEach(s=>$(s).style.display='none');
   $(t).style.display='block';
@@ -175,18 +193,7 @@ function openModal(tipo){
     $('aLitros').oninput=calc; $('aValorL').oninput=calc;
   }
 }
-function closeModal(tipo){
-  $(`modal-${tipo}`).classList.remove('active');
-  if(tipo=='veiculo'){$('vNome').value=''; diasSelecionados=[1,2,3,4,5]; setupDiasSemana();}
-}
-
-function setupDiasSemana(){
-  document.querySelectorAll('#diasSemana.dia-btn').forEach(btn=>{
-    const dia=+btn.dataset.dia;
-    btn.classList.toggle('active', diasSelecionados.includes(dia));
-    btn.onclick=()=>{btn.classList.toggle('active'); diasSelecionados=Array.from(document.querySelectorAll('#diasSemana.dia-btn.active')).map(b=>+b.dataset.dia)}
-  });
-}
+function closeModal(tipo){$(`modal-${tipo}`).classList.remove('active')}
 
 function renderVeiculosSelect(){
   $('selVeiculo').innerHTML=db.veiculos.map(v=>`<option value="${v.id}" ${v.id==db.ativo?'selected':''}>${v.nome}</option>`).join('');
@@ -195,7 +202,7 @@ function renderVeiculosSelect(){
 
 function addVeiculo(){
   if(!$('vNome').value.trim()) return alert('Preencha modelo');
-  const novo={id:Date.now(),nome:$('vNome').value,ano:+$('vAno').value||2010,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,tanque:+$('vTanque').value||6.5,reserva:+$('vReserva').value||1,diasSemana:[...diasSelecionados]};
+  const novo={id:Date.now(),nome:$('vNome').value,ano:+$('vAno').value||2010,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,tanque:+$('vTanque').value||6.5,reserva:+$('vReserva').value||1};
   db.veiculos.push(novo); db.ativo=novo.id; save(); closeModal('veiculo'); renderVeiculosSelect(); renderAll();
 }
 
@@ -218,7 +225,7 @@ function getKmAtual(v){
 
 function getMediaKmL(v){
   const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data)-new Date(b.data));
-  if(abs.length<2) return 42; // média padrão Lead 110
+  if(abs.length<2) return 42;
   let km=0,litros=0;
   for(let i=1;i<abs.length;i++){km+=abs[i].km-abs[i-1].km; litros+=abs[i].litros}
   return litros>0? km/litros : 42;
@@ -235,9 +242,7 @@ function renderAll(){
   $('kml').textContent=media.toFixed(1)+' km/l';
   $('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
 
-  // AUTONOMIA + ALERTA RESERVA
   const autonomia=media*v.tanque;
-  const kmReserva=media*v.reserva;
   const diasFaltam=Math.floor(autonomia/db.kmDiaPadrao);
   $('proxAbast').textContent=`${autonomia.toFixed(0)}km ~ ${diasFaltam} dias`;
 
@@ -248,7 +253,6 @@ function renderAll(){
     $('cardAbast').className='card kpi info-card';
   }
 
-  // ALERTA ÓLEO 300km ANTES
   const manutOleo=db.manutencoes.filter(m=>m.veiculo==db.ativo&&m.tipo.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km)[0];
   if(manutOleo){
     const faltam=manutOleo.proxKm-kmAtual;
@@ -271,7 +275,6 @@ function renderGrafico(){
   const abs=db.abastecimentos.filter(a=>a.veiculo==v.id).sort((a,b)=>new Date(a.data)-new Date(b.data));
 
   if(grafico) grafico.destroy();
-
   if(abs.length<2){
     ctx.font='14px sans-serif';
     ctx.fillStyle='#94a3b8';
@@ -317,7 +320,6 @@ function renderManut(){
 function delAbast(id){db.abastecimentos=db.abastecimentos.filter(a=>a.id!=id); save(); renderAll();}
 function delManut(id){db.manutencoes=db.manutencoes.filter(m=>m.id!=id); save(); renderAll();}
 
-// NOTIFICAÇÕES
 function pedirPermissaoNotificacao(){
   if('Notification' in window && Notification.permission==='default'){
     Notification.requestPermission();
@@ -325,7 +327,7 @@ function pedirPermissaoNotificacao(){
 }
 function ativarNotificacoes(){
   pedirPermissaoNotificacao();
-  alert('Alertas ativados! O app vai te avisar quando óleo/reserva estiver perto.');
+  alert('Alertas ativados!');
   verificarAlertas();
 }
 function verificarAlertas(){
@@ -334,14 +336,12 @@ function verificarAlertas(){
   const kmAtual=getKmAtual(v);
   const media=getMediaKmL(v);
   const autonomia=media*v.tanque;
-
   if(autonomia<=40){
     new Notification('⛽ RESERVA!', {body:`Tanque com só ${autonomia.toFixed(0)}km. Abastece logo!`});
   }
-
   const manutOleo=db.manutencoes.filter(m=>m.veiculo==db.ativo&&m.tipo.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km)[0];
   if(manutOleo && manutOleo.proxKm-kmAtual<=db.alertaOleoKm){
-    new Notification('🔧 Troca de Óleo!', {body:`Faltam ${manutOleo.proxKm-kmAtual}km pra troca. Óleo baixo em motor 2010 é perigoso.`});
+    new Notification('🔧 Troca de Óleo!', {body:`Faltam ${manutOleo.proxKm-kmAtual}km pra troca`});
   }
 }
 
