@@ -14,7 +14,8 @@ html,body{margin:0;padding:0;height:100%;overflow-x:hidden;background:var(--bg);
 header{display:flex;align-items:center;gap:12px;padding:20px 0 16px;border-bottom:1px solid var(--line);margin-bottom:20px}
 header h1{flex:1;font-size:22px;margin:0;font-weight:700}
 header select{max-width:140px;padding:10px 12px;font-size:14px}
-.icon-btn{background:none;border:none;font-size:28px;cursor:pointer;color:var(--text);padding:4px 8px;line-height:1}
+.icon-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px 6px;line-height:1}
+header select{flex:1;max-width:200px;padding:12px;font-size:14px}
 select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
 input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,0.2)}
 .btn{background:var(--accent);color:#fff;font-weight:700;border:none;cursor:pointer}
@@ -208,10 +209,16 @@ function load(){
 
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
 function applyTheme(){
-  document.body.classList.toggle('light', db.tema==='light');
+  document.documentElement.classList.toggle('light', db.tema==='light');
   $('btnTema').style.display=abaAtual==='painel'?'block':'none';
 }
-function toggleTema(){db.tema=db.tema==='dark'?'light':'dark'; applyTheme(); save()}
+
+function toggleTema(){
+  db.tema=db.tema==='dark'?'light':'dark'; 
+  applyTheme(); 
+  save();
+  setTimeout(renderGrafico,50); // atualiza cores do gráfico também
+}
 
 function setupSwipe(){
   const area=$('swipeArea');
@@ -382,7 +389,7 @@ function renderGrafico(){
   if(abs.length<2){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.font='14px sans-serif';
-    ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--muted');
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted');
     ctx.textAlign='center';
     ctx.fillText('Cadastre 2+ abastecimentos para ver o gráfico', canvas.width/2, canvas.height/2);
     return;
@@ -402,6 +409,9 @@ function renderGrafico(){
     return vals.reduce((a,b)=>a+b,0)/vals.length;
   });
 
+  const gridColor=db.tema==='dark'?'rgba(148,163,184,0.2)':'rgba(100,116,139,0.2)';
+  const textColor=db.tema==='dark'?'#94a3b8':'#64748b';
+
   grafico=new Chart(ctx,{
     type:'line',
     data:{
@@ -410,11 +420,14 @@ function renderGrafico(){
         label:'km/l',
         data:medias,
         borderColor:'#3b82f6',
-        backgroundColor:'rgba(59,130,246,0.15)',
-        tension:0.4,
+        backgroundColor:'rgba(59,130,246,0.1)',
+        borderWidth:2.5,
+        tension:0.3,
         fill:true,
-        pointRadius:5,
-        pointBackgroundColor:'#3b82f6'
+        pointRadius:6,
+        pointBackgroundColor:'#3b82f6',
+        pointBorderColor:'#fff',
+        pointBorderWidth:2
       }]
     },
     options:{
@@ -422,13 +435,12 @@ function renderGrafico(){
       maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
-        y:{beginAtZero:true,ticks:{color:db.tema==='dark'?'#94a3b8':'#64748b'}},
-        x:{ticks:{color:db.tema==='dark'?'#94a3b8':'#64748b'}}
+        y:{beginAtZero:false,grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}},
+        x:{grid:{color:gridColor},ticks:{color:textColor,font:{size:11}}}
       }
     }
   });
 }
-
 function renderAbast(){
   const list=db.abastecimentos.filter(a=>a.veiculo==db.ativo).sort((a,b)=>new Date(b.data)-new Date(a.data));
   $('listaAbast').innerHTML=list.length? list.map(a=>`<div class="item"><div><b>${a.data.split('-').reverse().join('/')}</b><br><small>${a.km}km • ${a.litros}L • R$${a.valorL.toFixed(3)}/L • R$${a.valor.toFixed(2)}</small></div><div class="item-actions"><button class="btn-small btn-edit" onclick="openModal('abast',${a.id})">✏️</button><button class="btn-small btn-danger" onclick="delAbast(${a.id})">🗑️</button></div></div>`).join(''):'<div class="empty">Sem abastecimentos</div>';
