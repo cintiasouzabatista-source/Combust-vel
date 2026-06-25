@@ -252,19 +252,24 @@ function setupSwipe(){
 
 function setupDiasSemana(){
   const container = $('diasSemana');
-  if(!container) return; // sai se não existe
+  if(!container) return;
   
-  if(!diasSelecionados) diasSelecionados = [1,2,3,4,5];
+  // Pega dias salvos do veículo ativo, se não existir usa Seg-Sex
+  const v = db.veiculos.find(x=>x.id==db.ativo);
+  diasSelecionados = v?.diasSemana || [1,2,3,4,5];
   
   container.querySelectorAll('.dia-btn').forEach(btn => {
+    btn.classList.remove('active'); // limpa antes
+    if(diasSelecionados.includes(+btn.dataset.dia)) btn.classList.add('active');
+    
     btn.onclick = () => {
       btn.classList.toggle('active');
       diasSelecionados = Array.from(container.querySelectorAll('.dia-btn.active')).map(b => +b.dataset.dia);
       if(diasSelecionados.length === 0) diasSelecionados = [1,2,3,4,5];
     };
-    if(diasSelecionados.includes(+btn.dataset.dia)) btn.classList.add('active');
   });
 }
+  
 function contarDiasUteis(dataInicio, dataFim, diasSemana){
   let count = 0;
   let data = new Date(dataInicio + 'T00:00:00');
