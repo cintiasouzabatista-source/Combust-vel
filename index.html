@@ -214,11 +214,16 @@ function applyTheme(){
 }
 
 function toggleTema(){
-  db.tema = db.tema === 'dark' ? 'light' : 'dark';
+  db.tema=db.tema==='dark'?'light':'dark';
+
   applyTheme();
   save();
 
-  renderGrafico();     // gráfico km/l
+  renderGrafico();
+  desenharGrafico();
+}
+
+ 
   function desenharGrafico() {
     const canvas = document.getElementById('graficoGasto');
     const ctx = canvas.getContext('2d');
@@ -286,11 +291,7 @@ function toggleTema(){
         ctx.font = '11px sans-serif';
         ctx.textAlign = 'center';
 
-        ctx.fillText(
-            d.label,
-            x + barWidth / 2,
-            canvas.height - 8
-        );
+       
     });
 }
 }
