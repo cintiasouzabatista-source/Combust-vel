@@ -8,11 +8,12 @@
 <style>
 :root{--bg:#0b1120;--card:#131c2f;--text:#e2e8f0;--muted:#94a3b8;--accent:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;--line:#334155}
 body.light{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#cbd5e1}
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;touch-action:pan-y}
 body{margin:0;background:var(--bg);color:var(--text);transition:.2s}
 .wrap{max-width:680px;margin:0 auto;padding:16px 12px 100px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 header h1{flex:1;font-size:20px;margin:0;font-weight:700}
+.icon-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);padding:8px}
 select,input,button{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
 input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,0.3)}
 .btn{background:var(--accent);color:#fff;font-weight:700;border:none;cursor:pointer}
@@ -40,11 +41,17 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
 .info-card{background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05));border-color:rgba(59,130,246,.3)}
 .modal-actions{display:flex;gap:10px;margin-top:16px}
+.dias-semana{display:flex;gap:6px;margin:8px 0}.dia-btn{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);border-radius:8px;font-size:12px;cursor:pointer}
+.dia-btn.active{background:var(--accent);color:#fff}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header><h1 id="title">Odômetro</h1><select id="selVeiculo"></select></header>
+<div class="wrap" id="swipeArea">
+  <header>
+    <h1 id="title">Odômetro</h1>
+    <select id="selVeiculo"></select>
+    <button class="icon-btn" id="btnTema">🌙</button>
+  </header>
 
   <section id="painel">
     <div class="kpis">
@@ -75,14 +82,42 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
   <section id="config" style="display:none">
     <div class="card">
       <h2 style="margin-top:0">⚙️ Configurações</h2>
-      <label class="label">Tema</label>
-      <select id="selTema"><option value="dark">🌙 Escuro</option><option value="light">☀️ Claro</option></select>
-      <label class="label" style="margin-top:16px">Km/dia que tu roda</label>
-      <input id="cfgKmDia" type="number" value="30">
+
+      <label class="label">Modo km/mês ou km/dia</label>
+      <select id="cfgModoKm">
+        <option value="dia">Km/dia + dias da semana</option>
+        <option value="mes">Km/mês</option>
+      </select>
+
+      <div id="cfgDiasSemana" style="margin-top:12px">
+        <label class="label">Dias que roda na semana</label>
+        <div class="dias-semana">
+          <button class="dia-btn" data-dia="1">Seg</button>
+          <button class="dia-btn" data-dia="2">Ter</button>
+          <button class="dia-btn" data-dia="3">Qua</button>
+          <button class="dia-btn" data-dia="4">Qui</button>
+          <button class="dia-btn" data-dia="5">Sex</button>
+          <button class="dia-btn" data-dia="6">Sáb</button>
+          <button class="dia-btn" data-dia="0">Dom</button>
+        </div>
+      </div>
+
+      <div id="cfgKmDiaWrap">
+        <label class="label" style="margin-top:12px">Km por dia</label>
+        <input id="cfgKmDia" type="number" value="30">
+      </div>
+
+      <div id="cfgKmMesWrap" style="display:none">
+        <label class="label" style="margin-top:12px">Km por mês</label>
+        <input id="cfgKmMes" type="number" value="900">
+      </div>
+
       <label class="label" style="margin-top:16px">Alerta óleo - km antes</label>
       <input id="cfgAlertaOleo" type="number" value="300">
+
       <label class="label" style="margin-top:16px">Notificações</label>
       <button class="btn-ghost" onclick="ativarNotificacoes()">🔔 Ativar Alertas</button>
+
       <h3 style="margin-top:20px">💾 Backup</h3>
       <button onclick="exportarJSON()" class="btn" style="margin-bottom:8px;width:100%">📤 Exportar</button>
       <label class="btn btn-ghost" style="width:100%;display:block;text-align:center;cursor:pointer">📥 Importar<input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
@@ -100,7 +135,7 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 
 <div class="modal" id="modal-veiculo">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloVeiculo">Cadastrar Veículo</h3><button class="btn-ghost" onclick="closeModal('veiculo')">✕</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloVeiculo">Cadastrar Veículo</h3></div>
     <input type="hidden" id="vId">
     <label class="label">Modelo</label><input id="vNome" placeholder="Honda Lead 110">
     <div class="grid grid-2"><div><label class="label">Ano</label><input id="vAno" type="number" value="2010"></div><div><label class="label">Data Aquisição</label><input id="vData" type="date"></div></div>
@@ -111,7 +146,7 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 
 <div class="modal" id="modal-abast">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloAbast">⛽ Abastecimento</h3><button class="btn-ghost" onclick="closeModal('abast')">✕</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloAbast">⛽ Abastecimento</h3></div>
     <input type="hidden" id="aId">
     <label class="label">Data</label><input id="aData" type="date">
     <label class="label">Km Odômetro</label><input id="aKm" type="number">
@@ -123,7 +158,7 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 
 <div class="modal" id="modal-manut">
   <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloManut">🔧 Manutenção</h3><button class="btn-ghost" onclick="closeModal('manut')">✕</button></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h3 id="tituloManut">🔧 Manutenção</h3></div>
     <input type="hidden" id="mId">
     <label class="label">Data</label><input id="mData" type="date">
     <label class="label">Tipo</label><input id="mTipo" placeholder="Troca de óleo">
@@ -136,36 +171,90 @@ input:focus,select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 
 <script>
 const KEY='combApp';
 const $=id=>document.getElementById(id);
-let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark',kmDiaPadrao:30,alertaOleoKm:300};
+let db={veiculos:[],abastecimentos:[],manutencoes:[],ativo:null,tema:'dark',modoKm:'dia',kmDiaPadrao:30,kmMesPadrao:900,diasSemana:[1,2,3,4,5],alertaOleoKm:300};
 let grafico=null;
+let abaAtual='painel';
+let startX=0;
 
 document.addEventListener('DOMContentLoaded', load);
 
 function load(){
   const raw=localStorage.getItem(KEY);
   if(raw) db=JSON.parse(raw);
+
   const hoje=new Date().toISOString().split('T')[0];
   if($('vData')) $('vData').value=hoje;
   if($('aData')) $('aData').value=hoje;
   if($('mData')) $('mData').value=hoje;
+
   renderVeiculosSelect();
   renderAll();
   applyTheme();
-  if($('selTema')){$('selTema').value=db.tema;$('selTema').onchange=e=>{db.tema=e.target.value; applyTheme(); save()}}
-  if($('cfgKmDia')){$('cfgKmDia').value=db.kmDiaPadrao;$('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll()}}
-  if($('cfgAlertaOleo')){$('cfgAlertaOleo').value=db.alertaOleoKm;$('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll()}}
+  setupSwipe();
+  setupDiasSemana();
+
+  $('btnTema').onclick=toggleTema;
+  $('cfgModoKm').value=db.modoKm;
+  $('cfgModoKm').onchange=e=>{db.modoKm=e.target.value; atualizarCfgKm(); save(); renderAll()}
+  $('cfgKmDia').value=db.kmDiaPadrao;
+  $('cfgKmDia').onchange=e=>{db.kmDiaPadrao=+e.target.value; save(); renderAll()}
+  $('cfgKmMes').value=db.kmMesPadrao;
+  $('cfgKmMes').onchange=e=>{db.kmMesPadrao=+e.target.value; save(); renderAll()}
+  $('cfgAlertaOleo').value=db.alertaOleoKm;
+  $('cfgAlertaOleo').onchange=e=>{db.alertaOleoKm=+e.target.value; save(); renderAll()}
+  atualizarCfgKm();
 }
 
 function save(){localStorage.setItem(KEY,JSON.stringify(db))}
-function applyTheme(){document.body.classList.toggle('light', db.tema==='light')}
+function applyTheme(){
+  document.body.classList.toggle('light', db.tema==='light');
+  $('btnTema').textContent=db.tema==='light'?'☀️':'🌙';
+}
+function toggleTema(){db.tema=db.tema==='dark'?'light':'dark'; applyTheme(); save()}
+
+function setupSwipe(){
+  const area=$('swipeArea');
+  area.addEventListener('touchstart',e=>{startX=e.touches[0].clientX});
+  area.addEventListener('touchend',e=>{
+    const endX=e.changedTouches[0].clientX;
+    const diff=endX-startX;
+    if(Math.abs(diff)>80){
+      const abas=['painel','abastecer','manutencao','veiculos','config'];
+      let idx=abas.indexOf(abaAtual);
+      if(diff<0 && idx<abas.length-1) idx++;
+      if(diff>0 && idx>0) idx--;
+      show(abas[idx]);
+    }
+  });
+}
 
 function show(t){
+  abaAtual=t;
   ['painel','abastecer','manutencao','veiculos','config'].forEach(s=>$(s).style.display='none');
   $(t).style.display='block';
   document.querySelectorAll('.footer button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.footer button')[['painel','abastecer','manutencao','veiculos','config'].indexOf(t)].classList.add('active');
   $('title').textContent=t.charAt(0).toUpperCase()+t.slice(1);
   if(t=='painel') setTimeout(renderGrafico,100);
+}
+
+function setupDiasSemana(){
+  document.querySelectorAll('.dia-btn').forEach(btn=>{
+    const dia=+btn.dataset.dia;
+    btn.classList.toggle('active', db.diasSemana.includes(dia));
+    btn.onclick=()=>{
+      btn.classList.toggle('active');
+      db.diasSemana=Array.from(document.querySelectorAll('.dia-btn.active')).map(b=>+b.dataset.dia);
+      save(); renderAll();
+    }
+  });
+}
+
+function atualizarCfgKm(){
+  const modo=db.modoKm;
+  $('cfgDiasSemana').style.display=modo==='dia'?'block':'none';
+  $('cfgKmDiaWrap').style.display=modo==='dia'?'block':'none';
+  $('cfgKmMesWrap').style.display=modo==='mes'?'block':'none';
 }
 
 function openModal(tipo, id=null){
@@ -213,11 +302,7 @@ function saveVeiculo(){
   if(!$('vNome').value.trim()) return alert('Preencha modelo');
   const id=$('vId').value;
   const obj={nome:$('vNome').value,ano:+$('vAno').value||2010,dataAquisicao:$('vData').value,kmCompra:+$('vKmCompra').value||0,tanque:+$('vTanque').value||6.5,reserva:+$('vReserva').value||1};
-  if(id){
-    Object.assign(db.veiculos.find(v=>v.id==+id), obj);
-  } else {
-    obj.id=Date.now(); db.veiculos.push(obj); db.ativo=obj.id;
-  }
+  if(id){Object.assign(db.veiculos.find(v=>v.id==+id), obj)} else {obj.id=Date.now(); db.veiculos.push(obj); db.ativo=obj.id}
   save(); closeModal('veiculo'); renderVeiculosSelect(); renderAll();
 }
 
@@ -225,11 +310,7 @@ function saveAbast(){
   if(!$('aData').value||!$('aKm').value||!$('aLitros').value) return alert('Preencha tudo');
   const id=$('aId').value;
   const obj={veiculo:db.ativo,data:$('aData').value,km:+$('aKm').value,litros:+$('aLitros').value,valor:+$('aTotal').value,valorL:+$('aValorL').value};
-  if(id){
-    Object.assign(db.abastecimentos.find(a=>a.id==+id), obj);
-  } else {
-    obj.id=Date.now(); db.abastecimentos.push(obj);
-  }
+  if(id){Object.assign(db.abastecimentos.find(a=>a.id==+id), obj)} else {obj.id=Date.now(); db.abastecimentos.push(obj)}
   save(); closeModal('abast'); renderAll(); verificarAlertas();
 }
 
@@ -237,11 +318,7 @@ function saveManut(){
   if(!$('mTipo').value.trim()||!$('mKm').value) return alert('Preencha tipo e km');
   const id=$('mId').value;
   const obj={veiculo:db.ativo,data:$('mData').value,tipo:$('mTipo').value,km:+$('mKm').value,intervalo:+$('mIntervalo').value||4000,proxKm:+$('mKm').value+(+$('mIntervalo').value||4000),valor:+$('mValor').value||0};
-  if(id){
-    Object.assign(db.manutencoes.find(m=>m.id==+id), obj);
-  } else {
-    obj.id=Date.now(); db.manutencoes.push(obj);
-  }
+  if(id){Object.assign(db.manutencoes.find(m=>m.id==+id), obj)} else {obj.id=Date.now(); db.manutencoes.push(obj)}
   save(); closeModal('manut'); renderAll(); verificarAlertas();
 }
 
@@ -258,6 +335,11 @@ function getMediaKmL(v){
   return litros>0? km/litros : 42;
 }
 
+function getKmDia(){
+  if(db.modoKm==='mes') return db.kmMesPadrao/30;
+  return db.kmDiaPadrao;
+}
+
 function renderAll(){
   if(!db.ativo||!db.veiculos.length) return;
   const v=db.veiculos.find(x=>x.id==db.ativo);
@@ -267,10 +349,14 @@ function renderAll(){
   $('kmAtual').textContent=kmAtual+' km';
   $('kml').textContent=media.toFixed(1)+' km/l';
   $('gasto').textContent='R$ '+abs.reduce((s,a)=>s+a.valor,0).toFixed(2);
+
   const autonomia=media*v.tanque;
-  const diasFaltam=Math.floor(autonomia/db.kmDiaPadrao);
+  const kmDia=getKmDia();
+  const diasFaltam=Math.floor(autonomia/kmDia);
   $('proxAbast').textContent=`${autonomia.toFixed(0)}km ~ ${diasFaltam} dias`;
+
   if(autonomia<=40){$('cardAbast').className='card kpi urgent';$('proxAbast').innerHTML=`${autonomia.toFixed(0)}km <span class="badge danger">RESERVA!</span>`} else {$('cardAbast').className='card kpi info-card'}
+
   const manutOleo=db.manutencoes.filter(m=>m.veiculo==db.ativo&&m.tipo.toLowerCase().includes('óleo')).sort((a,b)=>b.km-a.km)[0];
   if(manutOleo){
     const faltam=manutOleo.proxKm-kmAtual;
@@ -304,7 +390,7 @@ function renderGrafico(){
     const vals=dados.filter(d=>d.mes==m).map(d=>d.kml);
     return vals.reduce((a,b)=>a+b,0)/vals.length;
   });
-  grafico=new Chart(ctx,{type:'line',data:{labels:meses.map(m=>m.split('-').reverse().join('/')),datasets:[{label:'km/l',data:medias,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  grafico=new Chart(ctx,{type:'line',data:{labels:meses.map(m=>m.split('-').reverse().join('/')),datasets:[{label:'km/l',data:medias,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.2)',tension:0.4,fill:true,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
 }
 
 function renderAbast(){
