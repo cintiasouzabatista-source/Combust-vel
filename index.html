@@ -85,6 +85,17 @@ body.dark input, body.dark select, body.dark .file-input-label { background: #33
                     <h1 id="odometroVirtual">0 km</h1>
                     <p id="proxAtualizacao" style="opacity:0.8; font-size:13px">Atualiza hoje 19:00</p>
                 </div>
+                <div class="grid-2">
+    <div class="card kpi">
+        <p>Estimativa Semanal</p>
+        <h3 id="kmSemanal">0 km</h3>
+    </div>
+    <div class="card kpi">
+        <p>Estimativa Mensal</p>
+        <h3 id="kmMensal">0 km</h3>
+    </div>
+                </div>
+                
                 <button style="width:38px; height:38px; cursor:pointer; background:none; border:none; color:white;" onclick="showTab('config')">
                     <i class="fas fa-sliders-h" style="font-size:20px;"></i>
                 </button>
@@ -750,7 +761,25 @@ function calcularOdometroVirtualDoVeiculo(v) {
 function calcularOdometroVirtual() {
     return calcularOdometroVirtualDoVeiculo(obterVeiculoAtivo());
 }
+function calcularEstimativas() {
+    const vAtivo = db.veiculos.find(v => v.id === db.ativo);
+    if (!vAtivo) return;
 
+    // Obtém quantos dias da semana estão ativos (conta quantos botões estão com a classe 'active')
+    // Você precisará garantir que esses estados estejam salvos no objeto do veículo
+    const diasAtivos = vAtivo.diasSemana ? vAtivo.diasSemana.length : 7; 
+    
+    const kmPorDia = vAtivo.kmDia || 0;
+    
+    // Cálculos
+    const semanal = kmPorDia * diasAtivos;
+    const mensal = semanal * 4.3; // 4.3 é a média de semanas em um mês
+
+    // Atualiza o DOM
+    document.getElementById('kmSemanal').innerText = semanal + " km";
+    document.getElementById('kmMensal').innerText = Math.round(mensal) + " km";
+}
+    
 function atualizarPainel() {
     const vAtivo = obterVeiculoAtivo();
     const kmVirtual = calcularOdometroVirtual();
