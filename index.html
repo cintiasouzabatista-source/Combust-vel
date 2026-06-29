@@ -303,7 +303,7 @@ function atualizarPainel() {
     const kmProxOleo = manutOleo? manutOleo.km + manutOleo.proxKm : 0;
 
     document.getElementById('odometroVirtual').textContent = kmVirtual.toLocaleString('pt-BR') + ' km';
-    document.getElementById('ultimoKmAbast').textContent = kmUltimoAbast.toLocaleString('pt-BR) + ' km';
+    document.getElementById('ultimoKmAbast').textContent = kmUltimoAbast.toLocaleString('pt-BR') + ' km';
     document.getElementById('proxTrocaOleo').textContent = kmProxOleo > 0? kmProxOleo.toLocaleString('pt-BR') + ' km' : '-- km';
     document.getElementById('faltaOleo').textContent = kmProxOleo > 0? `Faltam ${(kmProxOleo - kmVirtual).toLocaleString('pt-BR')} km` : '';
     document.getElementById('proxAtualizacao').textContent = `Atualiza hoje ${config.horaAtualizacao}`;
@@ -422,53 +422,4 @@ function renderGrafico() {
     const ctx = document.getElementById('graficoConsumo').getContext('2d');
     const meses = {};
     abastecimentos.forEach((a, i) => {
-        if(i === 0) return;
-        const mes = a.data.slice(0,7);
-        const km = a.km - abastecimentos[i-1].km;
-        if(!meses[mes]) meses[mes] = {km:0, l:0};
-        meses[mes].km += km;
-        meses[mes].l += a.litros;
-    });
-    const labels = Object.keys(meses).sort();
-    const data = labels.map(m => (meses[m].km / meses[m].l).toFixed(1));
-    if(grafico) grafico.destroy();
-    if(labels.length === 0) {
-        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-        ctx.font="14px sans-serif";
-        ctx.fillStyle="#64748b";
-        ctx.textAlign="center";
-        ctx.fillText("Cadastre 2+ abastecimentos", ctx.canvas.width/2, ctx.canvas.height/2);
-        return;
-    }
-    grafico = new Chart(ctx, {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Km/L', data, backgroundColor: '#2563eb', borderRadius: 8 }] },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { legend: { display: false } }, 
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-}
-function limparTudo() {
-    if(confirm('Apagar todos os dados?')) {
-        localStorage.clear();
-        location.reload();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-    document.getElementById('aData').value = new Date().toISOString().slice(0,10);
-    document.getElementById('mData').value = new Date().toISOString().slice(0,10);
-    document.getElementById('vData').value = new Date().toISOString().slice(0,10);
-    renderAbast();
-    renderManut();
-    renderVeiculos();
-    atualizarPainel();
-    setInterval(atualizarPainel, 60000);
-});
-</script>
-</body>
-</html>
+        if(
