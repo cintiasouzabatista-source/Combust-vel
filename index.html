@@ -18,7 +18,7 @@ h3 { font-size: 16px; margin-bottom: 8px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 input, select, button { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; }
 .btn { background: var(--primary); color: #fff; border: none; font-weight: 600; cursor: pointer; }
-.btn-outline { background: transparent; border: 1px solid var(--border); }
+.btn-outline { background: transparent; border: 1px solid var(--border); cursor: pointer; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; }
@@ -60,7 +60,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
             <div class="grid-2"><input id="aLitros" type="number" step="0.01" placeholder="Litros" oninput="calcTotal()"><input id="aValorL" type="number" step="0.01" placeholder="R$ / L" oninput="calcTotal()"></div>
             <input id="aTotal" type="number" step="0.01" placeholder="Total R$" readonly>
             <button class="btn" id="btnSalvarAbast" onclick="addAbast()">Salvar</button>
-            <button class="btn-outline" id="btnCancelarAbast" onclick="cancelarEditAbast()" style="display:none">Cancelar</button>
+            <button class="btn-outline" id="btnCancelarAbast" onclick="cancelarEditAbast()" style="display:none; margin-top: 10px;">Cancelar</button>
         </div>
         <div class="card"><h3>Histórico</h3><div id="listaAbast"></div></div>
     </div>
@@ -69,7 +69,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
         <div class="card"><h3 id="tituloManut">Adicionar Manutenção</h3>
             <input id="mData" type="date"><input id="mKm" type="number" placeholder="Km"><input id="mTipo" type="text" placeholder="Ex: Troca Óleo">
             <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar</button>
-            <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
+            <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none; margin-top: 10px;">Cancelar</button>
         </div>
         <div class="card"><h3>Histórico</h3><div id="listaManut"></div></div>
     </div>
@@ -80,9 +80,9 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
     <div id="config" class="tab-content">
         <div class="card"><h3>Config</h3>
-            <label>Km Inicial</label><input id="kmBase" type="number" onchange="salvarConfig()">
+            <label>Km Inicial</label><input id="kmBase" type="number" onchange="salvarConfig()" style="margin-bottom: 15px;">
             <label>Dias que roda</label>
-            <div class="dias-semana" id="diasSemana">
+            <div class="dias-semana" id="diasSemana" style="margin-top: 10px;">
                 <button type="button" class="dia-btn" data-dia="0">Dom</button><button type="button" class="dia-btn" data-dia="1">Seg</button>
                 <button type="button" class="dia-btn" data-dia="2">Ter</button><button type="button" class="dia-btn" data-dia="3">Qua</button>
                 <button type="button" class="dia-btn" data-dia="4">Qui</button><button type="button" class="dia-btn" data-dia="5">Sex</button>
@@ -108,33 +108,13 @@ let editandoAbastId = null;
 let editandoManutId = null;
 
 function getVeiculoAtivo() {
-    if(!veiculoAtivoId && veiculos.length) { veiculoAtivoId = veiculos[0].id; localStorage.setItem('veiculoAtivoId', veiculoAtivoId); }
+    if(!veiculoAtivoId && veiculos.length) veiculoAtivoId = veiculos[0].id;
     return veiculos.find(v => v.id === veiculoAtivoId) || criarVeiculoDefault();
 }
 
 function criarVeiculoDefault() {
-    const hoje = new Date();
-    const mesAtras = new Date(); mesAtras.setMonth(hoje.getMonth() - 1);
-    const v = {
-        id: 'v1',
-        nome: 'Moto Lead',
-        tanqueL: 6.5,
-        abast: [
-            {id:1, data: mesAtras.toISOString().slice(0,10), km: 95000, litros: 6.5, valorL: 5.99, total: 38.93},
-            {id:2, data: hoje.toISOString().slice(0,10), km: 95320, litros: 6.2, valorL: 5.99, total: 37.13}
-        ],
-        manut: [
-            {id:1, data: mesAtras.toISOString().slice(0,10), km: 95000, tipo: 'Troca Óleo'}
-        ],
-        config: {
-            kmBase:95000,
-            dataBase: mesAtras.toISOString().slice(0,16),
-            modoKm:"mes",
-            kmValor:600,
-            horaAtualizacao:"19:00",
-            diasSemana:[0,1,2,3,4,5,6]
-        }
-    };
+    const hoje = new Date().toISOString().slice(0,10);
+    const v = { id: 'v1', nome: 'Moto Lead', abast: [], manut: [], config: {kmBase:0, dataBase:hoje, kmValor:600, diasSemana:[0,1,2,3,4,5,6]} };
     veiculos = [v];
     veiculoAtivoId = v.id;
     salvarTudo();
@@ -147,12 +127,12 @@ function showTab(id) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    event.target.closest('.btn-nav').classList.add('active');
-    if(id === 'painel') renderSelectVeiculo();
-    if(id === 'abastecer') document.getElementById('aKm').value = calcularOdometroVirtual(getVeiculoAtivo());
+    event.currentTarget.classList.add('active');
+    if(id === 'painel') { renderSelectVeiculo(); atualizarPainel(); }
+    if(id === 'abastecer') renderAbast();
+    if(id === 'manutencao') renderManut();
     if(id === 'config') carregarConfig();
     if(id === 'veiculo') renderVeiculos();
-    atualizarPainel();
 }
 
 function renderSelectVeiculo() {
@@ -162,12 +142,12 @@ function renderSelectVeiculo() {
 
 function toggleTheme() { document.body.classList.toggle('dark'); }
 
-function kmPorDia(v) { const val = parseInt(v.config.kmValor) || 0; return val / 30; }
+function kmPorDia(v) { return (parseInt(v.config.kmValor) || 0) / 30; }
 
 function calcularOdometroVirtual(v) {
-    const c = v.config; const kmBase = parseInt(c.kmBase) || 0; const dataBase = new Date(c.dataBase); const kmDia = kmPorDia(v); const diasSemana = c.diasSemana || []; const hora = 19;
+    const c = v.config; const kmBase = parseInt(c.kmBase) || 0; const dataBase = new Date(c.dataBase); const kmDia = kmPorDia(v); const diasSemana = c.diasSemana || [];
     let kmTotal = kmBase; let dataCalc = new Date(dataBase); const agora = new Date();
-    while (dataCalc < agora) { dataCalc.setDate(dataCalc.getDate() + 1); dataCalc.setHours(hora, 0, 0); if (dataCalc > agora) break; if (diasSemana.includes(dataCalc.getDay())) kmTotal += kmDia; }
+    while (dataCalc < agora) { dataCalc.setDate(dataCalc.getDate() + 1); if (diasSemana.includes(dataCalc.getDay())) kmTotal += kmDia; }
     return Math.floor(kmTotal);
 }
 
@@ -175,75 +155,61 @@ function atualizarPainel() {
     const v = getVeiculoAtivo();
     const kmVirtual = calcularOdometroVirtual(v);
     document.getElementById('odometroVirtual').textContent = kmVirtual.toLocaleString('pt-BR') + ' km';
-    if(v.abast.length < 2) { document.getElementById('mediaReal').textContent = '-- km/l'; document.getElementById('gastoTotal').textContent = 'R$ 0,00'; renderGrafico(v); return; }
     let totalKm = 0, totalL = 0, gasto = 0;
-    for(let i = 1; i < v.abast.length; i++) { totalKm += v.abast[i].km - v.abast[i-1].km; totalL += v.abast[i].litros; }
-    gasto = v.abast.reduce((acc, a) => acc + a.total, 0);
-    const media = totalL > 0? (totalKm / totalL) : 0;
-    document.getElementById('mediaReal').textContent = media > 0? media.toFixed(1) + ' km/l' : '-- km/l';
+    if(v.abast.length >= 2) {
+        for(let i = 1; i < v.abast.length; i++) { totalKm += v.abast[i].km - v.abast[i-1].km; totalL += v.abast[i].litros; }
+        gasto = v.abast.reduce((acc, a) => acc + parseFloat(a.total), 0);
+        const media = totalL > 0 ? (totalKm / totalL) : 0;
+        document.getElementById('mediaReal').textContent = media > 0 ? media.toFixed(1) + ' km/l' : '-- km/l';
+    }
     document.getElementById('gastoTotal').textContent = 'R$ ' + gasto.toFixed(2).replace('.', ',');
     renderGrafico(v);
 }
 
-function ajustarOdometro() { const v = getVeiculoAtivo(); const kmAtualMoto = prompt('Km real da moto?'); if (!kmAtualMoto || isNaN(kmAtualMoto)) return; v.config.kmBase = parseInt(kmAtualMoto); v.config.dataBase = new Date().toISOString(); salvarTudo(); atualizarPainel(); }
+function ajustarOdometro() { const v = getVeiculoAtivo(); const kmAtual = prompt('Km atual do painel da moto?'); if (kmAtual) { v.config.kmBase = parseInt(kmAtual); v.config.dataBase = new Date().toISOString().slice(0,10); salvarTudo(); atualizarPainel(); } }
 
-function calcTotal() { const litros = parseFloat(document.getElementById('aLitros').value) || 0; const valorL = parseFloat(document.getElementById('aValorL').value) || 0; document.getElementById('aTotal').value = (litros * valorL).toFixed(2); }
+function calcTotal() { const l = parseFloat(document.getElementById('aLitros').value) || 0; const vL = parseFloat(document.getElementById('aValorL').value) || 0; document.getElementById('aTotal').value = (l * vL).toFixed(2); }
 
 function addAbast() {
     const v = getVeiculoAtivo();
     const data = document.getElementById('aData').value; const km = parseInt(document.getElementById('aKm').value);
     const litros = parseFloat(document.getElementById('aLitros').value); const valorL = parseFloat(document.getElementById('aValorL').value); const total = parseFloat(document.getElementById('aTotal').value);
-    if (!data ||!km ||!litros ||!valorL ||!total) { alert('Preencha tudo'); return; }
-    if(editandoAbastId) { const idx = v.abast.findIndex(a=>a.id===editandoAbastId); v.abast[idx] = {id:editandoAbastId, data, km, litros, valorL, total}; editandoAbastId = null; document.getElementById('btnSalvarAbast').textContent = 'Salvar'; document.getElementById('btnCancelarAbast').style.display = 'none'; }
-    else { v.abast.push({ id: Date.now(), data, km, litros, valorL, total }); }
-    v.abast.sort((a,b) => new Date(a.data) - new Date(b.data)); salvarTudo(); renderAbast(); atualizarPainel(); limparAbast();
+    if (!data || !km || !litros || !valorL) return alert('Preencha os campos');
+    if(editandoAbastId) { const idx = v.abast.findIndex(a=>a.id===editandoAbastId); v.abast[idx] = {id:editandoAbastId, data, km, litros, valorL, total}; }
+    else v.abast.push({ id: Date.now(), data, km, litros, valorL, total });
+    v.abast.sort((a,b) => new Date(a.data) - new Date(b.data)); salvarTudo(); renderAbast(); cancelarEditAbast(); atualizarPainel();
 }
-function limparAbast() { document.getElementById('aData').value = new Date().toISOString().slice(0,10); document.getElementById('aKm').value = ''; document.getElementById('aLitros').value = ''; document.getElementById('aValorL').value = ''; document.getElementById('aTotal').value = ''; }
-function renderAbast() { const v = getVeiculoAtivo(); const div = document.getElementById('listaAbast'); if(!v.abast.length) { div.innerHTML = '<p>Nenhum</p>'; return; } div.innerHTML = v.abast.slice().reverse().map(a => `<div class="historico-item"><div><b>${a.km} km</b> - ${a.litros}L R$${a.total.toFixed(2)}</div><div class="historico-acoes"><button onclick="editarAbast(${a.id})"><i class="fas fa-pen"></i></button><button style="color:#ef4444" onclick="delAbast(${a.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
-function editarAbast(id) { const v = getVeiculoAtivo(); const a = v.abast.find(x=>x.id===id); editandoAbastId=id; document.getElementById('aData').value=a.data; document.getElementById('aKm').value=a.km; document.getElementById('aLitros').value=a.litros; document.getElementById('aValorL').value=a.valorL; document.getElementById('aTotal').value=a.total; document.getElementById('btnSalvarAbast').textContent='Salvar Edição'; document.getElementById('btnCancelarAbast').style.display='block'; }
-function cancelarEditAbast() { editandoAbastId=null; limparAbast(); document.getElementById('btnSalvarAbast').textContent='Salvar'; document.getElementById('btnCancelarAbast').style.display='none'; }
-function delAbast(id) { const v = getVeiculoAtivo(); v.abast = v.abast.filter(a => a.id!== id); salvarTudo(); renderAbast(); atualizarPainel(); }
 
-function addManut() { const v = getVeiculoAtivo(); const data = document.getElementById('mData').value; const km = parseInt(document.getElementById('mKm').value); const tipo = document.getElementById('mTipo').value; if (!data ||!km ||!tipo) { alert('Preencha tudo'); return; } if(editandoManutId) { const idx = v.manut.findIndex(m=>m.id===editandoManutId); v.manut[idx] = {id:editandoManutId, data, km, tipo}; editandoManutId = null; document.getElementById('btnSalvarManut').textContent = 'Salvar'; document.getElementById('btnCancelarManut').style.display = 'none'; } else { v.manut.push({ id: Date.now(), data, km, tipo }); } salvarTudo(); renderManut(); document.getElementById('mData').value = new Date().toISOString().slice(0,10); document.getElementById('mKm').value = ''; document.getElementById('mTipo').value = ''; }
-function renderManut() { const v = getVeiculoAtivo(); const div = document.getElementById('listaManut'); if(!v.manut.length) { div.innerHTML = '<p>Nenhuma</p>'; return; } div.innerHTML = v.manut.slice().reverse().map(m => `<div class="historico-item"><div><b>${m.tipo}</b> - ${m.km} km</div><div class="historico-acoes"><button onclick="editarManut(${m.id})"><i class="fas fa-pen"></i></button><button style="color:#ef4444" onclick="delManut(${m.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
-function editarManut(id) { const v = getVeiculoAtivo(); const m = v.manut.find(x=>x.id===id); editandoManutId=id; document.getElementById('mData').value=m.data; document.getElementById('mKm').value=m.km; document.getElementById('mTipo').value=m.tipo; document.getElementById('btnSalvarManut').textContent='Salvar Edição'; document.getElementById('btnCancelarManut').style.display='block'; }
+function renderAbast() { const v = getVeiculoAtivo(); const div = document.getElementById('listaAbast'); div.innerHTML = v.abast.slice().reverse().map(a => `<div class="historico-item"><div><b>${a.km} km</b> - ${a.litros}L R$${a.total.toFixed(2)}</div><div class="historico-acoes"><button onclick="editarAbast(${a.id})"><i class="fas fa-pen"></i></button><button style="color:#ef4444" onclick="delAbast(${a.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
+function editarAbast(id) { const a = getVeiculoAtivo().abast.find(x=>x.id===id); editandoAbastId=id; document.getElementById('aData').value=a.data; document.getElementById('aKm').value=a.km; document.getElementById('aLitros').value=a.litros; document.getElementById('aValorL').value=a.valorL; document.getElementById('aTotal').value=a.total; document.getElementById('btnSalvarAbast').textContent='Atualizar'; document.getElementById('btnCancelarAbast').style.display='block'; }
+function cancelarEditAbast() { editandoAbastId=null; document.getElementById('btnSalvarAbast').textContent='Salvar'; document.getElementById('btnCancelarAbast').style.display='none'; }
+function delAbast(id) { getVeiculoAtivo().abast = getVeiculoAtivo().abast.filter(a => a.id!== id); salvarTudo(); renderAbast(); atualizarPainel(); }
+
+function addManut() { const v = getVeiculoAtivo(); const data = document.getElementById('mData').value; const km = parseInt(document.getElementById('mKm').value); const tipo = document.getElementById('mTipo').value; if (!data || !km || !tipo) return alert('Preencha tudo'); if(editandoManutId) { const idx = v.manut.findIndex(m=>m.id===editandoManutId); v.manut[idx] = {id:editandoManutId, data, km, tipo}; } else v.manut.push({ id: Date.now(), data, km, tipo }); salvarTudo(); renderManut(); cancelarEditManut(); }
+function renderManut() { const v = getVeiculoAtivo(); const div = document.getElementById('listaManut'); div.innerHTML = v.manut.slice().reverse().map(m => `<div class="historico-item"><div><b>${m.tipo}</b> - ${m.km} km</div><div class="historico-acoes"><button onclick="editarManut(${m.id})"><i class="fas fa-pen"></i></button><button style="color:#ef4444" onclick="delManut(${m.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
+function editarManut(id) { const m = getVeiculoAtivo().manut.find(x=>x.id===id); editandoManutId=id; document.getElementById('mData').value=m.data; document.getElementById('mKm').value=m.km; document.getElementById('mTipo').value=m.tipo; document.getElementById('btnSalvarManut').textContent='Atualizar'; document.getElementById('btnCancelarManut').style.display='block'; }
 function cancelarEditManut() { editandoManutId=null; document.getElementById('btnSalvarManut').textContent='Salvar'; document.getElementById('btnCancelarManut').style.display='none'; }
-function delManut(id) { const v = getVeiculoAtivo(); v.manut = v.manut.filter(m => m.id!== id); salvarTudo(); renderManut(); }
+function delManut(id) { getVeiculoAtivo().manut = getVeiculoAtivo().manut.filter(m => m.id!== id); salvarTudo(); renderManut(); }
 
 function renderGrafico(v) {
     const ctx = document.getElementById('graficoConsumo').getContext('2d');
-    const meses = {};
-    v.abast.forEach((a, i) => {
-        if(i === 0) return;
-        const mes = a.data.slice(0,7);
-        const km = a.km - v.abast[i-1].km;
-        if(!meses[mes]) meses[mes] = {km:0, l:0};
-        meses[mes].km += km;
-        meses[mes].l += a.litros;
-    });
-    const labels = Object.keys(meses).sort();
-    const data = labels.map(m => (meses[m].km / meses[m].l).toFixed(1));
     if(grafico) grafico.destroy();
-    if(labels.length === 0) { ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="14px sans-serif"; ctx.fillStyle="#64748b"; ctx.textAlign="center"; ctx.fillText("Cadastre 2+ abastecimentos", ctx.canvas.width/2, ctx.canvas.height/2); return; }
-    grafico = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Km/L', data, backgroundColor: '#2563eb', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }); // <- CORRIGIDO: 2x } e 1x )
+    const labels = [], data = [];
+    for(let i = 1; i < v.abast.length; i++) { labels.push(v.abast[i].data); data.push(((v.abast[i].km - v.abast[i-1].km)/v.abast[i].litros).toFixed(1)); }
+    grafico = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Km/L', data, backgroundColor: '#2563eb' }] }, options: { responsive: true, maintainAspectRatio: false } });
 }
 
-function renderVeiculos() { const div = document.getElementById('listaVeiculos'); div.innerHTML = veiculos.map(v => `<div class="historico-item ${v.id===veiculoAtivoId?'card':''}"><div><b>${v.nome}</b></div><div class="historico-acoes"><button onclick="trocarVeiculo('${v.id}')"><i class="fas fa-check"></i></button><button style="color:#ef4444" onclick="excluirVeiculo('${v.id}')"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
-function novoVeiculo() { const nome = prompt('Nome do veículo?'); if(!nome) return; const id = 'v' + Date.now(); veiculos.push({id, nome, tanqueL: 6.5, abast: [], manut: [], config: {kmBase:0,dataBase:new Date().toISOString().slice(0,16),kmValor:30,diasSemana:[1,2,3,4,5]}}); veiculoAtivoId = id; salvarTudo(); renderVeiculos(); renderSelectVeiculo(); showTab('painel'); }
-function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); renderSelectVeiculo(); atualizarPainel(); }
-function excluirVeiculo(id) { if(veiculos.length === 1) { alert('Precisa ter 1 veículo'); return; } veiculos = veiculos.filter(v => v.id!== id); if(veiculoAtivoId === id) veiculoAtivoId = veiculos[0].id; salvarTudo(); renderVeiculos(); renderSelectVeiculo(); atualizarPainel(); }
+function renderVeiculos() { document.getElementById('listaVeiculos').innerHTML = veiculos.map(v => `<div class="historico-item"><div><b>${v.nome}</b></div><div class="historico-acoes"><button onclick="trocarVeiculo('${v.id}')"><i class="fas fa-check"></i></button><button style="color:#ef4444" onclick="excluirVeiculo('${v.id}')"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
+function novoVeiculo() { const nome = prompt('Nome do veículo?'); if(nome) { veiculos.push({id:'v'+Date.now(), nome, abast:[], manut:[], config:{kmBase:0, dataBase:new Date().toISOString().slice(0,10), kmValor:30, diasSemana:[1,2,3,4,5]}}); salvarTudo(); renderVeiculos(); } }
+function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); renderSelectVeiculo(); atualizarPainel(); showTab('painel'); }
+function excluirVeiculo(id) { if(veiculos.length > 1) { veiculos = veiculos.filter(v => v.id!== id); if(veiculoAtivoId === id) veiculoAtivoId = veiculos[0].id; salvarTudo(); renderVeiculos(); renderSelectVeiculo(); atualizarPainel(); } }
 
-function carregarConfig() { const v = getVeiculoAtivo(); document.getElementById('kmBase').value = v.config.kmBase; document.querySelectorAll('.dia-btn').forEach(b => { b.classList.toggle('active', v.config.diasSemana.includes(parseInt(b.dataset.dia))); }); }
+function carregarConfig() { const v = getVeiculoAtivo(); document.getElementById('kmBase').value = v.config.kmBase; document.querySelectorAll('.dia-btn').forEach(b => b.classList.toggle('active', v.config.diasSemana.includes(parseInt(b.dataset.dia)))); }
 function salvarConfig() { const v = getVeiculoAtivo(); v.config.kmBase = parseInt(document.getElementById('kmBase').value) || 0; v.config.diasSemana = [...document.querySelectorAll('.dia-btn.active')].map(b => parseInt(b.dataset.dia)); salvarTudo(); atualizarPainel(); }
 document.querySelectorAll('.dia-btn').forEach(b => { b.onclick = () => { b.classList.toggle('active'); salvarConfig(); }; });
 
 document.addEventListener('DOMContentLoaded', () => {
     if(!veiculos.length) criarVeiculoDefault();
-    document.getElementById('aData').value = new Date().toISOString().slice(0,10);
-    document.getElementById('mData').value = new Date().toISOString().slice(0,10);
-    renderAbast();
-    renderManut();
-    renderVeiculos();
     renderSelectVeiculo();
     atualizarPainel();
 });
