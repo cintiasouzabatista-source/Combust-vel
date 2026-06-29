@@ -117,7 +117,7 @@ function criarVeiculoDefault() {
     const mesAtras = new Date(); mesAtras.setMonth(hoje.getMonth() - 1);
     const v = {
         id: 'v1',
-        nome: 'Moto Lead', // <- NOME CORRIGIDO PRA APARECER NO SELECT
+        nome: 'Moto Lead',
         tanqueL: 6.5,
         abast: [
             {id:1, data: mesAtras.toISOString().slice(0,10), km: 95000, litros: 6.5, valorL: 5.99, total: 38.93},
@@ -127,7 +127,7 @@ function criarVeiculoDefault() {
             {id:1, data: mesAtras.toISOString().slice(0,10), km: 95000, tipo: 'Troca Óleo'}
         ],
         config: {
-            kmBase:95000, // <- KM INICIAL PRA NÃO FICAR 0
+            kmBase:95000,
             dataBase: mesAtras.toISOString().slice(0,16),
             modoKm:"mes",
             kmValor:600,
@@ -225,7 +225,7 @@ function renderGrafico(v) {
     const data = labels.map(m => (meses[m].km / meses[m].l).toFixed(1));
     if(grafico) grafico.destroy();
     if(labels.length === 0) { ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); ctx.font="14px sans-serif"; ctx.fillStyle="#64748b"; ctx.textAlign="center"; ctx.fillText("Cadastre 2+ abastecimentos", ctx.canvas.width/2, ctx.canvas.height/2); return; }
-    grafico = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Km/L', data, backgroundColor: '#2563eb', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } });
+    grafico = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Km/L', data, backgroundColor: '#2563eb', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }); // <- CORRIGIDO: 2x } e 1x )
 }
 
 function renderVeiculos() { const div = document.getElementById('listaVeiculos'); div.innerHTML = veiculos.map(v => `<div class="historico-item ${v.id===veiculoAtivoId?'card':''}"><div><b>${v.nome}</b></div><div class="historico-acoes"><button onclick="trocarVeiculo('${v.id}')"><i class="fas fa-check"></i></button><button style="color:#ef4444" onclick="excluirVeiculo('${v.id}')"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
