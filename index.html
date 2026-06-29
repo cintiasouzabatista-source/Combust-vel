@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Garagem</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Garage</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
 :root {
@@ -13,7 +13,7 @@ body.dark {
     --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334155;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; overflow-x: hidden; }
 .container { max-width: 600px; margin: 0 auto; padding: 16px; }
 .header-area { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
 .header-select { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 16px; }
@@ -33,9 +33,13 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .kpi.warn { border: 2px solid var(--warn); background: rgba(245,158,11,0.1); }
 .kpi.danger { border: 2px solid var(--danger); background: rgba(239,68,68,0.1); }
 
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; }
+/* --- AJUSTE DE FLUIDEZ CONTRA TRAVAMENTOS --- */
+.tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
+.tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.tab-content { width: 20%; flex-shrink: 0; padding: 0 4px; }
+/* ------------------------------------------- */
+
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; z-index: 10; }
 .btn-nav { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; }
 .btn-nav.active { color: var(--primary); }
 .btn-nav i { font-size: 20px; }
@@ -69,121 +73,125 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
 <body>
 <div class="container">
     <div class="header-area">
-        <h1>My Garage</h1>
+        <h1>Garage</h1>
         <select id="seletorVeiculoPrincipal" class="header-select" onchange="mudarVeiculoAtivo()"></select>
         <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     </div>
 
-    <div id="painel" class="tab-content active">
-        <div id="alertaBar" class="alerta-bar"></div>
-        <div class="card odometro-destaque">
-            <div style="display:flex; justify-content:space-between; align-items:center">
-                <div>
-                    <p>Odômetro Virtual</p>
-                    <h1 id="odometroVirtual">0 km</h1>
-                    <p id="proxAtualizacao" style="opacity:0.8">Atualiza hoje 19:00</p>
-                </div>
-                <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
-            </div>
-        </div>
-
-        <div class="grid-2">
-            <div class="card kpi"><p>Média Real</p><h3 id="mediaReal">0 km/l</h3></div>
-            <div class="card kpi"><p>Gasto Total</p><h3 id="gastoTotal">R$ 0,00</h3></div>
-        </div>
-        <div class="grid-2">
-            <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
-            <div class="card kpi destaque" id="cardAutonomia"><p>Autonomia</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
-        </div>
-        <div class="card kpi" id="cardOleo"><p>Próxima Troca de Óleo</p><h3 id="proxTrocaOleo">0 km</h3><p class="muted" id="faltaOleo">Faltam 0 km</p></div>
-    </div>
-
-    <div id="abastecer" class="tab-content">
-        <div class="card"><h3 id="tituloAbast">Novo Abastecimento</h3>
-            <div style="display:grid; gap:12px">
-                <input id="aData" type="date"><input id="aKm" type="number" placeholder="Km odômetro">
-                <div class="grid-2"><input id="aLitros" type="number" step="0.01" placeholder="Litros" oninput="calcTotal()"><input id="aValorL" type="number" step="0.01" placeholder="R$ / L" oninput="calcTotal()"></div>
-                <div class="grid-2"><input id="aTotal" type="number" step="0.01" placeholder="Total R$" readonly><select id="aTipo"><option value="gasolina">Gasolina</option><option value="alcool">Álcool</option></select></div>
-                <button class="btn" id="btnSalvarAbast" onclick="addAbast()">Salvar Abastecimento</button>
-                <button class="btn-outline" id="btnCancelarAbast" onclick="cancelarEditAbast()" style="display:none">Cancelar</button>
-            </div>
-        </div>
-        <div class="card"><h3>Histórico (Veículo Atual)</h3><div id="listaAbast"></div></div>
-    </div>
-
-    <div id="manutencao" class="tab-content">
-        <div class="card"><h3 id="tituloManut">Adicionar Manutenção</h3>
-            <div style="display:grid; gap:12px">
-                <input id="mData" type="date"><input id="mKm" type="number" placeholder="Km"><input id="mTipo" type="text" placeholder="Ex: Troca Óleo">
-                <input id="mValor" type="number" step="0.01" placeholder="Valor R$"><input id="mProxKm" type="number" placeholder="Próxima em X km">
-                <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar</button>
-                <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
-            </div>
-        </div>
-        <div class="card"><h3>Histórico (Veículo Atual)</h3><div id="listaManut"></div></div>
-    </div>
-
-    <div id="veiculo" class="tab-content">
-        <div class="card"><h3 id="tituloVeiculo">Cadastrar / Editar Veículo</h3>
-            <div style="display:grid; gap:12px">
-                <select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select>
-                <div class="grid-2">
-                    <input id="vMarca" type="text" placeholder="Marca Ex: Honda">
-                    <input id="vModelo" type="text" placeholder="Modelo Ex: Lead 110">
+    <div class="tabs-view-wrapper" id="swipeArea">
+        <div class="tabs-container-fluid" id="tabsFluid">
+            
+            <div id="painel" class="tab-content">
+                <div id="alertaBar" class="alerta-bar"></div>
+                <div class="card odometro-destaque">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div>
+                            <p>Odômetro Virtual</p>
+                            <h1 id="odometroVirtual">0 km</h1>
+                            <p id="proxAtualizacao" style="opacity:0.8">Atualiza hoje 19:00</p>
+                        </div>
+                        <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
+                    </div>
                 </div>
                 <div class="grid-2">
-                    <input id="vAno" type="number" placeholder="Ano Modelo">
-                    <input id="vKm" type="number" placeholder="Km Atual">
+                    <div class="card kpi"><p>Média Real</p><h3 id="mediaReal">0 km/l</h3></div>
+                    <div class="card kpi"><p>Gasto Total</p><h3 id="gastoTotal">R$ 0,00</h3></div>
                 </div>
-                <input id="vData" type="date">
-                <button class="btn" id="btnSalvarVeiculo" onclick="addVeiculo()">Salvar Veículo</button>
-                <button class="btn-outline" id="btnCancelarVeiculo" onclick="cancelarEditVeiculo()" style="display:none">Cancelar</button>
+                <div class="grid-2">
+                    <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
+                    <div class="card kpi destaque" id="cardAutonomia"><p>Autonomia</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
+                </div>
+                <div class="card kpi" id="cardOleo"><p>Próxima Troca de Óleo</p><h3 id="proxTrocaOleo">0 km</h3><p class="muted" id="faltaOleo">Faltam 0 km</p></div>
             </div>
-        </div>
-        <div class="card"><h3>Meus Veículos Gerenciados</h3><div id="listaVeiculos"></div></div>
-    </div>
 
-    <div id="config" class="tab-content">
-        <div class="card"><h3>Odômetro Virtual - Config (Veículo Atual)</h3>
-            <div style="display:grid; gap:12px">
-                <label>Ponto de Partida</label>
-                <div class="grid-2"><input id="kmBase" type="number" placeholder="Km inicial" onchange="salvarConfig()"><input id="dataBase" type="datetime-local" onchange="salvarConfig()"></div>
-                <label>Como você quer calcular?</label>
-                <div class="grid-3" id="modoKm">
-                    <button type="button" data-modo="dia">Por Dia</button>
-                    <button type="button" data-modo="semana">Por Semana</button>
-                    <button type="button" data-modo="mes">Por Mês</button>
+            <div id="abastecer" class="tab-content">
+                <div class="card"><h3 id="tituloAbast">Novo Abastecimento</h3>
+                    <div style="display:grid; gap:12px">
+                        <input id="aData" type="date"><input id="aKm" type="number" placeholder="Km odômetro">
+                        <div class="grid-2"><input id="aLitros" type="number" step="0.01" placeholder="Litros" oninput="calcTotal()"><input id="aValorL" type="number" step="0.01" placeholder="R$ / L" oninput="calcTotal()"></div>
+                        <div class="grid-2"><input id="aTotal" type="number" step="0.01" placeholder="Total R$" readonly><select id="aTipo"><option value="gasolina">Gasolina</option><option value="alcool">Álcool</option></select></div>
+                        <button class="btn" id="btnSalvarAbast" onclick="addAbast()">Salvar Abastecimento</button>
+                        <button class="btn-outline" id="btnCancelarAbast" onclick="cancelarEditAbast()" style="display:none">Cancelar</button>
+                    </div>
                 </div>
-                <input id="kmValor" type="number" value="30" placeholder="Ex: 30" onchange="salvarConfig()">
-                <label>Tanque L</label>
-                <input id="tanqueL" type="number" step="0.1" value="6.5" onchange="salvarConfig()">
-                <label>Horário da atualização</label>
-                <input id="horaAtualizacao" type="time" value="19:00" onchange="salvarConfig()">
-                <label>Dias que roda</label>
-                <div class="dias-semana" id="diasSemana">
-                    <button type="button" class="dia-btn" data-dia="0">Dom</button><button type="button" class="dia-btn" data-dia="1">Seg</button>
-                    <button type="button" class="dia-btn" data-dia="2">Ter</button><button type="button" class="dia-btn" data-dia="3">Qua</button>
-                    <button type="button" class="dia-btn" data-dia="4">Qui</button><button type="button" class="dia-btn" data-dia="5">Sex</button>
-                    <button type="button" class="dia-btn" data-dia="6">Sáb</button>
-                </div>
+                <div class="card"><h3>Histórico (Veículo Atual)</h3><div id="listaAbast"></div></div>
             </div>
+
+            <div id="manutencao" class="tab-content">
+                <div class="card"><h3 id="tituloManut">Adicionar Manutenção</h3>
+                    <div style="display:grid; gap:12px">
+                        <input id="mData" type="date"><input id="mKm" type="number" placeholder="Km"><input id="mTipo" type="text" placeholder="Ex: Troca Óleo">
+                        <input id="mValor" type="number" step="0.01" placeholder="Valor R$"><input id="mProxKm" type="number" placeholder="Próxima em X km">
+                        <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar</button>
+                        <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
+                    </div>
+                </div>
+                <div class="card"><h3>Histórico (Veículo Atual)</h3><div id="listaManut"></div></div>
+            </div>
+
+            <div id="veiculo" class="tab-content">
+                <div class="card"><h3 id="tituloVeiculo">Cadastrar / Editar Veículo</h3>
+                    <div style="display:grid; gap:12px">
+                        <select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select>
+                        <div class="grid-2">
+                            <input id="vMarca" type="text" placeholder="Marca Ex: Honda">
+                            <input id="vModelo" type="text" placeholder="Modelo Ex: Lead 110">
+                        </div>
+                        <div class="grid-2">
+                            <input id="vAno" type="number" placeholder="Ano Modelo">
+                            <input id="vKm" type="number" placeholder="Km Atual">
+                        </div>
+                        <input id="vData" type="date">
+                        <button class="btn" id="btnSalvarVeiculo" onclick="addVeiculo()">Salvar Veículo</button>
+                        <button class="btn-outline" id="btnCancelarVeiculo" onclick="cancelarEditVeiculo()" style="display:none">Cancelar</button>
+                    </div>
+                </div>
+                <div class="card"><h3>Meus Veículos Gerenciados</h3><div id="listaVeiculos"></div></div>
+            </div>
+
+            <div id="config" class="tab-content">
+                <div class="card"><h3>Odômetro Virtual - Config (Veículo Atual)</h3>
+                    <div style="display:grid; gap:12px">
+                        <label>Ponto de Partida</label>
+                        <div class="grid-2"><input id="kmBase" type="number" placeholder="Km inicial" onchange="salvarConfig()"><input id="dataBase" type="datetime-local" onchange="salvarConfig()"></div>
+                        <label>Como você quer calcular?</label>
+                        <div class="grid-3" id="modoKm">
+                            <button type="button" data-modo="dia">Por Dia</button>
+                            <button type="button" data-modo="semana">Por Semana</button>
+                            <button type="button" data-modo="mes">Por Mês</button>
+                        </div>
+                        <input id="kmValor" type="number" value="30" placeholder="Ex: 30" onchange="salvarConfig()">
+                        <label>Tanque L</label>
+                        <input id="tanqueL" type="number" step="0.1" value="6.5" onchange="salvarConfig()">
+                        <label>Horário da atualização</label>
+                        <input id="horaAtualizacao" type="time" value="19:00" onchange="salvarConfig()">
+                        <label>Dias que roda</label>
+                        <div class="dias-semana" id="diasSemana">
+                            <button type="button" class="dia-btn" data-dia="0">Dom</button><button type="button" class="dia-btn" data-dia="1">Seg</button>
+                            <button type="button" class="dia-btn" data-dia="2">Ter</button><button type="button" class="dia-btn" data-dia="3">Qua</button>
+                            <button type="button" class="dia-btn" data-dia="4">Qui</button><button type="button" class="dia-btn" data-dia="5">Sex</button>
+                            <button type="button" class="dia-btn" data-dia="6">Sáb</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card"><button class="btn btn-danger" onclick="limparTudo()">Limpar Todos os Dados</button></div>
+            </div>
+
         </div>
-        <div class="card"><button class="btn btn-danger" onclick="limparTudo()">Limpar Todos os Dados</button></div>
     </div>
 </div>
 
 <nav class="bottom-nav">
-    <button class="btn-nav active" onclick="showTab(event, 'painel')"><i class="fas fa-gauge-high"></i><span>Painel</span></button>
-    <button class="btn-nav" onclick="showTab(event, 'abastecer')"><i class="fas fa-gas-pump"></i><span>Abastecer</span></button>
-    <button class="btn-nav" onclick="showTab(event, 'manutencao')"><i class="fas fa-wrench"></i><span>Manutenção</span></button>
-    <button class="btn-nav" onclick="showTab(event, 'veiculo')"><i class="fas fa-motorcycle"></i><span>Veículo</span></button>
-    <button class="btn-nav" onclick="showTab(event, 'config')"><i class="fas fa-gear"></i><span>Config</span></button>
+    <button class="btn-nav active" onclick="navegarParaIndice(0)"><i class="fas fa-gauge-high"></i><span>Painel</span></button>
+    <button class="btn-nav" onclick="navegarParaIndice(1)"><i class="fas fa-gas-pump"></i><span>Abastecer</span></button>
+    <button class="btn-nav" onclick="navegarParaIndice(2)"><i class="fas fa-wrench"></i><span>Manutenção</span></button>
+    <button class="btn-nav" onclick="navegarParaIndice(3)"><i class="fas fa-motorcycle"></i><span>Veículo</span></button>
+    <button class="btn-nav" onclick="navegarParaIndice(4)"><i class="fas fa-gear"></i><span>Config</span></button>
 </nav>
 
 <script>
 let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
 let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || null;
-
 let abastecimentos = JSON.parse(localStorage.getItem('abast') || '[]');
 let manutencoes = JSON.parse(localStorage.getItem('manut') || '[]');
 let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
@@ -191,6 +199,11 @@ let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
 let editandoAbastId = null;
 let editandoManutId = null;
 let editandoVeiculoId = null;
+
+let abaAtualIndice = 0;
+const totalAbas = 5;
+let toqueInicioX = 0;
+let toqueInicioY = 0;
 
 function obterConfigAtual() {
     if(!veiculoAtivoId) return {"kmBase":94111,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":30,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":6.5};
@@ -205,17 +218,49 @@ function obterConfigAtual() {
     return configsGerais[veiculoAtivoId];
 }
 
-function showTab(e, id) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+function navegarParaIndice(indice) {
+    if (indice < 0 || indice >= totalAbas) return;
+    abaAtualIndice = indice;
     
-    if (e && e.currentTarget) { e.currentTarget.classList.add('active'); }
+    document.getElementById('tabsFluid').style.transform = `translateX(-${indice * 20}%)`;
     
-    if(id === 'abastecer') document.getElementById('aKm').value = calcularOdometroVirtual();
-    if(id === 'config') carregarConfig();
-    if(id === 'veiculo') renderVeiculos();
+    const botoesNav = document.querySelectorAll('.btn-nav');
+    botoesNav.forEach((b, idx) => {
+        b.classList.toggle('active', idx === indice);
+    });
+    
+    if(indice === 1) document.getElementById('aKm').value = calcularOdometroVirtual();
+    if(indice === 4) carregarConfig();
+    if(indice === 3) renderVeiculos();
 }
+
+// GESTOS ANTI-TRAVAMENTO REVISADOS
+const campoSwipe = document.getElementById('swipeArea');
+campoSwipe.addEventListener('touchstart', e => {
+    toqueInicioX = e.touches[0].clientX;
+    toqueInicioY = e.touches[0].clientY;
+}, {passive: true});
+
+campoSwipe.addEventListener('touchend', e => {
+    if (!toqueInicioX || !toqueInicioY) return;
+
+    let toqueFimX = e.changedTouches[0].clientX;
+    let toqueFimY = e.changedTouches[0].clientY;
+
+    let diferencaX = toqueInicioX - toqueFimX;
+    let diferencaY = toqueInicioY - toqueFimY;
+
+    // Filtro de Segurança: se moveu mais para cima/baixo do que para os lados, ignora o swipe horizontal (evita travar a rolagem vertical)
+    if (Math.abs(diferencaX) > Math.abs(diferencaY) && Math.abs(diferencaX) > 70) {
+        if (diferencaX > 0) {
+            navegarParaIndice(abaAtualIndice + 1);
+        } else {
+            navegarParaIndice(abaAtualIndice - 1);
+        }
+    }
+    toqueInicioX = 0;
+    toqueInicioY = 0;
+}, {passive: true});
 
 function toggleTheme() { 
     document.body.classList.toggle('dark'); 
@@ -641,6 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderManut();
     renderVeiculos();
     atualizarPainel();
+    
+    navegarParaIndice(0);
     setInterval(atualizarPainel, 60000);
 });
 </script>
