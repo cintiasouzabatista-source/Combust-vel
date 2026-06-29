@@ -206,7 +206,7 @@ let toqueInicioX = 0;
 let toqueInicioY = 0;
 
 function obterConfigAtual() {
-    if(!veiculoAtivoId) return {"kmBase":94111,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":30,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":6.5};
+    if(!veiculoAtivoId) return {"kmBase":ooooo,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":00.0};
     if(!configsGerais[veiculoAtivoId]) {
         let vObj = veiculos.find(v => v.id == veiculoAtivoId);
         configsGerais[veiculoAtivoId] = {
