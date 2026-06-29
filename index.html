@@ -124,9 +124,14 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
         <div class="card"><h3 id="tituloVeiculo">Cadastrar Veículo</h3>
             <div style="display:grid; gap:12px">
                 <select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select>
-                <input id="vAno" type="number" placeholder="Ano Modelo">
-                <input id="vModelo" type="text" placeholder="Modelo Ex: Lead 160">
-                <input id="vKm" type="number" placeholder="Km Atual">
+                <div class="grid-2">
+                    <input id="vMarca" type="text" placeholder="Marca Ex: Honda">
+                    <input id="vModelo" type="text" placeholder="Modelo Ex: Lead 110">
+                </div>
+                <div class="grid-2">
+                    <input id="vAno" type="number" placeholder="Ano Modelo">
+                    <input id="vKm" type="number" placeholder="Km Atual">
+                </div>
                 <input id="vData" type="date" placeholder="Data Aquisição">
                 <button class="btn" id="btnSalvarVeiculo" onclick="addVeiculo()">Salvar Veículo</button>
                 <button class="btn-outline" id="btnCancelarVeiculo" onclick="cancelarEditVeiculo()" style="display:none">Cancelar</button>
@@ -165,11 +170,11 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
 </div>
 
 <nav class="bottom-nav">
-    <button class="btn-nav active" onclick="showTab('painel')"><i class="fas fa-gauge-high"></i><span>Painel</span></button>
-    <button class="btn-nav" onclick="showTab('abastecer')"><i class="fas fa-gas-pump"></i><span>Abastecer</span></button>
-    <button class="btn-nav" onclick="showTab('manutencao')"><i class="fas fa-wrench"></i><span>Manutenção</span></button>
-    <button class="btn-nav" onclick="showTab('veiculo')"><i class="fas fa-motorcycle"></i><span>Veículo</span></button>
-    <button class="btn-nav" onclick="showTab('config')"><i class="fas fa-gear"></i><span>Config</span></button>
+    <button class="btn-nav active" onclick="showTab(event, 'painel')"><i class="fas fa-gauge-high"></i><span>Painel</span></button>
+    <button class="btn-nav" onclick="showTab(event, 'abastecer')"><i class="fas fa-gas-pump"></i><span>Abastecer</span></button>
+    <button class="btn-nav" onclick="showTab(event, 'manutencao')"><i class="fas fa-wrench"></i><span>Manutenção</span></button>
+    <button class="btn-nav" onclick="showTab(event, 'veiculo')"><i class="fas fa-motorcycle"></i><span>Veículo</span></button>
+    <button class="btn-nav" onclick="showTab(event, 'config')"><i class="fas fa-gear"></i><span>Config</span></button>
 </nav>
 
 <script>
@@ -182,14 +187,17 @@ let editandoAbastId = null;
 let editandoManutId = null;
 let editandoVeiculoId = null;
 
-function showTab(id) {
+function showTab(e, id) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     
-    if (typeof event !== 'undefined' && event.target) {
+    if (e && e.currentTarget) {
+        e.currentTarget.classList.add('active');
+    } else if (typeof event !== 'undefined' && event.target) {
         event.target.closest('.btn-nav').classList.add('active');
     }
+    
     if(id === 'abastecer') document.getElementById('aKm').value = calcularOdometroVirtual();
     if(id === 'config') carregarConfig();
     if(id === 'veiculo') renderVeiculos();
@@ -295,7 +303,7 @@ function atualizarPainel() {
     const kmProxOleo = manutOleo? manutOleo.km + manutOleo.proxKm : 0;
 
     document.getElementById('odometroVirtual').textContent = kmVirtual.toLocaleString('pt-BR') + ' km';
-    document.getElementById('ultimoKmAbast').textContent = kmUltimoAbast.toLocaleString('pt-BR') + ' km';
+    document.getElementById('ultimoKmAbast').textContent = kmUltimoAbast.toLocaleString('pt-BR) + ' km';
     document.getElementById('proxTrocaOleo').textContent = kmProxOleo > 0? kmProxOleo.toLocaleString('pt-BR') + ' km' : '-- km';
     document.getElementById('faltaOleo').textContent = kmProxOleo > 0? `Faltam ${(kmProxOleo - kmVirtual).toLocaleString('pt-BR')} km` : '';
     document.getElementById('proxAtualizacao').textContent = `Atualiza hoje ${config.horaAtualizacao}`;
@@ -345,16 +353,50 @@ function editarManut(id) { const m = manutencoes.find(x=>x.id===id); editandoMan
 function cancelarEditManut() { editandoManutId=null; document.querySelectorAll('#manutencao input').forEach(i => i.value = ''); document.getElementById('mData').value = new Date().toISOString().slice(0,10); document.getElementById('btnSalvarManut').textContent='Salvar'; document.getElementById('btnCancelarManut').style.display='none'; document.getElementById('tituloManut').textContent='Adicionar Manutenção'; }
 function delManut(id) { manutencoes = manutencoes.filter(m => m.id!== id); salvar(); renderManut(); atualizarPainel(); }
 
-function addVeiculo() { const tipo = document.getElementById('vTipo').value; const ano = document.getElementById('vAno').value; const modelo = document.getElementById('vModelo').value; const km = parseInt(document.getElementById('vKm').value); const data = document.getElementById('vData').value; if(!tipo ||!ano ||!modelo ||!km ||!data) { alert('Preencha tudo'); return; } if(editandoVeiculoId) { const idx = veiculos.findIndex(v=>v.id===editandoVeiculoId); veiculos[idx] = {id:editandoVeiculoId, tipo, ano, modelo, km, data}; editandoVeiculoId = null; document.getElementById('btnSalvarVeiculo').textContent = 'Salvar Veículo'; document.getElementById('btnCancelarVeiculo').style.display = 'none'; document.getElementById('tituloVeiculo').textContent = 'Cadastrar Veículo'; } else { veiculos.push({ id: Date.now(), tipo, ano, modelo, km, data }); } salvar(); renderVeiculos(); limparVeiculo(); }
-function limparVeiculo() { document.getElementById('vAno').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vKm').value = ''; document.getElementById('vData').value = ''; }
-function renderVeiculos() { const div = document.getElementById('listaVeiculos'); if(!veiculos.length) { div.innerHTML = '<p class="muted">Nenhum veículo</p>'; return; } div.innerHTML = veiculos.slice().reverse().map(v => `<div class="historico-item"><div><b>${v.modelo}</b> ${v.ano} - ${v.km}km</div><div class="historico-acoes"><button onclick="editarVeiculo(${v.id})"><i class="fas fa-pen"></i></button><button class="del" onclick="delVeiculo(${v.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
+function addVeiculo() { 
+    const tipo = document.getElementById('vTipo').value; 
+    const marca = document.getElementById('vMarca').value; 
+    const modelo = document.getElementById('vModelo').value; 
+    const ano = document.getElementById('vAno').value; 
+    const km = parseInt(document.getElementById('vKm').value); 
+    const data = document.getElementById('vData').value; 
+    
+    if(!tipo || !marca || !modelo || !ano || !km || !data) { alert('Preencha tudo'); return; } 
+    
+    if(editandoVeiculoId) { 
+        const idx = veiculos.findIndex(v=>v.id===editandoVeiculoId); 
+        veiculos[idx] = {id:editandoVeiculoId, tipo, marca, modelo, ano, km, data}; 
+        editandoVeiculoId = null; 
+        document.getElementById('btnSalvarVeiculo').textContent = 'Salvar Veículo'; 
+        document.getElementById('btnCancelarVeiculo').style.display = 'none'; 
+        document.getElementById('tituloVeiculo').textContent = 'Cadastrar Veículo'; 
+    } else { 
+        veiculos.push({ id: Date.now(), tipo, marca, modelo, ano, km, data }); 
+    } 
+    salvar(); 
+    renderVeiculos(); 
+    limparVeiculo(); 
+}
+function limparVeiculo() { 
+    document.getElementById('vMarca').value = ''; 
+    document.getElementById('vModelo').value = ''; 
+    document.getElementById('vAno').value = ''; 
+    document.getElementById('vKm').value = ''; 
+    document.getElementById('vData').value = ''; 
+}
+function renderVeiculos() { 
+    const div = document.getElementById('listaVeiculos'); 
+    if(!veiculos.length) { div.innerHTML = '<p class="muted">Nenhum veículo</p>'; return; } 
+    div.innerHTML = veiculos.slice().reverse().map(v => `<div class="historico-item"><div><b>${v.marca || ''} ${v.modelo}</b> (${v.ano}) - ${v.km}km</div><div class="historico-acoes"><button onclick="editarVeiculo(${v.id})"><i class="fas fa-pen"></i></button><button class="del" onclick="delVeiculo(${v.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); 
+}
 
 function editarVeiculo(id) {
     const v = veiculos.find(x=>x.id===id);
     editandoVeiculoId=id;
     document.getElementById('vTipo').value=v.tipo;
-    document.getElementById('vAno').value=v.ano;
+    document.getElementById('vMarca').value=v.marca || '';
     document.getElementById('vModelo').value=v.modelo;
+    document.getElementById('vAno').value=v.ano;
     document.getElementById('vKm').value=v.km;
     document.getElementById('vData').value=v.data;
     document.getElementById('btnSalvarVeiculo').textContent='Salvar Edição';
