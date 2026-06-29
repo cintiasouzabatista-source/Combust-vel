@@ -345,14 +345,18 @@ function delManut(id) { manutencoes = manutencoes.filter(m => m.id!== id); salva
 function addVeiculo() { const tipo = document.getElementById('vTipo').value; const ano = document.getElementById('vAno').value; const modelo = document.getElementById('vModelo').value; const km = parseInt(document.getElementById('vKm').value); const data = document.getElementById('vData').value; if(!tipo ||!ano ||!modelo ||!km ||!data) { alert('Preencha tudo'); return; } if(editandoVeiculoId) { const idx = veiculos.findIndex(v=>v.id===editandoVeiculoId); veiculos[idx] = {id:editandoVeiculoId, tipo, ano, modelo, km, data}; editandoVeiculoId = null; document.getElementById('btnSalvarVeiculo').textContent = 'Salvar Veículo'; document.getElementById('btnCancelarVeiculo').style.display = 'none'; document.getElementById('tituloVeiculo').textContent = 'Cadastrar Veículo'; } else { veiculos.push({ id: Date.now(), tipo, ano, modelo, km, data }); } salvar(); renderVeiculos(); limparVeiculo(); }
 function limparVeiculo() { document.getElementById('vAno').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vKm').value = ''; document.getElementById('vData').value = ''; }
 function renderVeiculos() { const div = document.getElementById('listaVeiculos'); if(!veiculos.length) { div.innerHTML = '<p class="muted">Nenhum veículo</p>'; return; } div.innerHTML = veiculos.slice().reverse().map(v => `<div class="historico-item"><div><b>${v.modelo}</b> ${v.ano} - ${v.km}km</div><div class="historico-acoes"><button onclick="editarVeiculo(${v.id})"><i class="fas fa-pen"></i></button><button class="del" onclick="delVeiculo(${v.id})"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
-function editarVeiculo(id) { const v = veiculos.find(x=>x.id===id); editandoVeiculoId=id; document.getElementById('vTipo').value=v.tipo; document.getElementBy
-                            document.getElementById('vModelo').value=v.modelo;
+ffunction editarVeiculo(id) {
+    const v = veiculos.find(x=>x.id===id);
+    editandoVeiculoId=id;
+    document.getElementById('vTipo').value=v.tipo;
+    document.getElementById('vAno').value=v.ano;
+    document.getElementById('vModelo').value=v.modelo;
     document.getElementById('vKm').value=v.km;
     document.getElementById('vData').value=v.data;
     document.getElementById('btnSalvarVeiculo').textContent='Salvar Edição';
     document.getElementById('btnCancelarVeiculo').style.display='block';
     document.getElementById('tituloVeiculo').textContent='Editar Veículo';
-}
+} // <- ESSA CHAVE TAVA FALTANDO AQUI
 function cancelarEditVeiculo() {
     editandoVeiculoId=null;
     limparVeiculo();
@@ -392,10 +396,9 @@ function renderGrafico() {
     grafico = new Chart(ctx, {
         type: 'bar',
         data: { labels, datasets: [{ label: 'Km/L', data, backgroundColor: '#2563eb', borderRadius: 8 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }
-    });
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } // <- 2 CHAVES FECHANDO AQUI
+    }); // <- 1 CHAVE FECHANDO AQUI
 }
-
 function limparTudo() {
     if(confirm('Apagar todos os dados?')) {
         localStorage.clear();
