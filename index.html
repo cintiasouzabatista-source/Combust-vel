@@ -206,7 +206,7 @@ let toqueInicioX = 0;
 let toqueInicioY = 0;
 
 function obterConfigAtual() {
-    if(!veiculoAtivoId) return {"kmBase":ooooo,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":00.0};
+    if(!veiculoAtivoId) return {"kmBase":0,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":0.0};
     if(!configsGerais[veiculoAtivoId]) {
         let vObj = veiculos.find(v => v.id == veiculoAtivoId);
         configsGerais[veiculoAtivoId] = {
@@ -250,7 +250,6 @@ campoSwipe.addEventListener('touchend', e => {
     let diferencaX = toqueInicioX - toqueFimX;
     let diferencaY = toqueInicioY - toqueFimY;
 
-    // Filtro de Segurança: se moveu mais para cima/baixo do que para os lados, ignora o swipe horizontal (evita travar a rolagem vertical)
     if (Math.abs(diferencaX) > Math.abs(diferencaY) && Math.abs(diferencaX) > 70) {
         if (diferencaX > 0) {
             navegarParaIndice(abaAtualIndice + 1);
