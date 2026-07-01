@@ -342,19 +342,34 @@ function calcularOdometroVirtual() {
     const dataBase = new Date(conf.dataBase);
     const kmDia = kmPorDia();
     const diasSemana = conf.diasSemana || [];
-    const hora = parseInt(conf.horaAtualizacao?.split(':')[0]) || 19;
-    if (!kmBase || !dataBase || !kmDia) return kmBase;
+    const [hora, min] = (conf.horaAtualizacao || '19:00').split(':').map(Number);
+    
+    if (!kmBase || isNaN(dataBase.getTime()) || !kmDia) return kmBase;
+    
     let kmTotal = kmBase;
-    let dataCalc = new Date(dataBase);
     const agora = new Date();
-    while (dataCalc < agora) {
+    
+    // Inicia o cursor no mesmo dia da data base, ajustado para o horário de rodar a atualização
+    let dataCalc = new Date(dataBase);
+    dataCalc.setHours(hora, min, 0, 0);
+    
+    // Se a data base original já era depois do horário de atualização daquele dia,
+    // o primeiro acréscimo só pode ocorrer a partir do dia seguinte
+    if (dataBase > dataCalc) {
         dataCalc.setDate(dataCalc.getDate() + 1);
-        dataCalc.setHours(hora, 0, 0);
-        if (dataCalc > agora) break;
-        if (diasSemana.includes(dataCalc.getDay())) kmTotal += kmDia;
     }
+    
+    // Loop avançando dia após dia até o momento presente
+    while (dataCalc <= agora) {
+        if (diasSemana.includes(dataCalc.getDay())) {
+            kmTotal += kmDia;
+        }
+        dataCalc.setDate(dataCalc.getDate() + 1);
+    }
+    
     return Math.floor(kmTotal);
 }
+
 
 function verificarAlertas(kmVirtual, kmUltimoAbast, media, kmProxOleo) {
     let conf = obterConfigAtual();
