@@ -407,6 +407,10 @@ function calcularOdometroVirtual() {
     return Math.floor(kmTotal);
 }
 
+function removerAcentos(texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 function atualizarPainel() {
     atualizarSeletorCabecalho();
     const kmVirtual = calcularOdometroVirtual();
@@ -448,16 +452,30 @@ function atualizarPainel() {
         document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
     }
 
-    const manutDoVeiculo = manutencoes.filter(m => m.veiculoId == veiculoAtivoId && m.tipo.toLowerCase().includes('óleo'));
-    manutDoVeiculo.sort((a,b) => b.km - a.km);
+    // --- MOTOR DE CORREÇÃO DA TROCA DE ÓLEO ---
+    const manutDoVeiculo = manutencoes.filter(m => {
+        const tipoLimpo = removerAcentos(m.tipo || "");
+        return m.veiculoId == veiculoAtivoId && (tipoLimpo.includes('oleo') || tipoLimpo.includes('troca oleo'));
+    });
+    
+    manutDoVeiculo.sort((a, b) => b.km - a.km);
+    
     if(manutDoVeiculo.length && manutDoVeiculo[0].proxKm) {
-        const proxTroca = parseInt(manutDoVeiculo[0].proxKm);
+        const proxTroca = parseInt(manutDoVeiculo[0].proxKm) || 0;
         document.getElementById('proxTrocaOleo').innerText = `${proxTroca.toLocaleString('pt-BR')} km`;
+        
         const faltam = proxTroca - kmVirtual;
-        document.getElementById('faltaOleo').innerText = faltam > 0 ? `Faltam ${faltam} km` : `Troque o óleo! Passou ${Math.abs(faltam)} km`;
+        if (faltam > 0) {
+            document.getElementById('faltaOleo').innerText = `Faltam ${faltam.toLocaleString('pt-BR')} km`;
+            document.getElementById('cardOleo').className = "card kpi";
+        } else {
+            document.getElementById('faltaOleo').innerText = `Troque o óleo! Passou ${Math.abs(faltam).toLocaleString('pt-BR')} km`;
+            document.getElementById('cardOleo').className = "card kpi danger";
+        }
     } else {
         document.getElementById('proxTrocaOleo').innerText = `0 km`;
         document.getElementById('faltaOleo').innerText = `Faltam 0 km`;
+        document.getElementById('cardOleo').className = "card kpi";
     }
 }
 
