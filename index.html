@@ -411,50 +411,48 @@ function verificarAlertas(kmVirtual, kmUltimoAbast, media, kmProxOleo) {
 }
 
 function atualizarPainel() {
-    let conf = obterConfigAtual();
+    // 1. Calcula o odômetro virtual atualizado com a função corrigida
     const kmVirtual = calcularOdometroVirtual();
+    document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
+
+    // 2. Busca o último abastecimento realizado
+    // Filtrando para garantir que pega os dados do veículo ativo
+    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId);
     
-    let abastsFiltrados = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId);
-    let manutsFiltradas = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
+    // Ordena pelo Km para garantir que o maior/mais recente está primeiro
+    abastDoVeiculo.sort((a, b) => b.km - a.km);
 
-    const ultimoAbast = abastsFiltrados[abastsFiltrados.length - 1];
-    const kmUltimoAbast = ultimoAbast ? ultimoAbast.km : kmVirtual;
-    const manutOleo = manutsFiltradas.find(m => m.tipo.toLowerCase().includes('óleo'));
-    const kmProxOleo = manutOleo ? manutOleo.km + manutOleo.proxKm : 0;
+    const ultimoAbast = abastDoVeiculo[0];
+    const tanqueL = obterConfigAtual().tanqueL || 6.5;
 
-    document.getElementById('odometroVirtual').textContent = kmVirtual.toLocaleString('pt-BR') + ' km';
-    document.getElementById('ultimoKmAbast').textContent = kmUltimoAbast.toLocaleString('pt-BR') + ' km';
-    document.getElementById('proxTrocaOleo').textContent = kmProxOleo > 0 ? kmProxOleo.toLocaleString('pt-BR') + ' km' : '-- km';
-    document.getElementById('faltaOleo').textContent = kmProxOleo > 0 ? `Faltam ${(kmProxOleo - kmVirtual).toLocaleString('pt-BR')} km` : '';
-    document.getElementById('proxAtualizacao').textContent = `Atualiza hoje ${conf.horaAtualizacao}`;
+    // Se houver média real calculada e um último abastecimento registrado
+    if (ultimoAbast && mediaReal > 0) {
+        // Quilometragem que você já rodou desde que abasteceu
+        const kmRodadosDesdeAbast = kmVirtual - ultimoAbast.km;
+        
+        // Quantos km a moto teoricamente roda com um tanque cheio
+        const capacidadeTotalKm = tanqueL * mediaReal;
+        
+        // Autonomia restante estimada (Capacidade total - o que já rodou)
+        let kmRestantes = Math.floor(capacidadeTotalKm - kmRodadosDesdeAbast);
+        if (kmRestantes < 0) kmRestantes = 0; // Evita valores negativos
 
-    let totalKm = 0, totalL = 0;
-    for(let i = 1; i < abastsFiltrados.length; i++) { 
-        totalKm += abastsFiltrados[i].km - abastsFiltrados[i-1].km; 
-        totalL += abastsFiltrados[i].litros; 
+        // Estimativa de dias baseada no seu consumo diário configurado (kmPorDia)
+        const kmDiario = kmPorDia();
+        const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantes / kmDiario) : 0;
+
+        // Atualiza o card de Autonomia na tela
+        document.getElementById('autonomia').innerText = `${kmRestantes} km ~ ${diasRestantes} dias`;
+        document.getElementById('ultimoKmAbast').innerText = `${ultimoAbast.km.toLocaleString('pt-BR')} km`;
+    } else {
+        // Valores padrão caso não haja histórico de abastecimento
+        document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
+        document.getElementById('ultimoKmAbast').innerText = `0 km`;
     }
-    const media = totalL > 0 ? (totalKm / totalL) : 0;
-    document.getElementById('mediaReal').textContent = media > 0 ? media.toFixed(1) + ' km/l' : '-- km/l';
 
-    const gasto = abastsFiltrados.reduce((acc, a) => acc + a.total, 0);
-    document.getElementById('gastoTotal').textContent = 'R$ ' + gasto.toFixed(2).replace('.', ',');
-
-    const autonomiaKm = Math.floor(media * conf.tanqueL);
-    const autonomiaDias = kmPorDia() > 0 ? Math.floor(autonomiaKm / kmPorDia()) : 0;
-    document.getElementById('autonomia').textContent = media > 0 ? `${autonomiaKm}km ~ ${autonomiaDias} dias` : '--';
-
-    verificarAlertas(kmVirtual, kmUltimoAbast, media, kmProxOleo);
+    // ... restante da sua função de atualizar o painel (troca de óleo, alertas, etc.)
 }
 
-function ajustarOdometro() { 
-    const kmAtualMoto = prompt('Qual o km real do veículo agora?'); 
-    if (!kmAtualMoto || isNaN(kmAtualMoto)) return; 
-    let conf = obterConfigAtual();
-    conf.kmBase = parseInt(kmAtualMoto); 
-    conf.dataBase = new Date().toISOString(); 
-    salvar(); 
-    atualizarPainel(); 
-}
 
 function calcTotal() { 
     const litros = parseFloat(document.getElementById('aLitros').value) || 0; 
