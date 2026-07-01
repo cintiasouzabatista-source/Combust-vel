@@ -30,10 +30,9 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .kpi p { font-size: 13px; margin-bottom: 4px; }
 .kpi h3 { font-size: 22px; }
 .kpi.destaque { border: 2px solid var(--primary); }
-.kpi.warn { border: 2px solid var(--warn); background: rgba(245,158,11,0.1); }
-.kpi.danger { border: 2px solid var(--danger); background: rgba(239,68,68,0.1); }
+.kpi.warn { border: 2px solid var(--warn) !important; background: rgba(245,158,11,0.15) !important; }
+.kpi.danger { border: 2px solid var(--danger) !important; background: rgba(239,68,68,0.15) !important; }
 
-/* --- AJUSTE DE FLUIDEZ CONTRA TRAVAMENTOS --- */
 .tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
 .tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 .tab-content { width: 20%; flex-shrink: 0; padding: 0 4px; }
@@ -44,10 +43,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .btn-nav i { font-size: 20px; }
 .theme-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
-.odometro-destaque {
-background: linear-gradient(135deg, #2563eb, #1d4ed8);
-color: white; border: none; padding: 14px 16px; margin-bottom: 12px;
-}
+.odometro-destaque { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 14px 16px; margin-bottom: 12px; }
 .odometro-destaque p { color: rgba(255,255,255,0.8); font-size: 13px; }
 .odometro-destaque h1 { font-size: 28px; font-weight: 700; margin: 2px 0; line-height: 1.1; }
 .btn-ajuste { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; }
@@ -58,10 +54,11 @@ color: white; border: none; padding: 14px 16px; margin-bottom: 12px;
 .grid-3 button { padding: 10px; font-size: 14px; }
 .grid-3 button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-body.dark input, body.dark select { background: #334155; border-color: #475569; color: #f1f5f9; }
-.alerta-bar { padding: 10px 14px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; font-weight: 600; display: none; }
-.alerta-bar.warn { display: block; background: rgba(245,158,11,0.2); color: var(--warn); border: 1px solid var(--warn); }
-.alerta-bar.danger { display: block; background: rgba(239,68,68,0.2); color: var(--danger); border: 1px solid var(--danger); }
+/* --- SEÇÃO DE ALERTAS ESTILIZADOS --- */
+.container-alertas { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.alerta-item { padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.alerta-item.warn { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid var(--warn); }
+.alerta-item.danger { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid var(--danger); }
 
 .historico-item { padding:8px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
 .historico-acoes { display:flex; gap:8px; }
@@ -72,7 +69,7 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
 <body>
 <div class="container">
     <div class="header-area">
-        <h1>Veiculos</h1>
+        <h1>Veículos</h1>
         <select id="seletorVeiculoPrincipal" class="header-select" onchange="mudarVeiculoAtivo()"></select>
         <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     </div>
@@ -81,13 +78,14 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
         <div class="tabs-container-fluid" id="tabsFluid">
             
             <div id="painel" class="tab-content">
-                <div id="alertaBar" class="alerta-bar"></div>
+                <div id="containerAlertas" class="container-alertas"></div>
+
                 <div class="card odometro-destaque">
                     <div style="display:flex; justify-content:space-between; align-items:center">
                         <div>
                             <p>Odômetro Virtual</p>
                             <h1 id="odometroVirtual">0 km</h1>
-                            <p id="proxAtualizacao" style="opacity:0.8">Atualiza hoje 19:00</p>
+                            <p id="proxAtualizacao" style="opacity:0.8">Atualização Inteligente Ativa</p>
                         </div>
                         <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
                     </div>
@@ -98,9 +96,9 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
                 </div>
                 <div class="grid-2">
                     <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
-                    <div class="card kpi destaque" id="cardAutonomia"><p>Autonomia</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
+                    <div class="card kpi" id="cardAutonomia"><p>Autonomia útil (Até Reserva)</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
                 </div>
-                <div class="card kpi" id="cardOleo"><p>Próxima Troca de Óleo</p><h3 id="proxTrocaOleo">0 km</h3><p class="muted" id="faltaOleo">Faltam 0 km</p></div>
+                <div class="card kpi" id="cardOleo"><p>Próxima Troca de Óleo</p><h3 id="proxTrocaOleo">0 km</h3><p id="faltaOleo">Faltam 0 km</p></div>
             </div>
 
             <div id="abastecer" class="tab-content">
@@ -160,7 +158,7 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
                             <button type="button" data-modo="mes">Por Mês</button>
                         </div>
                         <input id="kmValor" type="number" value="30" placeholder="Ex: 30" onchange="salvarConfig()">
-                        <label>Tanque L</label>
+                        <label>Capacidade Total Tanque (Litros)</label>
                         <input id="tanqueL" type="number" step="0.1" value="6.5" onchange="salvarConfig()">
                         <label>Horário da atualização</label>
                         <input id="horaAtualizacao" type="time" value="19:00" onchange="salvarConfig()">
@@ -205,7 +203,7 @@ let toqueInicioX = 0;
 let toqueInicioY = 0;
 
 function obterConfigAtual() {
-    if(!veiculoAtivoId) return {"kmBase":0,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":0.0};
+    if(!veiculoAtivoId) return {"kmBase":0,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":6.5};
     if(!configsGerais[veiculoAtivoId]) {
         let vObj = veiculos.find(v => v.id == veiculoAtivoId);
         configsGerais[veiculoAtivoId] = {
@@ -220,14 +218,9 @@ function obterConfigAtual() {
 function navegarParaIndice(indice) {
     if (indice < 0 || indice >= totalAbas) return;
     abaAtualIndice = indice;
-    
     document.getElementById('tabsFluid').style.transform = `translateX(-${indice * 20}%)`;
-    
     const botoesNav = document.querySelectorAll('.btn-nav');
-    botoesNav.forEach((b, idx) => {
-        b.classList.toggle('active', idx === indice);
-    });
-    
+    botoesNav.forEach((b, idx) => b.classList.toggle('active', idx === indice));
     if(indice === 0) atualizarPainel();
     if(indice === 1) { document.getElementById('aKm').value = calcularOdometroVirtual(); renderAbast(); }
     if(indice === 2) renderManut();
@@ -247,7 +240,6 @@ campoSwipe.addEventListener('touchend', e => {
     let toqueFimY = e.changedTouches[0].clientY;
     let diferencaX = toqueInicioX - toqueFimX;
     let diferencaY = toqueInicioY - toqueFimY;
-
     if (Math.abs(diferencaX) > Math.abs(diferencaY) && Math.abs(diferencaX) > 70) {
         if (diferencaX > 0) navegarParaIndice(abaAtualIndice + 1);
         else navegarParaIndice(abaAtualIndice - 1);
@@ -331,25 +323,20 @@ function kmPorDia() {
 function ajustarOdometro() {
     const novoKm = prompt("Digite o Km atual exato do painel digital da moto:");
     if (novoKm === null) return;
-    
     const kmNum = parseInt(novoKm);
     if (isNaN(kmNum) || kmNum <= 0) {
         alert("Por favor, insira um número de quilometragem válido.");
         return;
     }
-
     let conf = obterConfigAtual();
     conf.kmBase = kmNum;
-    
     const agora = new Date();
     const dataLocalStr = agora.getFullYear() + '-' + 
                          String(agora.getMonth() + 1).padStart(2, '0') + '-' + 
                          String(agora.getDate()).padStart(2, '0') + 'T' + 
                          String(agora.getHours()).padStart(2, '0') + ':' + 
                          String(agora.getMinutes()).padStart(2, '0');
-    
     conf.dataBase = dataLocalStr;
-    
     salvar();
     atualizarPainel();
     alert(`Odômetro ajustado com sucesso para ${kmNum.toLocaleString('pt-BR')} km!`);
@@ -359,23 +346,19 @@ function calcularOdometroVirtual() {
     let conf = obterConfigAtual();
     const kmBase = parseInt(conf.kmBase) || 0;
     if (!kmBase || !conf.dataBase) return kmBase;
-    
     const dataBase = new Date(conf.dataBase);
     const diasSemana = conf.diasSemana || [];
     const [hora, min] = (conf.horaAtualizacao || '19:00').split(':').map(Number);
-    
     if (isNaN(dataBase.getTime())) return kmBase;
     
     let kmTotal = kmBase;
     const agora = new Date();
-    
     let dataCalc = new Date(dataBase);
     dataCalc.setHours(hora, min, 0, 0);
     
     if (dataBase > dataCalc) {
         dataCalc.setDate(dataCalc.getDate() + 1);
     }
-    
     let ultimoMesSomado = -1;
     let ultimaSemanaSomada = -1;
 
@@ -435,18 +418,31 @@ function atualizarPainel() {
 
     const conf = obterConfigAtual();
     const tanqueL = conf.tanqueL || 6.5;
+    const reservaL = 1.8; 
+    const tanqueUtilL = tanqueL - reservaL; // 6.5 - 1.8 = 4.7 litros úteis
+
+    let alertasHtml = "";
+    let cardAutonomiaElement = document.getElementById('cardAutonomia');
+    cardAutonomiaElement.className = "card kpi destaque"; // reset
 
     if (ultimoAbast && mediaReal > 0) {
         document.getElementById('ultimoKmAbast').innerText = `${parseInt(ultimoAbast.km).toLocaleString('pt-BR')} km`;
         const kmRodadosDesdeAbast = kmVirtual - ultimoAbast.km;
-        const capacidadeTotalKm = tanqueL * mediaReal;
         
-        let kmRestantes = Math.floor(capacidadeTotalKm - kmRodadosDesdeAbast);
-        if (kmRestantes < 0) kmRestantes = 0;
+        // Autonomia calculada com base APENAS no tanque útil antes de bater na reserva
+        const capacidadeUtilKm = tanqueUtilL * mediaReal;
+        let kmRestantesParaReserva = Math.floor(capacidadeUtilKm - kmRodadosDesdeAbast);
+        if (kmRestantesParaReserva < 0) kmRestantesParaReserva = 0;
 
         const kmDiario = kmPorDia();
-        const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantes / kmDiario) : 0;
-        document.getElementById('autonomia').innerText = `${kmRestantes} km ~ ${diasRestantes} dias`;
+        const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantesParaReserva / kmDiario) : 0;
+        document.getElementById('autonomia').innerText = `${kmRestantesParaReserva} km ~ ${diasRestantes} dias`;
+
+        // Alerta de Combustível (Se atingir 30km ou menos para entrar na reserva)
+        if (kmRestantesParaReserva <= 30) {
+            cardAutonomiaElement.className = "card kpi warn";
+            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-gas-pump"></i> Combustível Baixo: Faltam apenas ${kmRestantesParaReserva} km para entrar na Reserva (1,8L)!</div>`;
+        }
     } else {
         document.getElementById('ultimoKmAbast').innerText = `0 km`;
         document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
@@ -457,26 +453,36 @@ function atualizarPainel() {
         const tipoLimpo = removerAcentos(m.tipo || "");
         return m.veiculoId == veiculoAtivoId && (tipoLimpo.includes('oleo') || tipoLimpo.includes('troca oleo'));
     });
-    
     manutDoVeiculo.sort((a, b) => b.km - a.km);
     
+    let cardOleoElement = document.getElementById('cardOleo');
+    cardOleoElement.className = "card kpi"; // reset
+
     if(manutDoVeiculo.length && manutDoVeiculo[0].proxKm) {
         const proxTroca = parseInt(manutDoVeiculo[0].proxKm) || 0;
         document.getElementById('proxTrocaOleo').innerText = `${proxTroca.toLocaleString('pt-BR')} km`;
-        
         const faltam = proxTroca - kmVirtual;
-        if (faltam > 0) {
+        
+        if (faltam > 250) {
             document.getElementById('faltaOleo').innerText = `Faltam ${faltam.toLocaleString('pt-BR')} km`;
-            document.getElementById('cardOleo').className = "card kpi";
+        } else if (faltam <= 250 && faltam > 0) {
+            // Regra: Alerta sobe com 250 km ou menos
+            document.getElementById('faltaOleo').innerText = `Atenção: Faltam apenas ${faltam.toLocaleString('pt-BR')} km para a troca!`;
+            cardOleoElement.className = "card kpi warn";
+            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Troca de Óleo Próxima: Faltam ${faltam} km.</div>`;
         } else {
-            document.getElementById('faltaOleo').innerText = `Troque o óleo! Passou ${Math.abs(faltam).toLocaleString('pt-BR')} km`;
-            document.getElementById('cardOleo').className = "card kpi danger";
+            // Passou do limite (zerou ou ficou negativo)
+            document.getElementById('faltaOleo').innerText = `Troque o óleo imediatamente! Passou ${Math.abs(faltam).toLocaleString('pt-BR')} km`;
+            cardOleoElement.className = "card kpi danger";
+            alertasHtml += `<div class="alerta-item danger"><i class="fas fa-oil-can"></i> Óleo Vencido! Passou do prazo em ${Math.abs(faltam)} km.</div>`;
         }
     } else {
         document.getElementById('proxTrocaOleo').innerText = `0 km`;
         document.getElementById('faltaOleo').innerText = `Faltam 0 km`;
-        document.getElementById('cardOleo').className = "card kpi";
     }
+
+    // Renderiza a central de alertas no topo da tela inicial
+    document.getElementById('containerAlertas').innerHTML = alertasHtml;
 }
 
 function calcTotal() {
