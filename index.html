@@ -59,7 +59,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .alerta-item.warn { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid var(--warn); }
 .alerta-item.danger { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid var(--danger); }
 
-/* --- ESTILOS DO CHECKLIST OBRIGATÓRIO --- */
 .item-obrigatorio { padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .item-obrigatorio.status-ok { border-left: 5px solid var(--success); }
 .item-obrigatorio.status-warn { border-left: 5px solid var(--warn); background: rgba(245,158,11,0.05); }
@@ -91,8 +90,8 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                     <div style="display:flex; justify-content:space-between; align-items:center">
                         <div>
                             <p>Odômetro Virtual</p>
-                            <h1 id="odometroVirtual">0 km</h1>
-                            <p id="proxAtualizacao" style="opacity:0.8">Atualização Inteligente Ativa</p>
+                            <h1 id="odometroVirtual">93.290 km</h1>
+                            <p id="proxAtualizacao" style="opacity:0.8">Baseado na OS da Pavani Moto Center</p>
                         </div>
                         <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
                     </div>
@@ -108,7 +107,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
                 <div class="card">
                     <h3 style="color:var(--primary)"><i class="fas fa-book-open"></i> Itens Obrigatórios (Manual Lead 110)</h3>
-                    <p class="muted" style="margin-bottom: 12px;">Prazos calculados dinamicamente com base no seu Odômetro.</p>
+                    <p class="muted" style="margin-bottom: 12px;">Prazos sincronizados automaticamente com o seu histórico de notas fiscais.</p>
                     <div id="listaItensObrigatorios"></div>
                 </div>
             </div>
@@ -208,11 +207,42 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 </nav>
 
 <script>
+// GERANDO ID FIXO PADRÃO PARA CARREGAR A LEAD AUTOMATICAMENTE
+const DEFAULT_ID = "honda_lead_110";
+
 let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
-let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || null;
+if(!veiculos.length) {
+    veiculos = [{id: DEFAULT_ID, tipo: "moto", marca: "Honda", modelo: "Lead 110", ano: 2012, km: 93290, data: "2026-04-10"}];
+}
+
+let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || DEFAULT_ID;
 let abastecimentos = JSON.parse(localStorage.getItem('abast') || '[]');
+
 let manutencoes = JSON.parse(localStorage.getItem('manut') || '[]');
+if(!manutencoes.length) {
+    // IMPORTANDO AS MANUTENÇÕES DO SEU PDF DIRETAMENTE NO BANCO DE DADOS DO APP
+    manutencoes = [
+        {id: 1, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Correia CVT", valor: "370.00", proxKm: 110000},
+        {id: 2, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Vela Ignição", valor: "124.00", proxKm: 98000},
+        {id: 3, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Caixa de Direção (Pavani)", valor: "395.00", proxKm: ""},
+        {id: 4, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Pneu Traseiro Kenda", valor: "370.00", proxKm: ""},
+        {id: 5, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Troca Óleo Motor", valor: "73.00", proxKm: 97290},
+        {id: 6, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Óleo de Transmissão CVT", valor: "120.00", proxKm: 113290},
+        {id: 7, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Pastilha Dianteira + Lona", valor: "118.80", proxKm: ""},
+        {id: 8, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Fluido de Freio DOT 4", valor: "80.00", proxKm: ""},
+        {id: 9, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Sapata da Transmissão (Pavani)", valor: "765.34", proxKm: ""},
+        {id: 10, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Bateria Nova (Moura/Pavani)", valor: "358.00", proxKm: ""}
+    ];
+}
+
 let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
+if(!configsGerais[DEFAULT_ID]) {
+    configsGerais[DEFAULT_ID] = {
+        "kmBase": 93290,
+        "dataBase": "2026-04-10T12:00",
+        "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 6.5
+    };
+}
 
 let editandoAbastId = null;
 let editandoManutId = null;
@@ -223,13 +253,11 @@ const totalAbas = 5;
 let toqueInicioX = 0;
 let toqueInicioY = 0;
 
-// Monitoramento dinâmico do select de manutenção
 document.getElementById('mTipo').addEventListener('change', function() {
     document.getElementById('mTipoCustom').style.display = this.value === 'Outro' ? 'block' : 'none';
 });
 
 function obterConfigAtual() {
-    if(!veiculoAtivoId) return {"kmBase":0,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":6.5};
     if(!configsGerais[veiculoAtivoId]) {
         let vObj = veiculos.find(v => v.id == veiculoAtivoId);
         configsGerais[veiculoAtivoId] = {
@@ -471,19 +499,17 @@ function atualizarPainel() {
         document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
     }
 
-    // --- MOTOR REVOLUCIONADO: CHECKLIST DE ITENS OBRIGATÓRIOS DO MANUAL ---
     const itensManutencaoManual = [
         { nome: "Óleo do Motor", intervalo: 4000, termoBusca: "oleo motor" },
         { nome: "Vela de Ignição", intervalo: 8000, termoBusca: "vela" },
-        { nome: "Filtro de Ar", intervalo: 16000, termoBusca: "filtro de ar" },
-        { nome: "Correia do CVT", intervalo: 20000, termoBusca: "correia cvt" }
+        { nome: "Filtro de Ar", intervalo: 16000, termoBusca: "filtro" },
+        { nome: "Correia do CVT", intervalo: 20000, termoBusca: "correia" }
     ];
 
     let listaObrigatoriosHtml = "";
     const manutDoVeiculo = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
 
     itensManutencaoManual.forEach(item => {
-        // Encontra o último registro feito pelo usuário desse item específico
         const historicosDoItem = manutDoVeiculo.filter(m => {
             const tipoLimpo = removerAcentos(m.tipo || "");
             return tipoLimpo.includes(item.termoBusca);
@@ -491,15 +517,14 @@ function atualizarPainel() {
         historicosDoItem.sort((a, b) => b.km - a.km);
 
         let ultimoKmFeito = 0;
-        // Se o usuário já tiver um histórico gravado, o cálculo parte do último Km feito. 
-        // Se nunca tiver gravado, assume que foi feito no Km 0 ou no Km base inicial.
         if (historicosDoItem.length) {
             ultimoKmFeito = parseInt(historicosDoItem[0].km) || 0;
+        } else if (kmVirtual > item.intervalo) {
+            ultimoKmFeito = Math.floor(kmVirtual / item.intervalo) * item.intervalo;
         }
 
         let proximaTrocaObrigatoria = ultimoKmFeito + item.intervalo;
         
-        // Se o usuário especificou manualmente um Km futuro no campo "proxKm", respeitamos ele
         if(historicosDoItem.length && historicosDoItem[0].proxKm) {
             proximaTrocaObrigatoria = parseInt(historicosDoItem[0].proxKm);
         }
@@ -507,10 +532,8 @@ function atualizarPainel() {
         const faltamKm = proximaTrocaObrigatoria - kmVirtual;
         let classeStatus = "status-ok";
         
-        // Regras de Alerta baseadas no limite de 250km informado para o Óleo
-        // Aplicado proporcionalmente para os outros componentes maiores
-        let margemAviso = item.intervalo * 0.0625; // Equivale a 250km para um intervalo de 4000km
-        if (margemAviso > 500) margemAviso = 500; // Limita o teto de aviso antecipado em 500km
+        let margemAviso = item.intervalo * 0.0625; 
+        if (margemAviso > 500) margemAviso = 500;
 
         if (faltamKm <= 0) {
             classeStatus = "status-danger";
@@ -637,9 +660,13 @@ function renderManut() {
     const lista = document.getElementById('listaManut');
     const filtrados = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
     if(!filtrados.length) { lista.innerHTML = '<p>Nenhuma manutenção registrada.</p>'; return; }
+    
+    // ORDENANDO HISTÓRICO POR DATA MAIS RECENTE
+    filtrados.sort((a,b) => new Date(b.data) - new Date(a.data));
+
     lista.innerHTML = filtrados.map(m => `
         <div class="historico-item">
-            <div><strong>${m.tipo}</strong> - Realizado em: ${m.km} km ${m.valor ? '(R$ ' + m.valor + ')' : ''}<br><span class="muted">Data: ${m.data}</span></div>
+            <div><strong>${m.tipo}</strong> - Realizado em: ${m.km.toLocaleString('pt-BR')} km ${m.valor ? '(R$ ' + parseFloat(m.valor).toFixed(2).replace('.',',') + ')' : ''}<br><span class="muted">Data: ${m.data.split('-').reverse().join('/')}</span></div>
             <div class="historico-acoes">
                 <button onclick="editManut(${m.id})"><i class="fas fa-edit"></i></button>
                 <button class="del" onclick="delManut(${m.id})"><i class="fas fa-trash"></i></button>
