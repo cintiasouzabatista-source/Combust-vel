@@ -63,7 +63,7 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
 .alerta-bar.warn { display: block; background: rgba(245,158,11,0.2); color: var(--warn); border: 1px solid var(--warn); }
 .alerta-bar.danger { display: block; background: rgba(239,68,68,0.2); color: var(--danger); border: 1px solid var(--danger); }
 
-.historico-item { border-bottom:1px solid var(--border); padding:8px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
+.historico-item { padding:8px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
 .historico-acoes { display:flex; gap:8px; }
 .historico-acoes button { background:none; border:none; cursor:pointer; padding:6px; width:auto; color: var(--primary); }
 .historico-acoes button.del { color:var(--danger); }
@@ -89,7 +89,7 @@ body.dark input, body.dark select { background: #334155; border-color: #475569; 
                             <h1 id="odometroVirtual">0 km</h1>
                             <p id="proxAtualizacao" style="opacity:0.8">Atualiza hoje 19:00</p>
                         </div>
-                        <button class="btn-ajuste" onclick="navegarParaIndice(4)"><i class="fas fa-sliders-h"></i></button>
+                        <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
                     </div>
                 </div>
                 <div class="grid-2">
@@ -328,17 +328,43 @@ function kmPorDia() {
     return val;
 }
 
+function ajustarOdometro() {
+    const novoKm = prompt("Digite o Km atual exato do painel digital da moto:");
+    if (novoKm === null) return;
+    
+    const kmNum = parseInt(novoKm);
+    if (isNaN(kmNum) || kmNum <= 0) {
+        alert("Por favor, insira um número de quilometragem válido.");
+        return;
+    }
+
+    let conf = obterConfigAtual();
+    conf.kmBase = kmNum;
+    
+    const agora = new Date();
+    const dataLocalStr = agora.getFullYear() + '-' + 
+                         String(agora.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(agora.getDate()).padStart(2, '0') + 'T' + 
+                         String(agora.getHours()).padStart(2, '0') + ':' + 
+                         String(agora.getMinutes()).padStart(2, '0');
+    
+    conf.dataBase = dataLocalStr;
+    
+    salvar();
+    atualizarPainel();
+    alert(`Odômetro ajustado com sucesso para ${kmNum.toLocaleString('pt-BR')} km!`);
+}
+
 function calcularOdometroVirtual() {
     let conf = obterConfigAtual();
     const kmBase = parseInt(conf.kmBase) || 0;
     if (!kmBase || !conf.dataBase) return kmBase;
     
     const dataBase = new Date(conf.dataBase);
-    const kmDia = kmPorDia();
     const diasSemana = conf.diasSemana || [];
     const [hora, min] = (conf.horaAtualizacao || '19:00').split(':').map(Number);
     
-    if (isNaN(dataBase.getTime()) || !kmDia) return kmBase;
+    if (isNaN(dataBase.getTime())) return kmBase;
     
     let kmTotal = kmBase;
     const agora = new Date();
@@ -350,13 +376,34 @@ function calcularOdometroVirtual() {
         dataCalc.setDate(dataCalc.getDate() + 1);
     }
     
+    let ultimoMesSomado = -1;
+    let ultimaSemanaSomada = -1;
+
+    const getNumeroSemana = (d) => {
+        const primeiraDataAno = new Date(d.getFullYear(), 0, 1);
+        return Math.ceil((((d - primeiraDataAno) / 86400000) + primeiraDataAno.getDay() + 1) / 7);
+    };
+
     while (dataCalc <= agora) {
-        if (diasSemana.includes(dataCalc.getDay())) {
-            kmTotal += kmDia;
+        if (conf.modoKm === 'dia') {
+            if (diasSemana.includes(dataCalc.getDay())) {
+                kmTotal += (parseInt(conf.kmValor) || 0);
+            }
+        } else if (conf.modoKm === 'semana') {
+            const numSemana = getNumeroSemana(dataCalc);
+            if (numSemana !== ultimaSemanaSomada && diasSemana.includes(dataCalc.getDay())) {
+                kmTotal += (parseInt(conf.kmValor) || 0);
+                ultimaSemanaSomada = numSemana;
+            }
+        } else if (conf.modoKm === 'mes') {
+            const numMes = dataCalc.getMonth() + (dataCalc.getFullYear() * 12);
+            if (numMes !== ultimoMesSomado && diasSemana.includes(dataCalc.getDay())) {
+                kmTotal += (parseInt(conf.kmValor) || 0);
+                ultimoMesSomado = numMes;
+            }
         }
         dataCalc.setDate(dataCalc.getDate() + 1);
     }
-    
     return Math.floor(kmTotal);
 }
 
@@ -369,11 +416,9 @@ function atualizarPainel() {
     abastDoVeiculo.sort((a, b) => b.km - a.km);
     const ultimoAbast = abastDoVeiculo[0];
 
-    // Gasto Total
     const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
     document.getElementById('gastoTotal').innerText = `R$ ${gastoTotal.toFixed(2).replace('.', ',')}`;
 
-    // Cálculo Média Real e Autonomia
     let mediaReal = 0;
     if (abastDoVeiculo.length >= 2) {
         const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
@@ -403,7 +448,6 @@ function atualizarPainel() {
         document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
     }
 
-    // Próxima troca de óleo
     const manutDoVeiculo = manutencoes.filter(m => m.veiculoId == veiculoAtivoId && m.tipo.toLowerCase().includes('óleo'));
     manutDoVeiculo.sort((a,b) => b.km - a.km);
     if(manutDoVeiculo.length && manutDoVeiculo[0].proxKm) {
@@ -618,12 +662,10 @@ function limparTudo() {
     if(confirm("Limpar permanentemente?")) { localStorage.clear(); location.reload(); }
 }
 
-// Inicialização segura da página
 window.onload = () => {
     if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     if(veiculos.length && !veiculoAtivoId) veiculoAtivoId = veiculos[0].id;
     
-    // Define datas padrão nos inputs de cadastro para facilitar
     const hojeStr = new Date().toISOString().slice(0, 10);
     if(document.getElementById('aData')) document.getElementById('aData').value = hojeStr;
     if(document.getElementById('mData')) document.getElementById('mData').value = hojeStr;
