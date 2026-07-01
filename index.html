@@ -90,8 +90,8 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                     <div style="display:flex; justify-content:space-between; align-items:center">
                         <div>
                             <p>Odômetro Virtual</p>
-                            <h1 id="odometroVirtual">93.290 km</h1>
-                            <p id="proxAtualizacao" style="opacity:0.8">Baseado na OS da Pavani Moto Center</p>
+                            <h1 id="odometroVirtual">0 km</h1>
+                            <p id="proxAtualizacao" style="opacity:0.8">Baseado no último ponto de partida</p>
                         </div>
                         <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
                     </div>
@@ -107,7 +107,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
                 <div class="card">
                     <h3 style="color:var(--primary)"><i class="fas fa-book-open"></i> Itens Obrigatórios (Customizado)</h3>
-                    <p class="muted" style="margin-bottom: 12px;">Troca de óleo reajustada para cada 1.000 km devido à quilometragem alta.</p>
                     <div id="listaItensObrigatorios"></div>
                 </div>
             </div>
@@ -224,7 +223,7 @@ if(!manutencoes.length) {
         {id: 2, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Vela Ignição", valor: "124.00", proxKm: 98000},
         {id: 3, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Caixa de Direção (Pavani)", valor: "395.00", proxKm: ""},
         {id: 4, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Pneu Traseiro Kenda", valor: "370.00", proxKm: ""},
-        {id: 5, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Troca Óleo Motor", valor: "73.00", proxKm: 94290}, // AJUSTADO PARA +1.000km automatico
+        {id: 5, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Troca Óleo Motor", valor: "73.00", proxKm: 94290},
         {id: 6, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Óleo de Transmissão CVT", valor: "120.00", proxKm: 113290},
         {id: 7, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Pastilha Dianteira + Lona", valor: "118.80", proxKm: ""},
         {id: 8, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Fluido de Freio DOT 4", valor: "80.00", proxKm: ""},
@@ -273,6 +272,10 @@ function navegarParaIndice(indice) {
     document.getElementById('tabsFluid').style.transform = `translateX(-${indice * 20}%)`;
     const botoesNav = document.querySelectorAll('.btn-nav');
     botoesNav.forEach((b, idx) => b.classList.toggle('active', idx === indice));
+    
+    cancelarEditAbast();
+    cancelarEditManut();
+
     if(indice === 0) atualizarPainel();
     if(indice === 1) { document.getElementById('aKm').value = calcularOdometroVirtual(); renderAbast(); }
     if(indice === 2) renderManut();
@@ -315,7 +318,12 @@ function salvar() {
 function mudarVeiculoAtivo() {
     veiculoAtivoId = document.getElementById('seletorVeiculoPrincipal').value;
     salvar();
+    cancelarEditAbast();
+    cancelarEditManut();
     atualizarPainel();
+    if(abaAtualIndice === 1) renderAbast();
+    if(abaAtualIndice === 2) renderManut();
+    if(abaAtualIndice === 4) carregarConfig();
 }
 
 function atualizarSeletorCabecalho() {
@@ -451,6 +459,7 @@ function atualizarPainel() {
     const kmVirtual = calcularOdometroVirtual();
     document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
 
+    // CORREÇÃO: Pegar apenas as informações do veículo ativo
     const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId);
     abastDoVeiculo.sort((a, b) => b.km - a.km);
     const ultimoAbast = abastDoVeiculo[0];
@@ -497,7 +506,6 @@ function atualizarPainel() {
         document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
     }
 
-    // ALTERADO INTERVALO DO ÓLEO DO MOTOR DE 4000 PARA 1000 KM
     const itensManutencaoManual = [
         { nome: "Óleo do Motor", intervalo: 1000, termoBusca: "oleo motor" },
         { nome: "Vela de Ignição", intervalo: 8000, termoBusca: "vela" },
@@ -518,11 +526,10 @@ function atualizarPainel() {
         let ultimoKmFeito = 0;
         if (historicosDoItem.length) {
             ultimoKmFeito = parseInt(historicosDoItem[0].km) || 0;
-        } else if (kmVirtual > item.intervalo) {
-            ultimoKmFeito = Math.floor(kmVirtual / item.intervalo) * item.intervalo;
+        } else {
+            ultimoKmFeito = kmVirtual > item.intervalo ? Math.floor(kmVirtual / item.intervalo) * item.intervalo : 0;
         }
 
-        // SE O USUÁRIO DIGITOU MANUALMENTE O PRÓXIMO KM, O APP SEGUE ELE À RISCA
         let proximaTrocaObrigatoria = 0;
         if(historicosDoItem.length && historicosDoItem[0].proxKm) {
             proximaTrocaObrigatoria = parseInt(historicosDoItem[0].proxKm);
@@ -533,7 +540,7 @@ function atualizarPainel() {
         const faltamKm = proximaTrocaObrigatoria - kmVirtual;
         let classeStatus = "status-ok";
         
-        let margemAviso = item.intervalo * 0.15; // Ajuste dinâmico de aviso para trocas rápidas
+        let margemAviso = item.intervalo * 0.15;
         if (margemAviso > 500) margemAviso = 500;
         if (margemAviso < 150) margemAviso = 150; 
 
@@ -582,14 +589,10 @@ function addAbast() {
 
     if(editandoAbastId) {
         abastecimentos = abastecimentos.map(a => a.id == editandoAbastId ? {id:a.id, veiculoId:veiculoAtivoId, km, litros:lit, valorL:val, total:tot, data:dat, tipo:tip} : a);
-        editandoAbastId = null;
-        document.getElementById('btnSalvarAbast').innerText = "Salvar Abastecimento";
-        document.getElementById('btnCancelarAbast').style.display = "none";
     } else {
         abastecimentos.push({id: Date.now(), veiculoId: veiculoAtivoId, km, litros: lit, valorL: val, total: tot, data: dat, tipo: tip});
     }
-    salvar(); atualizarPainel(); renderAbast();
-    document.getElementById('aKm').value = ''; document.getElementById('aLitros').value = ''; document.getElementById('aValorL').value = ''; document.getElementById('aTotal').value = '';
+    salvar(); cancelarEditAbast(); atualizarPainel(); renderAbast();
 }
 
 function renderAbast() {
@@ -626,6 +629,7 @@ function cancelarEditAbast() {
     document.getElementById('btnSalvarAbast').innerText = "Salvar Abastecimento";
     document.getElementById('btnCancelarAbast').style.display = "none";
     document.getElementById('aKm').value = ''; document.getElementById('aLitros').value = ''; document.getElementById('aValorL').value = ''; document.getElementById('aTotal').value = '';
+    document.getElementById('aData').value = new Date().toISOString().slice(0, 10);
 }
 
 function delAbast(id) {
@@ -648,20 +652,17 @@ function addManut() {
 
     if(editandoManutId) {
         manutencoes = manutencoes.map(m => m.id == editandoManutId ? {id:m.id, veiculoId:veiculoAtivoId, data:dat, km, tipo:tip, valor:val, proxKm:pkm} : m);
-        editandoManutId = null;
-        document.getElementById('btnSalvarManut').innerText = "Salvar";
-        document.getElementById('btnCancelarManut').style.display = "none";
     } else {
         manutencoes.push({id: Date.now(), veiculoId: veiculoAtivoId, data: dat, km, tipo: tip, valor: val, proxKm: pkm});
     }
-    salvar(); atualizarPainel(); renderManut();
-    document.getElementById('mKm').value = ''; document.getElementById('mTipoCustom').value = ''; document.getElementById('mValor').value = ''; document.getElementById('mProxKm').value = '';
+    salvar(); cancelarEditManut(); atualizarPainel(); renderManut();
 }
 
 function renderManut() {
     const lista = document.getElementById('listaManut');
+    // CORREÇÃO CRÍTICA: Filtragem rígida por ID do veículo ativo
     const filtrados = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
-    if(!filtrados.length) { lista.innerHTML = '<p>Nenhuma manutenção registrada.</p>'; return; }
+    if(!filtrados.length) { lista.innerHTML = '<p>Nenhuma manutenção registrada para este veículo.</p>'; return; }
     
     filtrados.sort((a,b) => new Date(b.data) - new Date(a.data));
 
@@ -702,9 +703,12 @@ function editManut(id) {
 
 function cancelarEditManut() {
     editandoManutId = null;
-    document.getElementById('btnSalvarManut').innerText = "Salvar";
+    document.getElementById('btnSalvarManut').innerText = "Salvar Registro";
     document.getElementById('btnCancelarManut').style.display = "none";
     document.getElementById('mKm').value = ''; document.getElementById('mTipoCustom').value = ''; document.getElementById('mValor').value = ''; document.getElementById('mProxKm').value = '';
+    document.getElementById('mData').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('mTipo').value = 'Troca Óleo Motor';
+    document.getElementById('mTipoCustom').style.display = 'none';
 }
 
 function delManut(id) {
@@ -723,16 +727,12 @@ function addVeiculo() {
 
     if(editandoVeiculoId) {
         veiculos = veiculos.map(v => v.id == editandoVeiculoId ? {id:v.id, tipo:tip, marca:mar, modelo:mod, ano, km, data:dat} : v);
-        editandoVeiculoId = null;
-        document.getElementById('btnSalvarVeiculo').innerText = "Salvar Veículo";
-        document.getElementById('btnCancelarVeiculo').style.display = "none";
     } else {
         const newId = Date.now().toString();
         veiculos.push({id: newId, tipo: tip, marca: mar, modelo: mod, ano, km, data: dat});
         if(!veiculoAtivoId) veiculoAtivoId = newId;
     }
-    salvar(); atualizarPainel(); renderVeiculos();
-    document.getElementById('vMarca').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vAno').value = ''; document.getElementById('vKm').value = '';
+    salvar(); cancelarEditVeiculo(); atualizarPainel(); renderVeiculos();
 }
 
 function renderVeiculos() {
@@ -768,6 +768,7 @@ function cancelarEditVeiculo() {
     document.getElementById('btnSalvarVeiculo').innerText = "Salvar Veículo";
     document.getElementById('btnCancelarVeiculo').style.display = "none";
     document.getElementById('vMarca').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vAno').value = ''; document.getElementById('vKm').value = '';
+    document.getElementById('vData').value = new Date().toISOString().slice(0, 10);
 }
 
 function delVeiculo(id) {
