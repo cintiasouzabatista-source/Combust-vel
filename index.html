@@ -7,7 +7,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
 :root {
-    --primary: #2563eb; --bg: #f1f5f9; --card: #fff; --text: #0f172a; --muted: #64748b; --border: #e2e8f0; --danger: #ef4444; --warn: #f59e0b;
+    --primary: #2563eb; --bg: #f1f5f9; --card: #fff; --text: #0f172a; --muted: #64748b; --border: #e2e8f0; --danger: #ef4444; --warn: #f59e0b; --success: #10b981;
 }
 body.dark {
     --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334155;
@@ -54,11 +54,18 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .grid-3 button { padding: 10px; font-size: 14px; }
 .grid-3 button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-/* --- SEÇÃO DE ALERTAS ESTILIZADOS --- */
 .container-alertas { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .alerta-item { padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
 .alerta-item.warn { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid var(--warn); }
 .alerta-item.danger { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid var(--danger); }
+
+/* --- ESTILOS DO CHECKLIST OBRIGATÓRIO --- */
+.item-obrigatorio { padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.item-obrigatorio.status-ok { border-left: 5px solid var(--success); }
+.item-obrigatorio.status-warn { border-left: 5px solid var(--warn); background: rgba(245,158,11,0.05); }
+.item-obrigatorio.status-danger { border-left: 5px solid var(--danger); background: rgba(239,68,68,0.05); }
+.item-obrigatorio .info-manut { flex: 1; }
+.item-obrigatorio .prazo-manut { font-weight: bold; font-size: 14px; text-align: right; }
 
 .historico-item { padding:8px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
 .historico-acoes { display:flex; gap:8px; }
@@ -98,7 +105,12 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                     <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
                     <div class="card kpi" id="cardAutonomia"><p>Autonomia útil (Até Reserva)</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
                 </div>
-                <div class="card kpi" id="cardOleo"><p>Próxima Troca de Óleo</p><h3 id="proxTrocaOleo">0 km</h3><p id="faltaOleo">Faltam 0 km</p></div>
+
+                <div class="card">
+                    <h3 style="color:var(--primary)"><i class="fas fa-book-open"></i> Itens Obrigatórios (Manual Lead 110)</h3>
+                    <p class="muted" style="margin-bottom: 12px;">Prazos calculados dinamicamente com base no seu Odômetro.</p>
+                    <div id="listaItensObrigatorios"></div>
+                </div>
             </div>
 
             <div id="abastecer" class="tab-content">
@@ -111,19 +123,28 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                         <button class="btn-outline" id="btnCancelarAbast" onclick="cancelarEditAbast()" style="display:none">Cancelar</button>
                     </div>
                 </div>
-                <div class="card"><h3>Histórico (Veículo Atual)</h3><div id="listaAbast"></div></div>
+                <div class="card"><h3>Histórico de Abastecimentos</h3><div id="listaAbast"></div></div>
             </div>
 
             <div id="manutencao" class="tab-content">
-                <div class="card"><h3 id="tituloManut">Adicionar Manutenção</h3>
+                <div class="card"><h3 id="tituloManut">Registrar Realização de Serviço</h3>
                     <div style="display:grid; gap:12px">
-                        <input id="mData" type="date"><input id="mKm" type="number" placeholder="Km"><input id="mTipo" type="text" placeholder="Ex: Troca Óleo">
-                        <input id="mValor" type="number" step="0.01" placeholder="Valor R$"><input id="mProxKm" type="number" placeholder="Próxima em X km">
-                        <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar</button>
+                        <input id="mData" type="date"><input id="mKm" type="number" placeholder="Em qual Km foi feito?">
+                        <select id="mTipo">
+                            <option value="Troca Óleo Motor">Óleo do Motor (Cada 4.000 km)</option>
+                            <option value="Filtro de Ar">Filtro de Ar (Cada 16.000 km)</option>
+                            <option value="Correia CVT">Correia de Transmissão CVT (Cada 20.000 km)</option>
+                            <option value="Vela Ignição">Vela de Ignição (Cada 8.000 km)</option>
+                            <option value="Outro">Outro serviço/manutenção geral</option>
+                        </select>
+                        <input id="mTipoCustom" type="text" placeholder="Especifique se marcou 'Outro'" style="display:none">
+                        <input id="mValor" type="number" step="0.01" placeholder="Valor R$ (Opcional)">
+                        <input id="mProxKm" type="number" placeholder="Proxima em X km (Calcula automático se deixar vazio)">
+                        <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar Registro</button>
                         <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
                     </div>
                 </div>
-                <div class="card"><h3>Histórico (Veículo Atual)</h3><div id="listaManut"></div></div>
+                <div class="card"><h3>Histórico de Serviços Executados</h3><div id="listaManut"></div></div>
             </div>
 
             <div id="veiculo" class="tab-content">
@@ -201,6 +222,11 @@ let abaAtualIndice = 0;
 const totalAbas = 5;
 let toqueInicioX = 0;
 let toqueInicioY = 0;
+
+// Monitoramento dinâmico do select de manutenção
+document.getElementById('mTipo').addEventListener('change', function() {
+    document.getElementById('mTipoCustom').style.display = this.value === 'Outro' ? 'block' : 'none';
+});
 
 function obterConfigAtual() {
     if(!veiculoAtivoId) return {"kmBase":0,"dataBase":new Date().toISOString().slice(0,16),"modoKm":"dia","kmValor":0,"horaAtualizacao":"19:00","diasSemana":[1,2,3,4,5],"tanqueL":6.5};
@@ -419,17 +445,15 @@ function atualizarPainel() {
     const conf = obterConfigAtual();
     const tanqueL = conf.tanqueL || 6.5;
     const reservaL = 1.8; 
-    const tanqueUtilL = tanqueL - reservaL; // 6.5 - 1.8 = 4.7 litros úteis
+    const tanqueUtilL = tanqueL - reservaL;
 
     let alertasHtml = "";
     let cardAutonomiaElement = document.getElementById('cardAutonomia');
-    cardAutonomiaElement.className = "card kpi destaque"; // reset
+    cardAutonomiaElement.className = "card kpi destaque";
 
     if (ultimoAbast && mediaReal > 0) {
         document.getElementById('ultimoKmAbast').innerText = `${parseInt(ultimoAbast.km).toLocaleString('pt-BR')} km`;
         const kmRodadosDesdeAbast = kmVirtual - ultimoAbast.km;
-        
-        // Autonomia calculada com base APENAS no tanque útil antes de bater na reserva
         const capacidadeUtilKm = tanqueUtilL * mediaReal;
         let kmRestantesParaReserva = Math.floor(capacidadeUtilKm - kmRodadosDesdeAbast);
         if (kmRestantesParaReserva < 0) kmRestantesParaReserva = 0;
@@ -438,50 +462,79 @@ function atualizarPainel() {
         const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantesParaReserva / kmDiario) : 0;
         document.getElementById('autonomia').innerText = `${kmRestantesParaReserva} km ~ ${diasRestantes} dias`;
 
-        // Alerta de Combustível (Se atingir 30km ou menos para entrar na reserva)
         if (kmRestantesParaReserva <= 30) {
             cardAutonomiaElement.className = "card kpi warn";
-            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-gas-pump"></i> Combustível Baixo: Faltam apenas ${kmRestantesParaReserva} km para entrar na Reserva (1,8L)!</div>`;
+            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-gas-pump"></i> Combustível Crítico: Faltam ${kmRestantesParaReserva} km para entrar na Reserva!</div>`;
         }
     } else {
         document.getElementById('ultimoKmAbast').innerText = `0 km`;
         document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
     }
 
-    // --- MOTOR DE CORREÇÃO DA TROCA DE ÓLEO ---
-    const manutDoVeiculo = manutencoes.filter(m => {
-        const tipoLimpo = removerAcentos(m.tipo || "");
-        return m.veiculoId == veiculoAtivoId && (tipoLimpo.includes('oleo') || tipoLimpo.includes('troca oleo'));
-    });
-    manutDoVeiculo.sort((a, b) => b.km - a.km);
-    
-    let cardOleoElement = document.getElementById('cardOleo');
-    cardOleoElement.className = "card kpi"; // reset
+    // --- MOTOR REVOLUCIONADO: CHECKLIST DE ITENS OBRIGATÓRIOS DO MANUAL ---
+    const itensManutencaoManual = [
+        { nome: "Óleo do Motor", intervalo: 4000, termoBusca: "oleo motor" },
+        { nome: "Vela de Ignição", intervalo: 8000, termoBusca: "vela" },
+        { nome: "Filtro de Ar", intervalo: 16000, termoBusca: "filtro de ar" },
+        { nome: "Correia do CVT", intervalo: 20000, termoBusca: "correia cvt" }
+    ];
 
-    if(manutDoVeiculo.length && manutDoVeiculo[0].proxKm) {
-        const proxTroca = parseInt(manutDoVeiculo[0].proxKm) || 0;
-        document.getElementById('proxTrocaOleo').innerText = `${proxTroca.toLocaleString('pt-BR')} km`;
-        const faltam = proxTroca - kmVirtual;
-        
-        if (faltam > 250) {
-            document.getElementById('faltaOleo').innerText = `Faltam ${faltam.toLocaleString('pt-BR')} km`;
-        } else if (faltam <= 250 && faltam > 0) {
-            // Regra: Alerta sobe com 250 km ou menos
-            document.getElementById('faltaOleo').innerText = `Atenção: Faltam apenas ${faltam.toLocaleString('pt-BR')} km para a troca!`;
-            cardOleoElement.className = "card kpi warn";
-            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Troca de Óleo Próxima: Faltam ${faltam} km.</div>`;
-        } else {
-            // Passou do limite (zerou ou ficou negativo)
-            document.getElementById('faltaOleo').innerText = `Troque o óleo imediatamente! Passou ${Math.abs(faltam).toLocaleString('pt-BR')} km`;
-            cardOleoElement.className = "card kpi danger";
-            alertasHtml += `<div class="alerta-item danger"><i class="fas fa-oil-can"></i> Óleo Vencido! Passou do prazo em ${Math.abs(faltam)} km.</div>`;
+    let listaObrigatoriosHtml = "";
+    const manutDoVeiculo = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
+
+    itensManutencaoManual.forEach(item => {
+        // Encontra o último registro feito pelo usuário desse item específico
+        const historicosDoItem = manutDoVeiculo.filter(m => {
+            const tipoLimpo = removerAcentos(m.tipo || "");
+            return tipoLimpo.includes(item.termoBusca);
+        });
+        historicosDoItem.sort((a, b) => b.km - a.km);
+
+        let ultimoKmFeito = 0;
+        // Se o usuário já tiver um histórico gravado, o cálculo parte do último Km feito. 
+        // Se nunca tiver gravado, assume que foi feito no Km 0 ou no Km base inicial.
+        if (historicosDoItem.length) {
+            ultimoKmFeito = parseInt(historicosDoItem[0].km) || 0;
         }
-    } else {
-        document.getElementById('proxTrocaOleo').innerText = `0 km`;
-        document.getElementById('faltaOleo').innerText = `Faltam 0 km`;
-    }
 
-    // Renderiza a central de alertas no topo da tela inicial
+        let proximaTrocaObrigatoria = ultimoKmFeito + item.intervalo;
+        
+        // Se o usuário especificou manualmente um Km futuro no campo "proxKm", respeitamos ele
+        if(historicosDoItem.length && historicosDoItem[0].proxKm) {
+            proximaTrocaObrigatoria = parseInt(historicosDoItem[0].proxKm);
+        }
+
+        const faltamKm = proximaTrocaObrigatoria - kmVirtual;
+        let classeStatus = "status-ok";
+        
+        // Regras de Alerta baseadas no limite de 250km informado para o Óleo
+        // Aplicado proporcionalmente para os outros componentes maiores
+        let margemAviso = item.intervalo * 0.0625; // Equivale a 250km para um intervalo de 4000km
+        if (margemAviso > 500) margemAviso = 500; // Limita o teto de aviso antecipado em 500km
+
+        if (faltamKm <= 0) {
+            classeStatus = "status-danger";
+            alertasHtml += `<div class="alerta-item danger"><i class="fas fa-wrench"></i> ${item.nome} Vencido! Passou ${Math.abs(faltamKm)} km do prazo de troca.</div>`;
+        } else if (faltamKm <= margemAviso) {
+            classeStatus = "status-warn";
+            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Trocar ${item.nome} em Breve: Restam ${faltamKm} km.</div>`;
+        }
+
+        listaObrigatoriosHtml += `
+            <div class="item-obrigatorio ${classeStatus}">
+                <div class="info-manut">
+                    <strong>${item.nome}</strong><br>
+                    <span class="muted">Troca a cada ${item.intervalo.toLocaleString('pt-BR')} km</span>
+                </div>
+                <div class="prazo-manut" style="color: ${classeStatus === 'status-danger' ? 'var(--danger)' : (classeStatus === 'status-warn' ? 'var(--warn)' : 'var(--success)')}">
+                    ${faltamKm <= 0 ? 'VENCIDO' : 'Faltam ' + faltamKm.toLocaleString('pt-BR') + ' km'}<br>
+                    <span class="muted" style="font-weight:normal; font-size:11px;">Alvo: ${proximaTrocaObrigatoria.toLocaleString('pt-BR')} km</span>
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById('listaItensObrigatorios').innerHTML = listaObrigatoriosHtml;
     document.getElementById('containerAlertas').innerHTML = alertasHtml;
 }
 
@@ -558,9 +611,13 @@ function addManut() {
     if(!veiculoAtivoId) return alert("Cadastre um veículo primeiro!");
     const dat = document.getElementById('mData').value;
     const km = parseInt(document.getElementById('mKm').value);
-    const tip = document.getElementById('mTipo').value;
+    let tip = document.getElementById('mTipo').value;
     const val = document.getElementById('mValor').value;
-    const pkm = document.getElementById('mProxKm').value;
+    let pkm = document.getElementById('mProxKm').value;
+
+    if (tip === "Outro") {
+        tip = document.getElementById('mTipoCustom').value || "Outro";
+    }
 
     if(!dat || !km || !tip) return alert("Preencha os campos obrigatórios!");
 
@@ -573,16 +630,16 @@ function addManut() {
         manutencoes.push({id: Date.now(), veiculoId: veiculoAtivoId, data: dat, km, tipo: tip, valor: val, proxKm: pkm});
     }
     salvar(); atualizarPainel(); renderManut();
-    document.getElementById('mKm').value = ''; document.getElementById('mTipo').value = ''; document.getElementById('mValor').value = ''; document.getElementById('mProxKm').value = '';
+    document.getElementById('mKm').value = ''; document.getElementById('mTipoCustom').value = ''; document.getElementById('mValor').value = ''; document.getElementById('mProxKm').value = '';
 }
 
 function renderManut() {
     const lista = document.getElementById('listaManut');
     const filtrados = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
-    if(!filtrados.length) { lista.innerHTML = '<p>Nenhuma manutenção.</p>'; return; }
+    if(!filtrados.length) { lista.innerHTML = '<p>Nenhuma manutenção registrada.</p>'; return; }
     lista.innerHTML = filtrados.map(m => `
         <div class="historico-item">
-            <div><strong>${m.tipo}</strong> - ${m.km} km (R$ ${m.valor || '0'})<br><span class="muted">Próxima em: ${m.proxKm || '--'} km</span></div>
+            <div><strong>${m.tipo}</strong> - Realizado em: ${m.km} km ${m.valor ? '(R$ ' + m.valor + ')' : ''}<br><span class="muted">Data: ${m.data}</span></div>
             <div class="historico-acoes">
                 <button onclick="editManut(${m.id})"><i class="fas fa-edit"></i></button>
                 <button class="del" onclick="delManut(${m.id})"><i class="fas fa-trash"></i></button>
@@ -597,10 +654,20 @@ function editManut(id) {
     editandoManutId = id;
     document.getElementById('mData').value = m.data;
     document.getElementById('mKm').value = m.km;
-    document.getElementById('mTipo').value = m.tipo;
+    
+    const selectTipo = document.getElementById('mTipo');
+    if ([...selectTipo.options].some(o => o.value === m.tipo)) {
+        selectTipo.value = m.tipo;
+        document.getElementById('mTipoCustom').style.display = 'none';
+    } else {
+        selectTipo.value = "Outro";
+        document.getElementById('mTipoCustom').value = m.tipo;
+        document.getElementById('mTipoCustom').style.display = 'block';
+    }
+
     document.getElementById('mValor').value = m.valor;
     document.getElementById('mProxKm').value = m.proxKm;
-    document.getElementById('btnSalvarManut').innerText = "Atualizar Manutenção";
+    document.getElementById('btnSalvarManut').innerText = "Atualizar Registro";
     document.getElementById('btnCancelarManut').style.display = "block";
 }
 
@@ -608,7 +675,7 @@ function cancelarEditManut() {
     editandoManutId = null;
     document.getElementById('btnSalvarManut').innerText = "Salvar";
     document.getElementById('btnCancelarManut').style.display = "none";
-    document.getElementById('mKm').value = ''; document.getElementById('mTipo').value = ''; document.getElementById('mValor').value = ''; document.getElementById('mProxKm').value = '';
+    document.getElementById('mKm').value = ''; document.getElementById('mTipoCustom').value = ''; document.getElementById('mValor').value = ''; document.getElementById('mProxKm').value = '';
 }
 
 function delManut(id) {
@@ -683,7 +750,7 @@ function delVeiculo(id) {
 }
 
 function limparTudo() {
-    if(confirm("Limpar permanentemente?")) { localStorage.clear(); location.reload(); }
+    if(confirm("Limpar permanentemente todos os dados armazenados?")) { localStorage.clear(); location.reload(); }
 }
 
 window.onload = () => {
