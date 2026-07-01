@@ -393,64 +393,100 @@ function verificarAlertas(kmVirtual, kmUltimoAbast, media, kmProxOleo) {
         msgs.push(`⛽ Atenção: ~${autonomiaKm - kmDesdeUltimo}km de autonomia`);
         cardAutonomia.classList.add('warn');
     }
-    if (kmProxOleo > 0) {
-        if (faltaOleo < 200 && faltaOleo > 0) {
-            msgs.push(`🔧 Troca de óleo em ${faltaOleo}km`);
-            cardOleo.classList.add('warn');
-        } else if (faltaOleo <= 0) {
-            msgs.push(`🔧 Troca de óleo ATRASADA ${Math.abs(faltaOleo)}km`);
-            cardOleo.classList.add('danger');
-        }
-    }
+function kmPorDia() {
+    let conf = obterConfigAtual();
+    const val = parseInt(conf.kmValor) || 0;
+    if(conf.modoKm === 'mes') return val / 30;
+    if(conf.modoKm === 'semana') return val / 7;
+    return val;
+}
 
-    if(msgs.length) { 
-        alertaBar.innerHTML = msgs.join(' | '); 
-        alertaBar.classList.add(msgs.some(m => m.includes('ATRASADA') || m.includes('restantes')) ? 'danger' : 'warn'); 
-        alertaBar.style.display = 'block'; 
+function calcularOdometroVirtual() {
+    let conf = obterConfigAtual();
+    const kmBase = parseInt(conf.kmBase) || 0;
+    if (!kmBase || !conf.dataBase) return kmBase;
+    
+    const dataBase = new Date(conf.dataBase);
+    const kmDia = kmPorDia();
+    const diasSemana = conf.diasSemana || [];
+    const [hora, min] = (conf.horaAtualizacao || '19:00').split(':').map(Number);
+    
+    if (isNaN(dataBase.getTime()) || !kmDia) return kmBase;
+    
+    let kmTotal = kmBase;
+    const agora = new Date();
+    
+    // Inicia o cursor no mesmo dia da data base, ajustado para o horário de rodar a atualização
+    let dataCalc = new Date(dataBase);
+    dataCalc.setHours(hora, min, 0, 0);
+    
+    // Se a data base original já era depois do horário de atualização daquele dia,
+    // o primeiro acréscimo só pode ocorrer a partir do dia seguinte
+    if (dataBase > dataCalc) {
+        dataCalc.setDate(dataCalc.getDate() + 1);
     }
+    
+    // Loop avançando dia após dia até o momento presente
+    while (dataCalc <= agora) {
+        if (diasSemana.includes(dataCalc.getDay())) {
+            kmTotal += kmDia;
+        }
+        dataCalc.setDate(dataCalc.getDate() + 1);
+    }
+    
+    return Math.floor(kmTotal);
 }
 
 function atualizarPainel() {
-    // 1. Calcula o odômetro virtual atualizado com a função corrigida
+    // 1. Atualiza o Odômetro na Tela
     const kmVirtual = calcularOdometroVirtual();
     document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
 
-    // 2. Busca o último abastecimento realizado
-    // Filtrando para garantir que pega os dados do veículo ativo
-    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId);
+    // 2. Filtra os abastecimentos do veículo atual
+    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId || !a.veiculoId);
     
-    // Ordena pelo Km para garantir que o maior/mais recente está primeiro
+    // Ordena para garantir que o mais recente (maior km) fique na posição 0
     abastDoVeiculo.sort((a, b) => b.km - a.km);
-
     const ultimoAbast = abastDoVeiculo[0];
-    const tanqueL = obterConfigAtual().tanqueL || 6.5;
 
-    // Se houver média real calculada e um último abastecimento registrado
+    // 3. Calcula a Média Real (Exemplo básico baseado nos dois últimos)
+    let mediaReal = 0;
+    if (abastDoVeiculo.length >= 2) {
+        const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
+        const litrosConsumidos = abastDoVeiculo[0].litros || 1;
+        mediaReal = kmRodados / litrosConsumidos;
+        document.getElementById('mediaReal').innerText = `${mediaReal.toFixed(1)} km/l`;
+    } else {
+        document.getElementById('mediaReal').innerText = `0 km/l`;
+    }
+
+    // 4. Calcula a Autonomia baseada no Último Abastecimento x Odômetro Virtual
+    const conf = obterConfigAtual();
+    const tanqueL = conf.tanqueL || 6.5;
+
     if (ultimoAbast && mediaReal > 0) {
-        // Quilometragem que você já rodou desde que abasteceu
+        // Exibe o Km do último abastecimento no card correspondente
+        document.getElementById('ultimoKmAbast').innerText = `${parseInt(ultimoAbast.km).toLocaleString('pt-BR')} km`;
+
+        // Quanto você já andou desde que abasteceu
         const kmRodadosDesdeAbast = kmVirtual - ultimoAbast.km;
         
-        // Quantos km a moto teoricamente roda com um tanque cheio
+        // Capacidade máxima total estimada do tanque
         const capacidadeTotalKm = tanqueL * mediaReal;
         
-        // Autonomia restante estimada (Capacidade total - o que já rodou)
+        // Quanto ainda resta
         let kmRestantes = Math.floor(capacidadeTotalKm - kmRodadosDesdeAbast);
-        if (kmRestantes < 0) kmRestantes = 0; // Evita valores negativos
+        if (kmRestantes < 0) kmRestantes = 0; // Evita número negativo se rodar mais que a média
 
-        // Estimativa de dias baseada no seu consumo diário configurado (kmPorDia)
+        // Calcula os dias restantes baseando-se no seu consumo configurado por dia
         const kmDiario = kmPorDia();
         const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantes / kmDiario) : 0;
 
-        // Atualiza o card de Autonomia na tela
         document.getElementById('autonomia').innerText = `${kmRestantes} km ~ ${diasRestantes} dias`;
-        document.getElementById('ultimoKmAbast').innerText = `${ultimoAbast.km.toLocaleString('pt-BR')} km`;
     } else {
-        // Valores padrão caso não haja histórico de abastecimento
-        document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
         document.getElementById('ultimoKmAbast').innerText = `0 km`;
+        document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
     }
-
-    // ... restante da sua função de atualizar o painel (troca de óleo, alertas, etc.)
 }
 
 
