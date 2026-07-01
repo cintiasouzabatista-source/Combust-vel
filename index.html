@@ -307,6 +307,7 @@ function toggleTheme() {
     localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); 
 }
 
+// CORREÇÃO DA PERSISTÊNCIA: Certificar que salva o ID ativo correto no localStorage
 function salvar() { 
     localStorage.setItem('veiculos', JSON.stringify(veiculos)); 
     localStorage.setItem('veiculoAtivoId', veiculoAtivoId);
@@ -320,10 +321,11 @@ function mudarVeiculoAtivo() {
     salvar();
     cancelarEditAbast();
     cancelarEditManut();
+    
     atualizarPainel();
-    if(abaAtualIndice === 1) renderAbast();
-    if(abaAtualIndice === 2) renderManut();
-    if(abaAtualIndice === 4) carregarConfig();
+    renderAbast();
+    renderManut();
+    carregarConfig();
 }
 
 function atualizarSeletorCabecalho() {
@@ -381,7 +383,7 @@ function kmPorDia() {
 }
 
 function ajustarOdometro() {
-    const novoKm = prompt("Digite o Km atual exato do painel digital da moto:");
+    const novoKm = prompt("Digite o Km atual exato do painel digital:");
     if (novoKm === null) return;
     const kmNum = parseInt(novoKm);
     if (isNaN(kmNum) || kmNum <= 0) {
@@ -454,12 +456,12 @@ function removerAcentos(texto) {
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+// CORREÇÃO CRÍTICA DO CÁLCULO DOS ITENS OBRIGATÓRIOS POR VEÍCULO
 function atualizarPainel() {
     atualizarSeletorCabecalho();
     const kmVirtual = calcularOdometroVirtual();
     document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
 
-    // CORREÇÃO: Pegar apenas as informações do veículo ativo
     const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId);
     abastDoVeiculo.sort((a, b) => b.km - a.km);
     const ultimoAbast = abastDoVeiculo[0];
@@ -524,17 +526,18 @@ function atualizarPainel() {
         historicosDoItem.sort((a, b) => b.km - a.km);
 
         let ultimoKmFeito = 0;
-        if (historicosDoItem.length) {
-            ultimoKmFeito = parseInt(historicosDoItem[0].km) || 0;
-        } else {
-            ultimoKmFeito = kmVirtual > item.intervalo ? Math.floor(kmVirtual / item.intervalo) * item.intervalo : 0;
-        }
-
         let proximaTrocaObrigatoria = 0;
-        if(historicosDoItem.length && historicosDoItem[0].proxKm) {
-            proximaTrocaObrigatoria = parseInt(historicosDoItem[0].proxKm);
+        let temHistorico = historicosDoItem.length > 0;
+
+        if (temHistorico) {
+            ultimoKmFeito = parseInt(historicosDoItem[0].km) || 0;
+            proximaTrocaObrigatoria = historicosDoItem[0].proxKm ? parseInt(historicosDoItem[0].proxKm) : (ultimoKmFeito + item.intervalo);
         } else {
-            proximaTrocaObrigatoria = ultimoKmFeito + item.intervalo;
+            // Se NÃO tem histórico cadastrado para ESTE veículo, calcula o alvo baseado no KM de cadastro do veículo
+            let vObj = veiculos.find(v => v.id == veiculoAtivoId);
+            let kmOrigem = vObj ? parseInt(vObj.km) : kmVirtual;
+            ultimoKmFeito = kmOrigem;
+            proximaTrocaObrigatoria = kmOrigem + item.intervalo;
         }
 
         const faltamKm = proximaTrocaObrigatoria - kmVirtual;
@@ -556,7 +559,7 @@ function atualizarPainel() {
             <div class="item-obrigatorio ${classeStatus}">
                 <div class="info-manut">
                     <strong>${item.nome}</strong><br>
-                    <span class="muted">Troca a cada ${item.intervalo.toLocaleString('pt-BR')} km</span>
+                    <span class="muted">${temHistorico ? 'Última: ' + ultimoKmFeito.toLocaleString('pt-BR') + ' km' : 'Sem histórico registrado'}</span>
                 </div>
                 <div class="prazo-manut" style="color: ${classeStatus === 'status-danger' ? 'var(--danger)' : (classeStatus === 'status-warn' ? 'var(--warn)' : 'var(--success)')}">
                     ${faltamKm <= 0 ? 'VENCIDO' : 'Faltam ' + faltamKm.toLocaleString('pt-BR') + ' km'}<br>
@@ -653,14 +656,13 @@ function addManut() {
     if(editandoManutId) {
         manutencoes = manutencoes.map(m => m.id == editandoManutId ? {id:m.id, veiculoId:veiculoAtivoId, data:dat, km, tipo:tip, valor:val, proxKm:pkm} : m);
     } else {
-        manutencoes.push({id: Date.now(), veiculoId: veiculoAtivoId, data: dat, km, tipo: tip, valor: val, proxKm: pkm});
+        manutencoes.push({id: Date.now(), veiculoId: veiculoAtivoId, data: dat, km: km, tipo: tip, valor: val, proxKm: pkm});
     }
     salvar(); cancelarEditManut(); atualizarPainel(); renderManut();
 }
 
 function renderManut() {
     const lista = document.getElementById('listaManut');
-    // CORREÇÃO CRÍTICA: Filtragem rígida por ID do veículo ativo
     const filtrados = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
     if(!filtrados.length) { lista.innerHTML = '<p>Nenhuma manutenção registrada para este veículo.</p>'; return; }
     
@@ -729,8 +731,8 @@ function addVeiculo() {
         veiculos = veiculos.map(v => v.id == editandoVeiculoId ? {id:v.id, tipo:tip, marca:mar, modelo:mod, ano, km, data:dat} : v);
     } else {
         const newId = Date.now().toString();
-        veiculos.push({id: newId, tipo: tip, marca: mar, modelo: mod, ano, km, data: dat});
-        if(!veiculoAtivoId) veiculoAtivoId = newId;
+        veiculos.push({id: newId, tipo: tip, marca: mar, modelo: mod, ano: ano, km: km, data: dat});
+        if(!veiculoAtivoId || veiculoAtivoId === DEFAULT_ID) veiculoAtivoId = newId;
     }
     salvar(); cancelarEditVeiculo(); atualizarPainel(); renderVeiculos();
 }
