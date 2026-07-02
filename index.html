@@ -657,7 +657,23 @@ function atualizarPainel() {
     document.getElementById('listaItensObrigatorios').innerHTML = listaObrigatoriosHtml;
     document.getElementById('containerAlertas').innerHTML = alertasHtml;
 }
+function calcularProximaTrocaDinamica() {
+    const kmAtual = parseInt(document.getElementById('kmAtual').value) || 0;
+    const intervalo = parseInt(document.getElementById('intervaloKm').value) || 0;
+    const campoProximaTroca = document.getElementById('proximaTroca');
 
+    // Se você digitou o KM atual e o intervalo, ele soma na hora
+    if (kmAtual > 0 && intervalo > 0) {
+        campoProximaTroca.value = kmAtual + intervalo;
+    } else {
+        campoProximaTroca.value = ''; // Limpa o campo se faltar alguma informação
+    }
+}
+
+// Executa a função em tempo real enquanto você digita em qualquer um dos dois campos
+document.getElementById('kmAtual').addEventListener('input', calcularProximaTrocaDinamica);
+document.getElementById('intervaloKm').addEventListener('input', calcularProximaTrocaDinamica);
+    
 function calcTotal() {
     const lit = parseFloat(document.getElementById('aLitros').value) || 0;
     const val = parseFloat(document.getElementById('aValorL').value) || 0;
