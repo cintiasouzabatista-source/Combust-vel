@@ -313,11 +313,15 @@ function toggleFormulario(formId, btnId, textoOriginal) {
     }
 }
 
-/* Controla a abertura e fechamento da lista de itens obrigatórios */
+/* Função Corrigida: Controla abertura alternada da sanfona */
 function toggleObrigatorios() {
     const lista = document.getElementById('listaItensObrigatorios');
     const icone = document.getElementById('iconeObrigatorios');
-    if(lista.style.display === "block") {
+    
+    // Puxa o estilo atual computado para evitar conflitos na primeira inicialização
+    const displayAtual = window.getComputedStyle(lista).display;
+
+    if(displayAtual === "block") {
         lista.style.display = "none";
         icone.className = "fas fa-chevron-down";
     } else {
@@ -351,10 +355,6 @@ function navegarParaIndice(indice) {
     document.getElementById('btnToggleManut').innerText = "➕ Registrar Nova Manutenção";
     document.getElementById('formVeiculo').style.display = "none";
     document.getElementById('btnToggleVeiculo').innerText = "➕ Cadastrar Novo Veículo";
-
-    // Reseta a lista de obrigatórios para fechada ao mudar de aba para salvar espaço
-    document.getElementById('listaItensObrigatorios').style.display = "none";
-    document.getElementById('iconeObrigatorios').className = "fas fa-chevron-down";
 
     cancelarEditAbast();
     cancelarEditManut();
@@ -404,6 +404,7 @@ function mudarVeiculoAtivo() {
     cancelarEditAbast();
     cancelarEditManut();
     
+    // Reseta o estado visual mantendo oculto na troca de veiculo
     document.getElementById('listaItensObrigatorios').style.display = "none";
     document.getElementById('iconeObrigatorios').className = "fas fa-chevron-down";
 
@@ -631,7 +632,6 @@ function atualizarPainel() {
                 alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Revisar ${m.tipo} em breve (${faltamKm} km).</div>`;
             }
 
-            // CORREÇÃO AQUI: Agora todo item cadastrado com meta vai aparecer na lista, independente de quão longe esteja
             listaObrigatoriosHtml += `
                 <div class="item-obrigatorio ${classeStatus}">
                     <div class="info-manut">
