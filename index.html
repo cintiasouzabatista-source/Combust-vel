@@ -624,30 +624,6 @@ function deletarVeiculo(id) {
 
 // 4. ATUALIZAR PAINEL GERAL
 function atualizarPainel() {
-    atualizarSeletorCabecalho();
-    const kmVirtual = calcularOdometroVirtual();
-    document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
-
-    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId).sort((a,b) => b.km - a.km);
-    const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
-    document.getElementById('gastoTotal').innerText = `R$ ${gastoTotal.toFixed(2).replace('.', ',')}`;
-
-    if (abastDoVeiculo.length >= 2) {
-        const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
-        const litrosConsumidos = parseFloat(abastDoVeiculo[0].litros) || 1;
-        document.getElementById('mediaReal').innerText = `${(kmRodados / litrosConsumidos).toFixed(1)} km/l`;
-    } else {
-        document.getElementById('mediaReal').innerText = `0 km/l`;
-    }
-
-    if(abastDoVeiculo.length > 0) {
-        document.getElementById('ultimoKmAbast').innerText = `${abastDoVeiculo[0].km} km`;
-    }
-
-    // Geração dos Itens Obrigatórios baseados nas últimas manutenções
-    renderItensObrigatorios(kmVirtual);
-}
-
 function renderItensObrigatorios(kmVirtual) {
     const lista = document.getElementById('listaItensObrigatorios');
     const tiposPadrao = ["Troca Óleo Motor", "Sistema de Arrefecimento", "Juntas do Motor", "Correia Dentada / Auxiliar", "Coxim do Motor", "Filtros (Ar/Combustível)", "Óleo de Câmbio"];
