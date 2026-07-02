@@ -1,12 +1,11 @@
 {
-  "name": "Controle Combustível",
-  "short_name": "Combustível",
-  "start_url": "./",
-  "scope": "./",
+  "theme_color": "#2563eb",
+  "background_color": "#f1f5f9",
   "display": "standalone",
-  "background_color": "#071225",
-  "theme_color": "#071225",
-  "orientation": "portrait",
+  "scope": "./",
+  "start_url": "./index.html",
+  "name": "Controle de Combustível",
+  "short_name": "Combustível",
   "icons": [
     {
       "src": "icon-192.png",
