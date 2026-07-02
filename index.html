@@ -33,8 +33,9 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .kpi.warn { border: 2px solid var(--warn) !important; background: rgba(245,158,11,0.15) !important; }
 .kpi.danger { border: 2px solid var(--danger) !important; background: rgba(239,68,68,0.15) !important; }
 
+/* Correção de Layout das Abas Alinhadas Verticalmente */
 .tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
-.tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); align-items: flex-start; }
 .tab-content { width: 20%; flex-shrink: 0; padding: 0 4px; }
 
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; z-index: 10; }
@@ -70,6 +71,10 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .historico-acoes { display:flex; gap:8px; }
 .historico-acoes button { background:none; border:none; cursor:pointer; padding:6px; width:auto; color: var(--primary); }
 .historico-acoes button.del { color:var(--danger); }
+
+/* Modais/Formulários Sanfona (Retráteis) */
+.form-retratil { display: none; margin-top: 12px; }
+.btn-toggle-form { background: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: 600; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -83,6 +88,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
     <div class="tabs-view-wrapper" id="swipeArea">
         <div class="tabs-container-fluid" id="tabsFluid">
             
+            <!-- ABA 1: PAINEL -->
             <div id="painel" class="tab-content">
                 <div id="containerAlertas" class="container-alertas"></div>
 
@@ -111,8 +117,12 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 </div>
             </div>
 
+            <!-- ABA 2: ABASTECER -->
             <div id="abastecer" class="tab-content">
-                <div class="card"><h3 id="tituloAbast">Novo Abastecimento</h3>
+                <button class="btn btn-toggle-form" id="btnToggleAbast" onclick="toggleFormulario('formAbast', 'btnToggleAbast', '➕ Registrar Novo Abastecimento')">➕ Registrar Novo Abastecimento</button>
+                
+                <div class="card form-retratil" id="formAbast">
+                    <h3 id="tituloAbast">Novo Abastecimento</h3>
                     <div style="display:grid; gap:12px">
                         <input id="aData" type="date"><input id="aKm" type="number" placeholder="Km odômetro">
                         <div class="grid-2"><input id="aLitros" type="number" step="0.01" placeholder="Litros" oninput="calcTotal()"><input id="aValorL" type="number" step="0.01" placeholder="R$ / L" oninput="calcTotal()"></div>
@@ -124,17 +134,22 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 <div class="card"><h3>Histórico de Abastecimentos</h3><div id="listaAbast"></div></div>
             </div>
 
+            <!-- ABA 3: MANUTENÇÃO -->
             <div id="manutencao" class="tab-content">
-                <div class="card"><h3 id="tituloManut">Registrar Realização de Serviço</h3>
+                <button class="btn btn-toggle-form" id="btnToggleManut" onclick="toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção')">➕ Registrar Nova Manutenção</button>
+
+                <div class="card form-retratil" id="formManut">
+                    <h3 id="tituloManut">Registrar Realização de Serviço</h3>
                     <div style="display:grid; gap:12px">
                         <input id="mData" type="date"><input id="mKm" type="number" placeholder="Em qual Km foi feito?">
                         <select id="mTipo">
-                            <option value="Troca Óleo Motor">Óleo do Motor</option>
-                            <option value="Sistema de Arrefecimento">Sistema de Arrefecimento (Água/Aditivo)</option>
-                            <option value="Juntas do Motor">Juntas do Motor (Tampa/Cárter)</option>
+                            <option value="Troca Óleo Motor">Troca Óleo Motor</option>
+                            <option value="Sistema de Arrefecimento">Sistema de Arrefecimento</option>
+                            <option value="Juntas do Motor">Juntas do Motor</option>
                             <option value="Correia Dentada / Auxiliar">Correia Dentada / Auxiliar</option>
                             <option value="Coxim do Motor">Coxim do Motor</option>
                             <option value="Filtros (Ar/Combustível)">Filtros (Ar/Combustível)</option>
+                            <option value="Óleo de Câmbio">Óleo de Câmbio</option>
                             <option value="Outro">Outro serviço/manutenção geral</option>
                         </select>
                         <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
@@ -147,8 +162,12 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 <div class="card"><h3>Histórico de Serviços Executados</h3><div id="listaManut"></div></div>
             </div>
 
+            <!-- ABA 4: VEÍCULO -->
             <div id="veiculo" class="tab-content">
-                <div class="card"><h3 id="tituloVeiculo">Cadastrar / Editar Veículo</h3>
+                <button class="btn btn-toggle-form" id="btnToggleVeiculo" onclick="toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo')">➕ Cadastrar Novo Veículo</button>
+
+                <div class="card form-retratil" id="formVeiculo">
+                    <h3 id="tituloVeiculo">Cadastrar / Editar Veículo</h3>
                     <div style="display:grid; gap:12px">
                         <select id="vTipo"><option value="carro">Carro</option><option value="moto">Moto</option></select>
                         <div class="grid-2">
@@ -167,6 +186,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 <div class="card"><h3>Meus Veículos Gerenciados</h3><div id="listaVeiculos"></div></div>
             </div>
 
+            <!-- ABA 5: CONFIG -->
             <div id="config" class="tab-content">
                 <div class="card"><h3>Odômetro Virtual - Config (Veículo Atual)</h3>
                     <div style="display:grid; gap:12px">
@@ -237,11 +257,12 @@ if(!manutencoes.length) {
         {id: 9, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Sapata da Transmissão (Pavani)", valor: "765.34", proxKm: ""},
         {id: 10, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Bateria Nova (Moura/Pavani)", valor: "358.00", proxKm: ""},
 
-        // HISTÓRICO REAL FORD FIESTA
+        // HISTÓRICO REAL FORD FIESTA (Óleo adicionado aqui)
         {id: 11, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Juntas do Motor", valor: "1711.00", proxKm: 140000},
         {id: 12, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Óleo de Câmbio", valor: "0.00", proxKm: 160000},
         {id: 13, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Sistema de Arrefecimento", valor: "1654.00", proxKm: 110000},
-        {id: 14, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Coxim do Motor", valor: "0.00", proxKm: 130000}
+        {id: 14, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Coxim do Motor", valor: "0.00", proxKm: 130000},
+        {id: 15, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Troca Óleo Motor", valor: "250.00", proxKm: 92100}
     ];
 }
 
@@ -272,6 +293,18 @@ document.getElementById('mTipo').addEventListener('change', function() {
     document.getElementById('mTipoCustom').style.display = this.value === 'Outro' ? 'block' : 'none';
 });
 
+function toggleFormulario(formId, btnId, textoOriginal) {
+    const form = document.getElementById(formId);
+    const btn = document.getElementById(btnId);
+    if(form.style.display === "block") {
+        form.style.display = "none";
+        btn.innerText = textoOriginal;
+    } else {
+        form.style.display = "block";
+        btn.innerText = "✖ Fechar Formulário";
+    }
+}
+
 function obterConfigAtual() {
     if(!configsGerais[veiculoAtivoId]) {
         let vObj = veiculos.find(v => v.id == veiculoAtivoId);
@@ -291,6 +324,14 @@ function navegarParaIndice(indice) {
     const botoesNav = document.querySelectorAll('.btn-nav');
     botoesNav.forEach((b, idx) => b.classList.toggle('active', idx === indice));
     
+    // Fecha todos os formulários ao mudar de página para manter limpo
+    document.getElementById('formAbast').style.display = "none";
+    document.getElementById('btnToggleAbast').innerText = "➕ Registrar Novo Abastecimento";
+    document.getElementById('formManut').style.display = "none";
+    document.getElementById('btnToggleManut').innerText = "➕ Registrar Nova Manutenção";
+    document.getElementById('formVeiculo').style.display = "none";
+    document.getElementById('btnToggleVeiculo').innerText = "➕ Cadastrar Novo Veículo";
+
     cancelarEditAbast();
     cancelarEditManut();
 
@@ -609,6 +650,8 @@ function addAbast() {
         abastecimentos.push({id: Date.now(), veiculoId: veiculoAtivoId, km, litros: lit, valorL: val, total: tot, data: dat, tipo: tip});
     }
     salvar(); cancelarEditAbast(); atualizarPainel(); renderAbast();
+    document.getElementById('formAbast').style.display = "none";
+    document.getElementById('btnToggleAbast').innerText = "➕ Registrar Novo Abastecimento";
 }
 
 function renderAbast() {
@@ -630,6 +673,8 @@ function editAbast(id) {
     const a = abastecimentos.find(x => x.id == id);
     if(!a) return;
     editandoAbastId = id;
+    document.getElementById('formAbast').style.display = "block";
+    document.getElementById('btnToggleAbast').innerText = "✖ Fechar Formulário";
     document.getElementById('aData').value = a.data;
     document.getElementById('aKm').value = a.km;
     document.getElementById('aLitros').value = a.litros;
@@ -672,6 +717,8 @@ function addManut() {
         manutencoes.push({id: Date.now(), veiculoId: veiculoAtivoId, data: dat, km: km, tipo: tip, valor: val, proxKm: pkm});
     }
     salvar(); cancelarEditManut(); atualizarPainel(); renderManut();
+    document.getElementById('formManut').style.display = "none";
+    document.getElementById('btnToggleManut').innerText = "➕ Registrar Nova Manutenção";
 }
 
 function renderManut() {
@@ -697,6 +744,8 @@ function editManut(id) {
     const m = manutencoes.find(x => x.id == id);
     if(!m) return;
     editandoManutId = id;
+    document.getElementById('formManut').style.display = "block";
+    document.getElementById('btnToggleManut').innerText = "✖ Fechar Formulário";
     document.getElementById('mData').value = m.data;
     document.getElementById('mKm').value = m.km;
     
@@ -748,6 +797,8 @@ function addVeiculo() {
         if(!veiculoAtivoId || veiculoAtivoId === DEFAULT_ID) veiculoAtivoId = newId;
     }
     salvar(); cancelarEditVeiculo(); atualizarPainel(); renderVeiculos();
+    document.getElementById('formVeiculo').style.display = "none";
+    document.getElementById('btnToggleVeiculo').innerText = "➕ Cadastrar Novo Veículo";
 }
 
 function renderVeiculos() {
@@ -768,6 +819,8 @@ function editVeiculo(id) {
     const v = veiculos.find(x => x.id == id);
     if(!v) return;
     editandoVeiculoId = id;
+    document.getElementById('formVeiculo').style.display = "block";
+    document.getElementById('btnToggleVeiculo').innerText = "✖ Fechar Formulário";
     document.getElementById('vTipo').value = v.tipo;
     document.getElementById('vMarca').value = v.marca;
     document.getElementById('vModelo').value = v.modelo;
