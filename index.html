@@ -102,7 +102,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 </div>
                 <div class="grid-2">
                     <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
-                    <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
+                    <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">--</h3></div>
                 </div>
 
                 <div class="card">
@@ -130,9 +130,11 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                         <input id="mData" type="date"><input id="mKm" type="number" placeholder="Em qual Km foi feito?">
                         <select id="mTipo">
                             <option value="Troca Óleo Motor">Óleo do Motor</option>
-                            <option value="Filtro de Ar">Filtro de Ar</option>
-                            <option value="Correia CVT">Correia de Transmissão CVT</option>
-                            <option value="Vela Ignição">Vela de Ignição</option>
+                            <option value="Sistema de Arrefecimento">Sistema de Arrefecimento (Água/Aditivo)</option>
+                            <option value="Juntas do Motor">Juntas do Motor (Tampa/Cárter)</option>
+                            <option value="Correia Dentada / Auxiliar">Correia Dentada / Auxiliar</option>
+                            <option value="Coxim do Motor">Coxim do Motor</option>
+                            <option value="Filtros (Ar/Combustível)">Filtros (Ar/Combustível)</option>
                             <option value="Outro">Outro serviço/manutenção geral</option>
                         </select>
                         <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
@@ -148,10 +150,10 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
             <div id="veiculo" class="tab-content">
                 <div class="card"><h3 id="tituloVeiculo">Cadastrar / Editar Veículo</h3>
                     <div style="display:grid; gap:12px">
-                        <select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select>
+                        <select id="vTipo"><option value="carro">Carro</option><option value="moto">Moto</option></select>
                         <div class="grid-2">
-                            <input id="vMarca" type="text" placeholder="Marca Ex: Honda">
-                            <input id="vModelo" type="text" placeholder="Modelo Ex: Lead 110">
+                            <input id="vMarca" type="text" placeholder="Marca Ex: Ford">
+                            <input id="vModelo" type="text" placeholder="Modelo Ex: Fiesta 1.6">
                         </div>
                         <div class="grid-2">
                             <input id="vAno" type="number" placeholder="Ano Modelo">
@@ -178,7 +180,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                         </div>
                         <input id="kmValor" type="number" value="30" placeholder="Ex: 30" onchange="salvarConfig()">
                         <label>Capacidade Total Tanque (Litros)</label>
-                        <input id="tanqueL" type="number" step="0.1" value="6.5" onchange="salvarConfig()">
+                        <input id="tanqueL" type="number" step="0.1" value="54" onchange="salvarConfig()">
                         <label>Horário da atualização</label>
                         <input id="horaAtualizacao" type="time" value="19:00" onchange="salvarConfig()">
                         <label>Dias que roda</label>
@@ -201,16 +203,20 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
     <button class="btn-nav active" onclick="navegarParaIndice(0)"><i class="fas fa-gauge-high"></i><span>Painel</span></button>
     <button class="btn-nav" onclick="navegarParaIndice(1)"><i class="fas fa-gas-pump"></i><span>Abastecer</span></button>
     <button class="btn-nav" onclick="navegarParaIndice(2)"><i class="fas fa-wrench"></i><span>Manutenção</span></button>
-    <button class="btn-nav" onclick="navegarParaIndice(3)"><i class="fas fa-motorcycle"></i><span>Veículo</span></button>
+    <button class="btn-nav" onclick="navegarParaIndice(3)"><i class="fas fa-car"></i><span>Veículo</span></button>
     <button class="btn-nav" onclick="navegarParaIndice(4)"><i class="fas fa-gear"></i><span>Config</span></button>
 </nav>
 
 <script>
 const DEFAULT_ID = "honda_lead_110";
+const FIESTA_ID = "ford_fiesta_2012";
 
 let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
 if(!veiculos.length) {
-    veiculos = [{id: DEFAULT_ID, tipo: "moto", marca: "Honda", modelo: "Lead 110", ano: 2012, km: 93290, data: "2026-04-10"}];
+    veiculos = [
+        {id: DEFAULT_ID, tipo: "moto", marca: "Honda", modelo: "Lead 110", ano: 2012, km: 93290, data: "2026-04-10"},
+        {id: FIESTA_ID, tipo: "carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2012, km: 82500, data: "2026-01-08"}
+    ];
 }
 
 let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || DEFAULT_ID;
@@ -219,6 +225,7 @@ let abastecimentos = JSON.parse(localStorage.getItem('abast') || '[]');
 let manutencoes = JSON.parse(localStorage.getItem('manut') || '[]');
 if(!manutencoes.length) {
     manutencoes = [
+        // HISTÓRICO HONDA LEAD 110
         {id: 1, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Correia CVT", valor: "370.00", proxKm: 110000},
         {id: 2, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Vela Ignição", valor: "124.00", proxKm: 98000},
         {id: 3, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Caixa de Direção (Pavani)", valor: "395.00", proxKm: ""},
@@ -228,16 +235,27 @@ if(!manutencoes.length) {
         {id: 7, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Pastilha Dianteira + Lona", valor: "118.80", proxKm: ""},
         {id: 8, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Fluido de Freio DOT 4", valor: "80.00", proxKm: ""},
         {id: 9, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Sapata da Transmissão (Pavani)", valor: "765.34", proxKm: ""},
-        {id: 10, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Bateria Nova (Moura/Pavani)", valor: "358.00", proxKm: ""}
+        {id: 10, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Bateria Nova (Moura/Pavani)", valor: "358.00", proxKm: ""},
+
+        // HISTÓRICO REAL FORD FIESTA (EXTRAÍDO DAS ORDENS DE SERVIÇO ENVIADAS)
+        {id: 11, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Juntas do Motor (Tampa e Cárter)", valor: "1711.00", proxKm: 140000},
+        {id: 12, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Troca de Óleo de Câmbio", valor: "0.00", proxKm: 160000},
+        {id: 13, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Sistema de Arrefecimento (Termostática/Reservatório)", valor: "1654.00", proxKm: 110000},
+        {id: 14, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Coxim do Motor", valor: "0.00", proxKm: 130000}
     ];
 }
 
 let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
 if(!configsGerais[DEFAULT_ID]) {
     configsGerais[DEFAULT_ID] = {
-        "kmBase": 93290,
-        "dataBase": "2026-04-10T12:00",
+        "kmBase": 93290, "dataBase": "2026-04-10T12:00",
         "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 6.5
+    };
+}
+if(!configsGerais[FIESTA_ID]) {
+    configsGerais[FIESTA_ID] = {
+        "kmBase": 82500, "dataBase": "2026-01-08T12:00",
+        "modoKm": "dia", "kmValor": 40, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
     };
 }
 
@@ -260,7 +278,7 @@ function obterConfigAtual() {
         configsGerais[veiculoAtivoId] = {
             "kmBase": vObj ? vObj.km : 0,
             "dataBase": vObj ? vObj.data + "T12:00" : new Date().toISOString().slice(0,16),
-            "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 6.5
+            "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
         };
     }
     return configsGerais[veiculoAtivoId];
@@ -342,7 +360,7 @@ function salvarConfig() {
     conf.dataBase = document.getElementById('dataBase').value;
     conf.kmValor = parseInt(document.getElementById('kmValor').value) || 30;
     conf.horaAtualizacao = document.getElementById('horaAtualizacao').value;
-    conf.tanqueL = parseFloat(document.getElementById('tanqueL').value) || 6.5;
+    conf.tanqueL = parseFloat(document.getElementById('tanqueL').value) || 54.0;
     conf.diasSemana = [...document.querySelectorAll('.dia-btn.active')].map(b => parseInt(b.dataset.dia));
     salvar();
     atualizarPainel();
@@ -354,7 +372,7 @@ function carregarConfig() {
     document.getElementById('dataBase').value = conf.dataBase || '';
     document.getElementById('kmValor').value = conf.kmValor || 30;
     document.getElementById('horaAtualizacao').value = conf.horaAtualizacao || '19:00';
-    document.getElementById('tanqueL').value = conf.tanqueL || 6.5;
+    document.getElementById('tanqueL').value = conf.tanqueL || 54.0;
     document.querySelectorAll('.dia-btn').forEach(b => { b.classList.toggle('active', conf.diasSemana.includes(parseInt(b.dataset.dia))); });
     document.querySelectorAll('#modoKm button').forEach(b => { b.classList.toggle('active', b.dataset.modo === conf.modoKm); });
 }
@@ -382,11 +400,11 @@ function kmPorDia() {
 }
 
 function ajustarOdometro() {
-    const novoKm = prompt("Digite o Km atual exato do painel digital:");
+    const novoKm = prompt("Digite o Km atual exato do painel:");
     if (novoKm === null) return;
     const kmNum = parseInt(novoKm);
     if (isNaN(kmNum) || kmNum <= 0) {
-        alert("Por favor, insira um número de quilometragem válido.");
+        alert("Por favor, insira um número válido.");
         return;
     }
     let conf = obterConfigAtual();
@@ -458,7 +476,6 @@ function formatarDataBR(dataStr) {
     return dataStr;
 }
 
-// CORREÇÃO GERAL DO PAINEL DE ACORDO COM AS SOLICITAÇÕES
 function atualizarPainel() {
     atualizarSeletorCabecalho();
     const kmVirtual = calcularOdometroVirtual();
@@ -482,8 +499,8 @@ function atualizarPainel() {
     }
 
     const conf = obterConfigAtual();
-    const tanqueL = conf.tanqueL || 6.5;
-    const reservaL = 1.8; 
+    const tanqueL = conf.tanqueL || 54.0;
+    const reservaL = veiculoAtivoId === FIESTA_ID ? 7.0 : 1.8; 
     const tanqueUtilL = tanqueL - reservaL;
 
     let alertasHtml = "";
@@ -500,7 +517,6 @@ function atualizarPainel() {
         const kmDiario = kmPorDia();
         const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantesParaReserva / kmDiario) : 0;
         
-        // CORREÇÃO: Calcular e mostrar a data do próximo abastecimento baseado nos dias restantes
         let dataEstimadaStr = "Imediato";
         if (diasRestantes > 0) {
             let dataEstimada = new Date();
@@ -510,7 +526,7 @@ function atualizarPainel() {
 
         document.getElementById('autonomia').innerText = `${kmRestantesParaReserva} km (${dataEstimadaStr})`;
 
-        if (kmRestantesParaReserva <= 30) {
+        if (kmRestantesParaReserva <= 40) {
             cardAutonomiaElement.className = "card kpi warn";
             alertasHtml += `<div class="alerta-item warn"><i class="fas fa-gas-pump"></i> Próx. Abastecimento perto! Faltam ${kmRestantesParaReserva} km para a Reserva.</div>`;
         }
@@ -519,23 +535,20 @@ function atualizarPainel() {
         document.getElementById('autonomia').innerText = `--`;
     }
 
-    // CORREÇÃO: Listar apenas manutenções estritamente vinculadas a este veículo específico
     let listaObrigatoriosHtml = "";
     const manutDoVeiculo = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
 
     if (manutDoVeiculo.length === 0) {
         listaObrigatoriosHtml = `<p class="muted" style="text-align:center; padding:12px;">Nenhum plano ou histórico de manutenção para este veículo.</p>`;
     } else {
-        // Agrupar pelo tipo de serviço para pegar o último executado de cada um
         const servicosAgrupados = {};
         manutDoVeiculo.forEach(m => {
-            if (!servicosAgrupados[m.tipo] || new Date(m.data) > new Date(servicosAgrupados[m.tipo].data)) {
+            if (!servicosAgantes[m.tipo] || new Date(m.data) > new Date(servicosAgrupados[m.tipo].data)) {
                 servicosAgrupados[m.tipo] = m;
             }
         });
 
         Object.values(servicosAgrupados).forEach(m => {
-            // Só exibe no painel se foi configurado um Km Próximo de troca para o alerta funcionar
             if (!m.proxKm) return;
 
             const proximaTroca = parseInt(m.proxKm);
@@ -545,7 +558,7 @@ function atualizarPainel() {
             if (faltamKm <= 0) {
                 classeStatus = "status-danger";
                 alertasHtml += `<div class="alerta-item danger"><i class="fas fa-wrench"></i> ${m.tipo} Vencido há ${Math.abs(faltamKm)} km!</div>`;
-            } else if (faltamKm <= 200) { // Alerta amarelo com menos de 200km para vencer
+            } else if (faltamKm <= 500) { 
                 classeStatus = "status-warn";
                 alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Revisar ${m.tipo} em breve (${faltamKm} km).</div>`;
             }
