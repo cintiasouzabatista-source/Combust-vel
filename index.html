@@ -492,7 +492,20 @@ function ajustarOdometro() {
     atualizarPainel();
     alert(`Odômetro ajustado com sucesso para ${kmNum.toLocaleString('pt-BR')} km!`);
 }
+// Função para calcular o Valor Total do Combustível automaticamente
+function calcTotal() {
+    const litros = parseFloat(document.getElementById('aLitros').value) || 0;
+    const valorLitro = parseFloat(document.getElementById('aValorL').value) || 0;
+    const campoTotal = document.getElementById('aTotal');
 
+    if (litros > 0 && valorLitro > 0) {
+        // Multiplica os litros pelo valor do litro e fixa em 2 casas decimais
+        campoTotal.value = (litros * valorLitro).toFixed(2);
+    } else {
+        campoTotal.value = ''; // Limpa se um dos campos estiver vazio
+    }
+}
+    
 function calcularOdometroVirtual() {
     let conf = obterConfigAtual();
     const kmBase = parseInt(conf.kmBase) || 0;
