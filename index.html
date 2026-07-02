@@ -28,7 +28,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .btn-danger { background: var(--danger); }
 .btn-outline { background: transparent; border: 1px solid var(--border); }
 .kpi p { font-size: 13px; margin-bottom: 4px; }
-.kpi h3 { font-size: 22px; }
+.kpi h3 { font-size: 18px; font-weight: 700; }
 .kpi.destaque { border: 2px solid var(--primary); }
 .kpi.warn { border: 2px solid var(--warn) !important; background: rgba(245,158,11,0.15) !important; }
 .kpi.danger { border: 2px solid var(--danger) !important; background: rgba(239,68,68,0.15) !important; }
@@ -102,11 +102,11 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 </div>
                 <div class="grid-2">
                     <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
-                    <div class="card kpi" id="cardAutonomia"><p>Autonomia útil (Até Reserva)</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
+                    <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">0km ~ 0 dias</h3></div>
                 </div>
 
                 <div class="card">
-                    <h3 style="color:var(--primary)"><i class="fas fa-book-open"></i> Itens Obrigatórios (Customizado)</h3>
+                    <h3 style="color:var(--primary)"><i class="fas fa-book-open"></i> Itens Obrigatórios / Próximas Trocas</h3>
                     <div id="listaItensObrigatorios"></div>
                 </div>
             </div>
@@ -129,15 +129,15 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                     <div style="display:grid; gap:12px">
                         <input id="mData" type="date"><input id="mKm" type="number" placeholder="Em qual Km foi feito?">
                         <select id="mTipo">
-                            <option value="Troca Óleo Motor">Óleo do Motor (Cada 1.000 km)</option>
-                            <option value="Filtro de Ar">Filtro de Ar (Cada 16.000 km)</option>
-                            <option value="Correia CVT">Correia de Transmissão CVT (Cada 20.000 km)</option>
-                            <option value="Vela Ignição">Vela de Ignição (Cada 8.000 km)</option>
+                            <option value="Troca Óleo Motor">Óleo do Motor</option>
+                            <option value="Filtro de Ar">Filtro de Ar</option>
+                            <option value="Correia CVT">Correia de Transmissão CVT</option>
+                            <option value="Vela Ignição">Vela de Ignição</option>
                             <option value="Outro">Outro serviço/manutenção geral</option>
                         </select>
-                        <input id="mTipoCustom" type="text" placeholder="Especifique se marcou 'Outro'" style="display:none">
+                        <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
                         <input id="mValor" type="number" step="0.01" placeholder="Valor R$ (Opcional)">
-                        <input id="mProxKm" type="number" placeholder="Próxima em qual Km? (Opcional - Substitui o automático)">
+                        <input id="mProxKm" type="number" placeholder="Próxima troca em qual Km? (Obrigatório para Alertas)">
                         <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar Registro</button>
                         <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
                     </div>
@@ -307,7 +307,6 @@ function toggleTheme() {
     localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); 
 }
 
-// CORREÇÃO DA PERSISTÊNCIA: Certificar que salva o ID ativo correto no localStorage
 function salvar() { 
     localStorage.setItem('veiculos', JSON.stringify(veiculos)); 
     localStorage.setItem('veiculoAtivoId', veiculoAtivoId);
@@ -452,11 +451,14 @@ function calcularOdometroVirtual() {
     return Math.floor(kmTotal);
 }
 
-function removerAcentos(texto) {
-    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function formatarDataBR(dataStr) {
+    if(!dataStr) return "";
+    const partes = dataStr.split('-');
+    if(partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return dataStr;
 }
 
-// CORREÇÃO CRÍTICA DO CÁLCULO DOS ITENS OBRIGATÓRIOS POR VEÍCULO
+// CORREÇÃO GERAL DO PAINEL DE ACORDO COM AS SOLICITAÇÕES
 function atualizarPainel() {
     atualizarSeletorCabecalho();
     const kmVirtual = calcularOdometroVirtual();
@@ -491,83 +493,81 @@ function atualizarPainel() {
     if (ultimoAbast && mediaReal > 0) {
         document.getElementById('ultimoKmAbast').innerText = `${parseInt(ultimoAbast.km).toLocaleString('pt-BR')} km`;
         const kmRodadosDesdeAbast = kmVirtual - ultimoAbast.km;
-        const capacidadeUtilKm = tanqueUtilL * mediaReal;
-        let kmRestantesParaReserva = Math.floor(capacidadeUtilKm - kmRodadosDesdeAbast);
+        const capacidadUtilKm = tanqueUtilL * mediaReal;
+        let kmRestantesParaReserva = Math.floor(capacidadUtilKm - kmRodadosDesdeAbast);
         if (kmRestantesParaReserva < 0) kmRestantesParaReserva = 0;
 
         const kmDiario = kmPorDia();
         const diasRestantes = kmDiario > 0 ? Math.ceil(kmRestantesParaReserva / kmDiario) : 0;
-        document.getElementById('autonomia').innerText = `${kmRestantesParaReserva} km ~ ${diasRestantes} dias`;
+        
+        // CORREÇÃO: Calcular e mostrar a data do próximo abastecimento baseado nos dias restantes
+        let dataEstimadaStr = "Imediato";
+        if (diasRestantes > 0) {
+            let dataEstimada = new Date();
+            dataEstimada.setDate(dataEstimada.getDate() + diasRestantes);
+            dataEstimadaStr = dataEstimada.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+        }
+
+        document.getElementById('autonomia').innerText = `${kmRestantesParaReserva} km (${dataEstimadaStr})`;
 
         if (kmRestantesParaReserva <= 30) {
             cardAutonomiaElement.className = "card kpi warn";
-            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-gas-pump"></i> Combustível Crítico: Faltam ${kmRestantesParaReserva} km para entrar na Reserva!</div>`;
+            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-gas-pump"></i> Próx. Abastecimento perto! Faltam ${kmRestantesParaReserva} km para a Reserva.</div>`;
         }
     } else {
         document.getElementById('ultimoKmAbast').innerText = `0 km`;
-        document.getElementById('autonomia').innerText = `0 km ~ 0 dias`;
+        document.getElementById('autonomia').innerText = `--`;
     }
 
-    const itensManutencaoManual = [
-        { nome: "Óleo do Motor", intervalo: 1000, termoBusca: "oleo motor" },
-        { nome: "Vela de Ignição", intervalo: 8000, termoBusca: "vela" },
-        { nome: "Filtro de Ar", intervalo: 16000, termoBusca: "filtro" },
-        { nome: "Correia do CVT", intervalo: 20000, termoBusca: "correia" }
-    ];
-
+    // CORREÇÃO: Listar apenas manutenções estritamente vinculadas a este veículo específico
     let listaObrigatoriosHtml = "";
     const manutDoVeiculo = manutencoes.filter(m => m.veiculoId == veiculoAtivoId);
 
-    itensManutencaoManual.forEach(item => {
-        const historicosDoItem = manutDoVeiculo.filter(m => {
-            const tipoLimpo = removerAcentos(m.tipo || "");
-            return tipoLimpo.includes(item.termoBusca);
+    if (manutDoVeiculo.length === 0) {
+        listaObrigatoriosHtml = `<p class="muted" style="text-align:center; padding:12px;">Nenhum plano ou histórico de manutenção para este veículo.</p>`;
+    } else {
+        // Agrupar pelo tipo de serviço para pegar o último executado de cada um
+        const servicosAgrupados = {};
+        manutDoVeiculo.forEach(m => {
+            if (!servicosAgrupados[m.tipo] || new Date(m.data) > new Date(servicosAgrupados[m.tipo].data)) {
+                servicosAgrupados[m.tipo] = m;
+            }
         });
-        historicosDoItem.sort((a, b) => b.km - a.km);
 
-        let ultimoKmFeito = 0;
-        let proximaTrocaObrigatoria = 0;
-        let temHistorico = historicosDoItem.length > 0;
+        Object.values(servicosAgrupados).forEach(m => {
+            // Só exibe no painel se foi configurado um Km Próximo de troca para o alerta funcionar
+            if (!m.proxKm) return;
 
-        if (temHistorico) {
-            ultimoKmFeito = parseInt(historicosDoItem[0].km) || 0;
-            proximaTrocaObrigatoria = historicosDoItem[0].proxKm ? parseInt(historicosDoItem[0].proxKm) : (ultimoKmFeito + item.intervalo);
-        } else {
-            // Se NÃO tem histórico cadastrado para ESTE veículo, calcula o alvo baseado no KM de cadastro do veículo
-            let vObj = veiculos.find(v => v.id == veiculoAtivoId);
-            let kmOrigem = vObj ? parseInt(vObj.km) : kmVirtual;
-            ultimoKmFeito = kmOrigem;
-            proximaTrocaObrigatoria = kmOrigem + item.intervalo;
-        }
+            const proximaTroca = parseInt(m.proxKm);
+            const faltamKm = proximaTroca - kmVirtual;
+            let classeStatus = "status-ok";
 
-        const faltamKm = proximaTrocaObrigatoria - kmVirtual;
-        let classeStatus = "status-ok";
+            if (faltamKm <= 0) {
+                classeStatus = "status-danger";
+                alertasHtml += `<div class="alerta-item danger"><i class="fas fa-wrench"></i> ${m.tipo} Vencido há ${Math.abs(faltamKm)} km!</div>`;
+            } else if (faltamKm <= 200) { // Alerta amarelo com menos de 200km para vencer
+                classeStatus = "status-warn";
+                alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Revisar ${m.tipo} em breve (${faltamKm} km).</div>`;
+            }
+
+            listaObrigatoriosHtml += `
+                <div class="item-obrigatorio ${classeStatus}">
+                    <div class="info-manut">
+                        <strong>${m.tipo}</strong><br>
+                        <span class="muted">Última: ${parseInt(m.km).toLocaleString('pt-BR')} km (${formatarDataBR(m.data)})</span>
+                    </div>
+                    <div class="prazo-manut" style="color: ${classeStatus === 'status-danger' ? 'var(--danger)' : (classeStatus === 'status-warn' ? 'var(--warn)' : 'var(--success)')}">
+                        ${faltamKm <= 0 ? 'VENCIDO' : 'Faltam ' + faltamKm.toLocaleString('pt-BR') + ' km'}<br>
+                        <span class="muted" style="font-weight:normal; font-size:11px;">Alvo: ${proximaTroca.toLocaleString('pt-BR')} km</span>
+                    </div>
+                </div>
+            `;
+        });
         
-        let margemAviso = item.intervalo * 0.15;
-        if (margemAviso > 500) margemAviso = 500;
-        if (margemAviso < 150) margemAviso = 150; 
-
-        if (faltamKm <= 0) {
-            classeStatus = "status-danger";
-            alertasHtml += `<div class="alerta-item danger"><i class="fas fa-wrench"></i> ${item.nome} Vencido! Passou ${Math.abs(faltamKm)} km do prazo.</div>`;
-        } else if (faltamKm <= margemAviso) {
-            classeStatus = "status-warn";
-            alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Trocar ${item.nome} em Breve: Restam ${faltamKm} km.</div>`;
+        if(listaObrigatoriosHtml === "") {
+            listaObrigatoriosHtml = `<p class="muted" style="text-align:center; padding:12px;">Nenhum serviço agendado com 'Próxima Km' encontrada.</p>`;
         }
-
-        listaObrigatoriosHtml += `
-            <div class="item-obrigatorio ${classeStatus}">
-                <div class="info-manut">
-                    <strong>${item.nome}</strong><br>
-                    <span class="muted">${temHistorico ? 'Última: ' + ultimoKmFeito.toLocaleString('pt-BR') + ' km' : 'Sem histórico registrado'}</span>
-                </div>
-                <div class="prazo-manut" style="color: ${classeStatus === 'status-danger' ? 'var(--danger)' : (classeStatus === 'status-warn' ? 'var(--warn)' : 'var(--success)')}">
-                    ${faltamKm <= 0 ? 'VENCIDO' : 'Faltam ' + faltamKm.toLocaleString('pt-BR') + ' km'}<br>
-                    <span class="muted" style="font-weight:normal; font-size:11px;">Alvo: ${proximaTrocaObrigatoria.toLocaleString('pt-BR')} km</span>
-                </div>
-            </div>
-        `;
-    });
+    }
 
     document.getElementById('listaItensObrigatorios').innerHTML = listaObrigatoriosHtml;
     document.getElementById('containerAlertas').innerHTML = alertasHtml;
@@ -604,7 +604,7 @@ function renderAbast() {
     if(!filtrados.length) { lista.innerHTML = '<p>Nenhum abastecimento.</p>'; return; }
     lista.innerHTML = filtrados.map(a => `
         <div class="historico-item">
-            <div><strong>${a.km} km</strong> - ${a.litros}L (R$ ${a.total})<br><span class="muted">${a.data} - ${a.tipo}</span></div>
+            <div><strong>${a.km} km</strong> - ${a.litros}L (R$ ${a.total})<br><span class="muted">${formatarDataBR(a.data)} - ${a.tipo}</span></div>
             <div class="historico-acoes">
                 <button onclick="editAbast(${a.id})"><i class="fas fa-edit"></i></button>
                 <button class="del" onclick="delAbast(${a.id})"><i class="fas fa-trash"></i></button>
@@ -651,7 +651,7 @@ function addManut() {
         tip = document.getElementById('mTipoCustom').value || "Outro";
     }
 
-    if(!dat || !km || !tip) return alert("Preencha os campos obrigatórios!");
+    if(!dat || !km || !tip) return alert("Preencha data, km executado e o tipo de serviço!");
 
     if(editandoManutId) {
         manutencoes = manutencoes.map(m => m.id == editandoManutId ? {id:m.id, veiculoId:veiculoAtivoId, data:dat, km, tipo:tip, valor:val, proxKm:pkm} : m);
@@ -670,8 +670,8 @@ function renderManut() {
 
     lista.innerHTML = filtrados.map(m => `
         <div class="historico-item">
-            <div><strong>${m.tipo}</strong> - Realizado em: ${m.km.toLocaleString('pt-BR')} km ${m.valor ? '(R$ ' + parseFloat(m.valor).toFixed(2).replace('.',',') + ')' : ''}<br>
-            <span class="muted">Data: ${m.data.split('-').reverse().join('/')} ${m.proxKm ? ' | Próxima programada: ' + parseInt(m.proxKm).toLocaleString('pt-BR') + ' km' : ''}</span></div>
+            <div><strong>${m.tipo}</strong> - Executado: ${m.km.toLocaleString('pt-BR')} km ${m.valor ? '(R$ ' + parseFloat(m.valor).toFixed(2).replace('.',',') + ')' : ''}<br>
+            <span class="muted">Data: ${formatarDataBR(m.data)} ${m.proxKm ? ' | Alvo Próxima: ' + parseInt(m.proxKm).toLocaleString('pt-BR') + ' km' : ''}</span></div>
             <div class="historico-acoes">
                 <button onclick="editManut(${m.id})"><i class="fas fa-edit"></i></button>
                 <button class="del" onclick="delManut(${m.id})"><i class="fas fa-trash"></i></button>
@@ -742,7 +742,7 @@ function renderVeiculos() {
     if(!veiculos.length) { lista.innerHTML = '<p>Nenhum veículo.</p>'; return; }
     lista.innerHTML = veiculos.map(v => `
         <div class="historico-item">
-            <div><strong>${v.marca} ${v.modelo}</strong> (${v.ano || '--'})<br><span class="muted">Inicial: ${v.km} km em ${v.data}</span></div>
+            <div><strong>${v.marca} ${v.modelo}</strong> (${v.ano || '--'})<br><span class="muted">Inicial: ${v.km} km em ${formatarDataBR(v.data)}</span></div>
             <div class="historico-acoes">
                 <button onclick="editVeiculo('${v.id}')"><i class="fas fa-edit"></i></button>
                 <button class="del" onclick="delVeiculo('${v.id}')"><i class="fas fa-trash"></i></button>
