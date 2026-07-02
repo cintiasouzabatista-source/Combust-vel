@@ -33,7 +33,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .kpi.warn { border: 2px solid var(--warn) !important; background: rgba(245,158,11,0.15) !important; }
 .kpi.danger { border: 2px solid var(--danger) !important; background: rgba(239,68,68,0.15) !important; }
 
-/* Correção de Layout das Abas Alinhadas Verticalmente */
+/* Layout das Abas */
 .tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
 .tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); align-items: flex-start; }
 .tab-content { width: 20%; flex-shrink: 0; padding: 0 4px; }
@@ -60,11 +60,11 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .alerta-item.warn { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid var(--warn); }
 .alerta-item.danger { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid var(--danger); }
 
-.item-obrigatorio { padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.item-obrigatorio { padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--card); }
 .item-obrigatorio.status-ok { border-left: 5px solid var(--success); }
 .item-obrigatorio.status-warn { border-left: 5px solid var(--warn); background: rgba(245,158,11,0.05); }
 .item-obrigatorio.status-danger { border-left: 5px solid var(--danger); background: rgba(239,68,68,0.05); }
-.item-obrigatorio .info-manut { flex: 1; }
+.item-obrigatorio .info-manut { flex: 1; text-align: left; }
 .item-obrigatorio .prazo-manut { font-weight: bold; font-size: 14px; text-align: right; }
 
 .historico-item { padding:8px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
@@ -74,7 +74,11 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
 /* Modais/Formulários Sanfona (Retráteis) */
 .form-retratil { display: none; margin-top: 12px; }
-.btn-toggle-form { background: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: 600; margin-bottom: 12px; }
+.btn-toggle-form { background: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: 600; margin-bottom: 12px; text-align: center; cursor: pointer; }
+
+/* Sanfona específica para os Itens Obrigatórios */
+.titulo-retratil-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--primary); user-select: none; }
+.conteudo-obrigatorios-retratil { display: none; margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -111,9 +115,13 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                     <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">--</h3></div>
                 </div>
 
+                <!-- Modificado para ser Retrátil e começar fechado -->
                 <div class="card">
-                    <h3 style="color:var(--primary)"><i class="fas fa-book-open"></i> Itens Obrigatórios / Próximas Trocas</h3>
-                    <div id="listaItensObrigatorios"></div>
+                    <div class="titulo-retratil-header" id="btnToggleObrigatorios" onclick="toggleObrigatorios()">
+                        <h3><i class="fas fa-book-open"></i> Itens Obrigatórios / Trocas</h3>
+                        <i class="fas fa-chevron-down" id="iconeObrigatorios"></i>
+                    </div>
+                    <div id="listaItensObrigatorios" class="conteudo-obrigatorios-retratil"></div>
                 </div>
             </div>
 
@@ -257,7 +265,7 @@ if(!manutencoes.length) {
         {id: 9, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Sapata da Transmissão (Pavani)", valor: "765.34", proxKm: ""},
         {id: 10, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Bateria Nova (Moura/Pavani)", valor: "358.00", proxKm: ""},
 
-        // HISTÓRICO REAL FORD FIESTA (Óleo adicionado aqui)
+        // HISTÓRICO REAL FORD FIESTA
         {id: 11, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Juntas do Motor", valor: "1711.00", proxKm: 140000},
         {id: 12, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Óleo de Câmbio", valor: "0.00", proxKm: 160000},
         {id: 13, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Sistema de Arrefecimento", valor: "1654.00", proxKm: 110000},
@@ -305,6 +313,19 @@ function toggleFormulario(formId, btnId, textoOriginal) {
     }
 }
 
+/* Controla a abertura e fechamento da lista de itens obrigatórios */
+function toggleObrigatorios() {
+    const lista = document.getElementById('listaItensObrigatorios');
+    const icone = document.getElementById('iconeObrigatorios');
+    if(lista.style.display === "block") {
+        lista.style.display = "none";
+        icone.className = "fas fa-chevron-down";
+    } else {
+        lista.style.display = "block";
+        icone.className = "fas fa-chevron-up";
+    }
+}
+
 function obterConfigAtual() {
     if(!configsGerais[veiculoAtivoId]) {
         let vObj = veiculos.find(v => v.id == veiculoAtivoId);
@@ -324,13 +345,16 @@ function navegarParaIndice(indice) {
     const botoesNav = document.querySelectorAll('.btn-nav');
     botoesNav.forEach((b, idx) => b.classList.toggle('active', idx === indice));
     
-    // Fecha todos os formulários ao mudar de página para manter limpo
     document.getElementById('formAbast').style.display = "none";
     document.getElementById('btnToggleAbast').innerText = "➕ Registrar Novo Abastecimento";
     document.getElementById('formManut').style.display = "none";
     document.getElementById('btnToggleManut').innerText = "➕ Registrar Nova Manutenção";
     document.getElementById('formVeiculo').style.display = "none";
     document.getElementById('btnToggleVeiculo').innerText = "➕ Cadastrar Novo Veículo";
+
+    // Reseta a lista de obrigatórios para fechada ao mudar de aba para salvar espaço
+    document.getElementById('listaItensObrigatorios').style.display = "none";
+    document.getElementById('iconeObrigatorios').className = "fas fa-chevron-down";
 
     cancelarEditAbast();
     cancelarEditManut();
@@ -380,6 +404,9 @@ function mudarVeiculoAtivo() {
     cancelarEditAbast();
     cancelarEditManut();
     
+    document.getElementById('listaItensObrigatorios').style.display = "none";
+    document.getElementById('iconeObrigatorios').className = "fas fa-chevron-down";
+
     atualizarPainel();
     renderAbast();
     renderManut();
@@ -604,6 +631,7 @@ function atualizarPainel() {
                 alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Revisar ${m.tipo} em breve (${faltamKm} km).</div>`;
             }
 
+            // CORREÇÃO AQUI: Agora todo item cadastrado com meta vai aparecer na lista, independente de quão longe esteja
             listaObrigatoriosHtml += `
                 <div class="item-obrigatorio ${classeStatus}">
                     <div class="info-manut">
