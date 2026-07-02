@@ -237,10 +237,10 @@ if(!manutencoes.length) {
         {id: 9, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Sapata da Transmissão (Pavani)", valor: "765.34", proxKm: ""},
         {id: 10, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Bateria Nova (Moura/Pavani)", valor: "358.00", proxKm: ""},
 
-        // HISTÓRICO REAL FORD FIESTA (EXTRAÍDO DAS ORDENS DE SERVIÇO ENVIADAS)
-        {id: 11, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Juntas do Motor (Tampa e Cárter)", valor: "1711.00", proxKm: 140000},
-        {id: 12, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Troca de Óleo de Câmbio", valor: "0.00", proxKm: 160000},
-        {id: 13, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Sistema de Arrefecimento (Termostática/Reservatório)", valor: "1654.00", proxKm: 110000},
+        // HISTÓRICO REAL FORD FIESTA
+        {id: 11, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Juntas do Motor", valor: "1711.00", proxKm: 140000},
+        {id: 12, veiculoId: FIESTA_ID, data: "2025-10-01", km: 80000, tipo: "Óleo de Câmbio", valor: "0.00", proxKm: 160000},
+        {id: 13, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Sistema de Arrefecimento", valor: "1654.00", proxKm: 110000},
         {id: 14, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Coxim do Motor", valor: "0.00", proxKm: 130000}
     ];
 }
@@ -543,7 +543,7 @@ function atualizarPainel() {
     } else {
         const servicosAgrupados = {};
         manutDoVeiculo.forEach(m => {
-            if (!servicosAgantes[m.tipo] || new Date(m.data) > new Date(servicosAgrupados[m.tipo].data)) {
+            if (!servicosAgrupados[m.tipo] || new Date(m.data) > new Date(servicosAgrupados[m.tipo].data)) {
                 servicosAgrupados[m.tipo] = m;
             }
         });
@@ -558,7 +558,7 @@ function atualizarPainel() {
             if (faltamKm <= 0) {
                 classeStatus = "status-danger";
                 alertasHtml += `<div class="alerta-item danger"><i class="fas fa-wrench"></i> ${m.tipo} Vencido há ${Math.abs(faltamKm)} km!</div>`;
-            } else if (faltamKm <= 500) { 
+            } else if (faltamKm <= 1000) { 
                 classeStatus = "status-warn";
                 alertasHtml += `<div class="alerta-item warn"><i class="fas fa-exclamation-triangle"></i> Revisar ${m.tipo} em breve (${faltamKm} km).</div>`;
             }
