@@ -59,6 +59,9 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
 .form-retratil { display: none; margin-top: 12px; }
 .btn-toggle-form { background: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: 600; margin-bottom: 12px; text-align: center; cursor: pointer; }
+
+.alerta-oleo-container { margin-top: 8px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.alerta-oleo-container.critico { background: rgba(239, 68, 68, 0.3); border: 1px solid #ef4444; }
 </style>
 </head>
 <body>
@@ -79,7 +82,8 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                         <div>
                             <p>Odômetro Virtual</p>
                             <h1 id="odometroVirtual">0 km</h1>
-                            <p id="proxAtualizacao" style="opacity:0.8">Baseado no seu padrão de uso</p>
+                            <p id="proxAtualizacao" style="opacity:0.8; margin-bottom: 4px;">Baseado no seu padrão de uso</p>
+                            <div id="alertaOleoPainel" style="display:none"></div>
                         </div>
                         <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
                     </div>
@@ -651,6 +655,27 @@ function atualizarPainel() {
     } else {
         document.getElementById('ultimoKmAbast').innerText = `0 km`;
         document.getElementById('autonomia').innerText = `--`;
+    }
+
+    // LOGICA DO ALERTA INTELIGENTE DE OLEO DO MOTOR
+    const alertaBox = document.getElementById('alertaOleoPainel');
+    const manutOleo = manutencoes.filter(m => m.veiculoId === veiculoAtivoId && m.tipo === "Troca Óleo Motor").sort((a,b) => b.km - a.km);
+
+    if(manutOleo.length > 0 && manutOleo[0].proxKm) {
+        const proxTrocaKm = parseInt(manutOleo[0].proxKm);
+        if(kmVirtual >= proxTrocaKm) {
+            const passou = kmVirtual - proxTrocaKm;
+            alertaBox.className = "alerta-oleo-container critico";
+            alertaBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 🚨 Óleo vencido há ${passou} km!`;
+            alertaBox.style.display = "inline-flex";
+        } else {
+            const falta = proxTrocaKm - kmVirtual;
+            alertaBox.className = "alerta-oleo-container";
+            alertaBox.innerHTML = `<i class="fas fa-circle-info"></i> ⚠️ Troca de Óleo em ${falta} km`;
+            alertaBox.style.display = "inline-flex";
+        }
+    } else {
+        alertaBox.style.display = "none";
     }
 }
 
