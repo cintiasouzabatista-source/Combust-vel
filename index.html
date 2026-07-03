@@ -244,6 +244,7 @@ if(!configsGerais[FIESTA_ID]) {
 
 let editandoAbastId = null;
 let editandoManutId = null;
+let editandoVeiculoId = null;
 let abaAtualIndice = 0;
 const totalAbas = 5;
 let toqueInicioX = 0;
@@ -541,6 +542,7 @@ function renderVeiculos() {
                 <small class="muted">Km de Entrada: ${v.km} km</small>
             </div>
             <div class="historico-acoes">
+                <button onclick="prepararEditVeiculo('${v.id}')"><i class="fas fa-edit"></i></button>
                 <button class="del" onclick="deletarVeiculo('${v.id}')"><i class="fas fa-trash"></i></button>
             </div>
         </div>
@@ -554,20 +556,47 @@ function addVeiculo() {
     const ano = document.getElementById('vAno').value;
     const km = parseInt(document.getElementById('vKm').value);
     const data = document.getElementById('vData').value;
-    const id = (marca + "_" + modelo + "_" + ano).toLowerCase().replace(/ /g, "_");
 
     if(!marca || !modelo || !km) { alert("Preencha os dados básicos do veículo!"); return; }
 
-    veiculos.push({ id, tipo, marca, modelo, ano, km, data });
-    veiculoAtivoId = id;
-    salvar(); renderVeiculos(); toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo'); atualizarPainel();
+    if(editandoVeiculoId) {
+        veiculos = veiculos.map(v => v.id === editandoVeiculoId ? {id: v.id, tipo, marca, modelo, ano, km, data} : v);
+        editandoVeiculoId = null;
+    } else {
+        const id = (marca + "_" + modelo + "_" + ano).toLowerCase().replace(/ /g, "_");
+        veiculos.push({ id, tipo, marca, modelo, ano, km, data });
+        veiculoAtivoId = id;
+    }
+    salvar(); renderVeiculos(); toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo'); cancelarEditVeiculo(); atualizarPainel();
+}
+
+function prepararEditVeiculo(id) {
+    const v = veiculos.find(x => x.id === id);
+    if(!v) return;
+    editandoVeiculoId = v.id;
+    document.getElementById('vTipo').value = v.tipo;
+    document.getElementById('vMarca').value = v.marca;
+    document.getElementById('vModelo').value = v.modelo;
+    document.getElementById('vAno').value = v.ano;
+    document.getElementById('vKm').value = v.km;
+    document.getElementById('vData').value = v.data || '';
+    document.getElementById('tituloVeiculo').innerText = "Editar Veículo";
+    document.getElementById('btnCancelarVeiculo').style.display = "inline-block";
+    document.getElementById('formVeiculo').style.display = "block";
+}
+
+function cancelarEditVeiculo() {
+    editandoVeiculoId = null;
+    document.getElementById('tituloVeiculo').innerText = "Cadastrar / Editar Veículo";
+    document.getElementById('btnCancelarVeiculo').style.display = "none";
+    document.getElementById('vMarca').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vAno').value = ''; document.getElementById('vKm').value = ''; document.getElementById('vData').value = '';
 }
 
 function deletarVeiculo(id) {
     if(veiculos.length <= 1) { alert("Você deve manter pelo menos um veículo cadastrado!"); return; }
     if(confirm("Deseja deletar permanentemente este veículo e trocar de perfil?")) {
         veiculos = veiculos.filter(v => v.id !== id);
-        veiculoAtivoId = veiculos[0].id;
+        if(veiculoAtivoId === id) veiculoAtivoId = veiculos[0].id;
         salvar(); renderVeiculos(); atualizarPainel();
     }
 }
@@ -601,7 +630,21 @@ function atualizarPainel() {
         
         if(tamanhoTanque > 0) {
             const estimativaProxKm = Math.floor(ultimoKm + (tamanhoTanque * mediaUsada));
-            document.getElementById('autonomia').innerText = `${estimativaProxKm} km`;
+            
+            let kmDiario = parseInt(conf.kmValor) || 0;
+            if(conf.modoKm === 'semana') kmDiario = kmDiario / 7;
+            if(conf.modoKm === 'mes') kmDiario = kmDiario / 30;
+            
+            let dataTexto = "";
+            if (kmDiario > 0 && estimativaProxKm > kmVirtual) {
+                let kmRestantes = estimativaProxKm - kmVirtual;
+                let diasRestantes = Math.ceil(kmRestantes / kmDiario);
+                let dataEstimada = new Date();
+                dataEstimada.setDate(dataEstimada.getDate() + diasRestantes);
+                dataTexto = ` (${dataEstimada.toLocaleDateString('pt-BR')})`;
+            }
+            
+            document.getElementById('autonomia').innerText = `${estimativaProxKm} km${dataTexto}`;
         } else {
             document.getElementById('autonomia').innerText = `--`;
         }
