@@ -30,9 +30,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .btn-outline { background: transparent; border: 1px solid var(--border); }
 .kpi p { font-size: 13px; margin-bottom: 4px; }
 .kpi h3 { font-size: 18px; font-weight: 700; }
-.kpi.destaque { border: 2px solid var(--primary); }
-.kpi.warn { border: 2px solid var(--warn) !important; background: rgba(245,158,11,0.15) !important; }
-.kpi.danger { border: 2px solid var(--danger) !important; background: rgba(239,68,68,0.15) !important; }
 
 .tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
 .tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); align-items: flex-start; }
@@ -55,18 +52,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .grid-3 button { padding: 10px; font-size: 14px; }
 .grid-3 button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-.container-alertas { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.alerta-item { padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-.alerta-item.warn { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid var(--warn); }
-.alerta-item.danger { background: rgba(239,68,68,0.15); color: #dc2626; border: 1px solid var(--danger); }
-
-.item-obrigatorio { padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--card); }
-.item-obrigatorio.status-ok { border-left: 5px solid var(--success); }
-.item-obrigatorio.status-warn { border-left: 5px solid var(--warn); background: rgba(245,158,11,0.05); }
-.item-obrigatorio.status-danger { border-left: 5px solid var(--danger); background: rgba(239,68,68,0.05); }
-.item-obrigatorio .info-manut { flex: 1; text-align: left; }
-.item-obrigatorio .prazo-manut { font-weight: bold; font-size: 14px; text-align: right; }
-
 .historico-item { padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
 .historico-acoes { display:flex; gap:8px; }
 .historico-acoes button { background:none; border:none; cursor:pointer; padding:6px; width:auto; color: var(--primary); }
@@ -74,8 +59,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
 .form-retratil { display: none; margin-top: 12px; }
 .btn-toggle-form { background: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: 600; margin-bottom: 12px; text-align: center; cursor: pointer; }
-.titulo-retratil-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--primary); user-select: none; }
-.conteudo-obrigatorios-retratil { display: none; margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -91,8 +74,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
             
             <!-- ABA 1: PAINEL -->
             <div id="painel" class="tab-content">
-                <div id="containerAlertas" class="container-alertas"></div>
-
                 <div class="card odometro-destaque">
                     <div style="display:flex; justify-content:space-between; align-items:center">
                         <div>
@@ -110,14 +91,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 <div class="grid-2">
                     <div class="card kpi"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
                     <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">--</h3></div>
-                </div>
-
-                <div class="card">
-                    <div class="titulo-retratil-header" id="btnToggleObrigatorios" onclick="toggleObrigatorios()">
-                        <h3><i class="fas fa-book-open"></i> Itens Obrigatórios / Trocas</h3>
-                        <i class="fas fa-chevron-down" id="iconeObrigatorios"></i>
-                    </div>
-                    <div id="listaItensObrigatorios" class="conteudo-obrigatorios-retratil"></div>
                 </div>
             </div>
 
@@ -158,7 +131,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                         </select>
                         <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
                         <input id="mValor" type="number" placeholder="Trocar a cada quantos Km? (Ex: 5000)">
-                        <input id="mProxKm" type="number" placeholder="Próxima troca em qual Km? (Obrigatório para Alertas)">
+                        <input id="mProxKm" type="number" placeholder="Próxima troca em qual Km?">
                         <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar Registro</button>
                         <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
                     </div>
@@ -271,7 +244,6 @@ if(!configsGerais[FIESTA_ID]) {
 
 let editandoAbastId = null;
 let editandoManutId = null;
-let editandoVeiculoId = null;
 let abaAtualIndice = 0;
 const totalAbas = 5;
 let toqueInicioX = 0;
@@ -290,18 +262,6 @@ function toggleFormulario(formId, btnId, textoOriginal) {
     } else {
         form.style.display = "block";
         btn.innerText = "✖ Fechar Formulário";
-    }
-}
-
-function toggleObrigatorios() {
-    const lista = document.getElementById('listaItensObrigatorios');
-    const icone = document.getElementById('iconeObrigatorios');
-    if(lista.style.display === "block") {
-        lista.style.display = "none";
-        icone.className = "fas fa-chevron-down";
-    } else {
-        lista.style.display = "block";
-        icone.className = "fas fa-chevron-up";
     }
 }
 
@@ -330,7 +290,6 @@ function navegarParaIndice(indice) {
     if(indice === 4) carregarConfig();
 }
 
-// Lógica de deslizar (Swipe)
 const campoSwipe = document.getElementById('swipeArea');
 campoSwipe.addEventListener('touchstart', e => {
     toqueInicioX = e.touches[0].clientX;
@@ -442,7 +401,6 @@ function calcularOdometroVirtual() {
     return Math.floor(kmBase + (diasTranscorridos * kmDiario));
 }
 
-// SOMA AUTOMÁTICA DA MANUTENÇÃO
 function autoCalcularProxKm() {
     const kmFeito = parseInt(document.getElementById('mKm').value) || 0;
     const intervalo = parseInt(document.getElementById('mValor').value) || 0;
@@ -453,12 +411,6 @@ function autoCalcularProxKm() {
 document.getElementById('mKm').addEventListener('input', autoCalcularProxKm);
 document.getElementById('mValor').addEventListener('input', autoCalcularProxKm);
 
-
-// ==========================================
-//   FUNÇÕES COMPLETAS DE SALVAMENTO (CRUD)
-// ==========================================
-
-// 1. ABASTECIMENTOS
 function renderAbast() {
     const lista = document.getElementById('listaAbast');
     const filtrados = abastecimentos.filter(a => a.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
@@ -521,7 +473,6 @@ function deletarAbast(id) {
     if(confirm("Excluir este abastecimento?")) { abastecimentos = abastecimentos.filter(a => a.id !== id); salvar(); renderAbast(); atualizarPainel(); }
 }
 
-// 2. MANUTENÇÕES
 function renderManut() {
     const lista = document.getElementById('listaManut');
     const filtrados = manutencoes.filter(m => m.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
@@ -581,7 +532,6 @@ function deletarManut(id) {
     if(confirm("Excluir esta manutenção?")) { manutencoes = manutencoes.filter(m => m.id !== id); salvar(); renderManut(); atualizarPainel(); }
 }
 
-// 3. VEÍCULOS
 function renderVeiculos() {
     const lista = document.getElementById('listaVeiculos');
     lista.innerHTML = veiculos.map(v => `
@@ -622,54 +572,49 @@ function deletarVeiculo(id) {
     }
 }
 
-// 4. ATUALIZAR PAINEL GERAL
 function atualizarPainel() {
-function renderItensObrigatorios(kmVirtual) {
-    const lista = document.getElementById('listaItensObrigatorios');
-    const tiposPadrao = ["Troca Óleo Motor", "Sistema de Arrefecimento", "Juntas do Motor", "Correia Dentada / Auxiliar", "Coxim do Motor", "Filtros (Ar/Combustível)", "Óleo de Câmbio"];
-    let alertasHTML = "";
-    let obrigatoriosHTML = "";
+    atualizarSeletorCabecalho();
+    const kmVirtual = calcularOdometroVirtual();
+    document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
 
-    tiposPadrao.forEach(tipo => {
-        const historicoTipo = manutencoes.filter(m => m.veiculoId === veiculoAtivoId && m.tipo === tipo).sort((a,b) => b.km - a.km);
-        let statusClass = "status-ok";
-        let prazoTxt = "Em dia";
+    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId).sort((a,b) => b.km - a.km);
+    const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
+    document.getElementById('gastoTotal').innerText = `R$ ${gastoTotal.toFixed(2).replace('.', ',')}`;
+
+    let mediaReal = 0;
+    if (abastDoVeiculo.length >= 2) {
+        const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
+        const litrosConsumidos = parseFloat(abastDoVeiculo[0].litros) || 1;
+        mediaReal = kmRodados / litrosConsumidos;
+        document.getElementById('mediaReal').innerText = `${mediaReal.toFixed(1)} km/l`;
+    } else {
+        document.getElementById('mediaReal').innerText = `0 km/l`;
+    }
+
+    if(abastDoVeiculo.length > 0) {
+        const ultimoKm = abastDoVeiculo[0].km;
+        document.getElementById('ultimoKmAbast').innerText = `${ultimoKm} km`;
         
-        if(historicoTipo.length > 0) {
-            const ultima = historicoTipo[0];
-            if(ultima.proxKm) {
-                const restam = ultima.proxKm - kmVirtual;
-                if(restam <= 0) {
-                    statusClass = "status-danger"; prazoTxt = `Vencido há ${Math.abs(restam)} km`;
-                    alertasHTML += `<div class="alerta-item danger"><i class="fas fa-exclamation-triangle"></i> ${tipo} está VENCIDO!</div>`;
-                } else if(restam <= 500) {
-                    statusClass = "status-warn"; prazoTxt = `Trocar em ${restam} km`;
-                    alertasHTML += `<div class="alerta-item warn"><i class="fas fa-clock"></i> ${tipo} próximo do vencimento.</div>`;
-                } else {
-                    prazoTxt = `Ok (Faltam ${restam} km)`;
-                }
-            }
+        let conf = obterConfigAtual();
+        let tamanhoTanque = parseFloat(conf.tanqueL) || 0;
+        let mediaUsada = mediaReal > 0 ? mediaReal : 30; 
+        
+        if(tamanhoTanque > 0) {
+            const estimativaProxKm = Math.floor(ultimoKm + (tamanhoTanque * mediaUsada));
+            document.getElementById('autonomia').innerText = `${estimativaProxKm} km`;
         } else {
-            statusClass = "status-warn"; prazoTxt = "Nenhum histórico registrado";
+            document.getElementById('autonomia').innerText = `--`;
         }
-
-        obrigatoriosHTML += `
-            <div class="item-obrigatorio ${statusClass}">
-                <div class="info-manut"><strong>${tipo}</strong></div>
-                <div class="prazo-manut">${prazoTxt}</div>
-            </div>
-        `;
-    });
-
-    document.getElementById('containerAlertas').innerHTML = alertasHTML;
-    lista.innerHTML = obrigatoriosHTML;
+    } else {
+        document.getElementById('ultimoKmAbast').innerText = `0 km`;
+        document.getElementById('autonomia').innerText = `--`;
+    }
 }
 
 function limparTudo() {
     if(confirm("Atenção! Apagar tudo de forma definitiva?")) { localStorage.clear(); location.reload(); }
 }
 
-// Inicializar aplicativo
 if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
 atualizarPainel();
 </script>
