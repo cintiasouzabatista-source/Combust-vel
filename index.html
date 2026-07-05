@@ -332,6 +332,41 @@ function salvar() {
     localStorage.setItem('configsGerais', JSON.stringify(configsGerais)); 
 }
 
+    <!-- Adicionei esta pequena parte ao seu script atual para gerenciar os temas dinâmicos -->
+<script>
+function aplicarTemaVeiculo() {
+    const vAtivo = veiculos.find(v => v.id === veiculoAtivoId);
+    document.body.classList.remove('tema-carro', 'tema-moto');
+    if (vAtivo) {
+        document.body.classList.add('tema-' + vAtivo.tipo);
+    }
+}
+
+// Chame esta função dentro da sua função atualizarPainel() e mudarVeiculoAtivo()
+// Exemplo:
+function mudarVeiculoAtivo() {
+    veiculoAtivoId = document.getElementById('seletorVeiculoPrincipal').value;
+    salvar();
+    aplicarTemaVeiculo(); // <--- Adicionado
+    atualizarPainel();
+}
+</script>
+
+<style>
+/* Estilos para os Temas Dinâmicos */
+body.tema-moto { --primary: #e67e22; --accent: #d35400; } /* Laranja para Moto */
+body.tema-carro { --primary: #2980b9; --accent: #2c3e50; } /* Azul para Carro */
+
+/* Ajuste na lógica do abastecimento (dentro da função addAbast) */
+function addAbast() {
+    let km = parseInt(document.getElementById('aKm').value);
+    // Se o usuário não informou KM, pega o virtual atual
+    if (!km) km = calcularOdometroVirtual(); 
+    
+    // ... restante do seu código de salvar ...
+}
+</style>
+    
 function mudarVeiculoAtivo() {
     veiculoAtivoId = document.getElementById('seletorVeiculoPrincipal').value;
     salvar();
