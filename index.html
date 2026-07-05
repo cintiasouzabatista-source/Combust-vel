@@ -216,8 +216,8 @@ const FIESTA_ID = "ford_fiesta_2012";
 let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
 if(!veiculos.length) {
     veiculos = [
-        {id: DEFAULT_ID, tipo: "moto", marca: "Honda", modelo: "Lead 110", ano: 2012, km: 93290, data: "2026-04-10"},
-        {id: FIESTA_ID, tipo: "carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2012, km: 82500, data: "2026-01-08"}
+        {id: DEFAULT_ID, tipo: "Moto", marca: "Honda", modelo: "Lead 110", ano: 2010, km: 93290, data: "2026-04-10"},
+        {id: FIESTA_ID, tipo: "Carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2014, km: 82500, data: "2026-01-08"}
     ];
 }
 
@@ -243,7 +243,7 @@ let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
 if(!configsGerais[DEFAULT_ID]) {
     configsGerais[DEFAULT_ID] = {
         "kmBase": 93290, "dataBase": "2026-04-10T12:00",
-        "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 6.5
+        "modoKm": "dia", "kmValor": 00, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL":0,0
     };
 }
 if(!configsGerais[FIESTA_ID]) {
