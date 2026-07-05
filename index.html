@@ -397,68 +397,62 @@ function ajustarOdometro() {
 
 function calcularOdometroVirtual() {
     let conf = obterConfigAtual();
-    const kmBase = parseInt(conf.kmBase) || 0;
-    if (!kmBase || !conf.dataBase) return kmBase;
+
+    const kmBase = Number(conf.kmBase) || 0;
+    if (!conf.dataBase) return kmBase;
+
     const dataBase = new Date(conf.dataBase);
-    if (isNaN(dataBase.getTime())) return kmBase;
-    
     const agora = new Date();
-    let diasTranscorridos = Math.floor((agora - dataBase) / (1000 * 60 * 60 * 24));
-    if(diasTranscorridos < 0) diasTranscorridos = 0;
-    
-    let kmDiario = parseInt(conf.kmValor) || 0;
-    if(conf.modoKm === 'semana') kmDiario = kmDiario / 7;
-    if(conf.modoKm === 'mes') kmDiario = kmDiario / 30;
 
-    return Math.floor(kmBase + (diasTranscorridos * kmDiario));
-}
+    if (agora <= dataBase) return kmBase;
 
-function autoCalcularProxKm() {
-    const kmFeito = parseInt(document.getElementById('mKm').value) || 0;
-    const intervalo = parseInt(document.getElementById('mValor').value) || 0;
-    if(kmFeito > 0 && intervalo > 0) {
-        document.getElementById('mProxKm').value = kmFeito + intervalo;
+    let kmPorDia = 0;
+
+    switch (conf.modoKm) {
+        case "dia":
+            kmPorDia = Number(conf.kmValor) || 0;
+            break;
+
+        case "semana":
+            kmPorDia = (Number(conf.kmValor) || 0) / 7;
+            break;
+
+        case "mes":
+            kmPorDia = (Number(conf.kmValor) || 0) / 30.4375;
+            break;
     }
-}
-document.getElementById('mKm').addEventListener('input', autoCalcularProxKm);
-document.getElementById('mValor').addEventListener('input', autoCalcularProxKm);
 
-function renderAbast() {
-    const lista = document.getElementById('listaAbast');
-    const filtrados = abastecimentos.filter(a => a.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
-    lista.innerHTML = filtrados.map(a => `
-        <div class="historico-item">
-            <div>
-                <strong>${a.km} km</strong> - ${a.litros}L (${a.tipo})<br>
-                <small class="muted">${a.data.split('-').reverse().join('/')} - Total: R$ ${a.total}</small>
-            </div>
-            <div class="historico-acoes">
-                <button onclick="prepararEditAbast(${a.id})"><i class="fas fa-edit"></i></button>
-                <button class="del" onclick="deletarAbast(${a.id})"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
+    let kmRodados = 0;
 
-function addAbast() {
-    const km = parseInt(document.getElementById('aKm').value);
-    const data = document.getElementById('aData').value;
-    const litros = document.getElementById('aLitros').value;
-    const valorL = document.getElementById('aValorL').value;
-    const total = document.getElementById('aTotal').value;
-    const tipo = document.getElementById('aTipo').value;
+    const diasPermitidos = conf.diasSemana || [0,1,2,3,4,5,6];
 
-    if(!km || !data || !litros || !total) { alert("Preencha os campos obrigatórios!"); return; }
+    const data = new Date(dataBase);
 
-    if(editandoAbastId) {
-        abastecimentos = abastecimentos.map(a => a.id === editandoAbastId ? {id:a.id, veiculoId:veiculoAtivoId, km, data, litros, valorL, total, tipo} : a);
-        editandoAbastId = null;
-    } else {
-        abastecimentos.push({ id: Date.now(), veiculoId: veiculoAtivoId, km, data, litros, valorL, total, tipo });
+    while (data < agora) {
+
+        const diaSemana = data.getDay();
+
+        if (diasPermitidos.includes(diaSemana)) {
+
+            const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+
+            const [h,m] = (conf.horaAtualizacao || "19:00").split(":");
+
+            const horaProgramada = Number(h) * 60 + Number(m);
+
+            if (
+                data.toDateString() !== agora.toDateString() ||
+                horaAtual >= horaProgramada
+            ) {
+                kmRodados += kmPorDia;
+            }
+        }
+
+        data.setDate(data.getDate() + 1);
     }
-    salvar(); renderAbast(); toggleFormulario('formAbast', 'btnToggleAbast', '➕ Registrar Novo Abastecimento'); cancelarEditAbast(); atualizarPainel();
-}
 
+    return Math.round(kmBase + kmRodados);
+        }
 function prepararEditAbast(id) {
     const a = abastecimentos.find(x => x.id === id);
     if(!a) return;
