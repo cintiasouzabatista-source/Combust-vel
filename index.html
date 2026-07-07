@@ -219,110 +219,6 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 
 //JS SCRIPT//
     
-const DEFAULT_ID = "honda_lead_110";
-const FIESTA_ID = "ford_fiesta_2012";
-
-let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
-if(!veiculos.length) {
-    veiculos = [
-        {id: DEFAULT_ID, tipo: "Moto", marca: "Honda", modelo: "Lead 110", ano: 2010, km: 93290, data: "2026-04-10"},
-        {id: FIESTA_ID, tipo: "Carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2014, km: 82500, data: "2026-01-08"}
-    ];
-}
-
-let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || DEFAULT_ID;
-let abastecimentos = JSON.parse(localStorage.getItem('abast') || '[]');
-let manutencoes = JSON.parse(localStorage.getItem('manut') || '[]');
-
-if(!manutencoes.length) {
-    manutencoes = [
-        {id: 1, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Idler / Correia CVT", valor: "370.00", proxKm: 110000},
-        {id: 5, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Troca Óleo Motor", valor: "73.00", proxKm: 94290},
-        {id: 15, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Troca Óleo Motor", valor: "250.00", proxKm: 92100}
-    ];
-}
-
-if(!abastecimentos.length) {
-    abastecimentos = [
-        {id: 101, veiculoId: DEFAULT_ID, km: 94208, data: "2026-07-01", litros: "5.5", valorL: "5.80", total: "31.90", tipo: "gasolina"}
-    ];
-}
-
-let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
-if(!configsGerais[DEFAULT_ID]) {
-    configsGerais[DEFAULT_ID] = {
-        "kmBase": 93290, "dataBase": "2026-04-10T12:00",
-        "modoKm": "dia", "kmValor": 00, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL":0,0
-    };
-}
-if(!configsGerais[FIESTA_ID]) {
-    configsGerais[FIESTA_ID] = {
-        "kmBase": 82500, "dataBase": "2026-01-08T12:00",
-        "modoKm": "dia", "kmValor": 40, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
-    };
-}
-
-let editandoAbastId = null;
-let editandoManutId = null;
-let editandoVeiculoId = null;
-let abaAtualIndice = 0;
-const totalAbas = 5;
-let toqueInicioX = 0;
-let toqueInicioY = 0;
-
-document.getElementById('mTipo').addEventListener('change', function() {
-    document.getElementById('mTipoCustom').style.display = this.value === 'Outro' ? 'block' : 'none';
-});
-
-function toggleFormulario(formId, btnId, textoOriginal) {
-    const form = document.getElementById(formId);
-    const btn = document.getElementById(btnId);
-    if(form.style.display === "block") {
-        form.style.display = "none";
-        btn.innerText = textoOriginal;
-    } else {
-        form.style.display = "block";
-        btn.innerText = "✖ Fechar Formulário";
-    }
-}
-
-function obterConfigAtual() {
-    if(!configsGerais[veiculoAtivoId]) {
-        let vObj = veiculos.find(v => v.id == veiculoAtivoId);
-        configsGerais[veiculoAtivoId] = {
-            "kmBase": vObj ? vObj.km : 0,
-            "dataBase": vObj ? vObj.data + "T12:00" : "2026-01-01T12:00",
-            "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
-        };
-    }
-    return configsGerais[veiculoAtivoId];
-}
-
-function navegarParaIndice(indice) {
-    if (indice < 0 || indice >= totalAbas) return;
-    abaAtualIndice = indice;
-    document.getElementById('tabsFluid').style.transform = `translateX(-${indice * 20}%)`;
-    document.querySelectorAll('.btn-nav').forEach((b, idx) => b.classList.toggle('active', idx === indice));
-    
-    if(indice === 0) atualizarPainel();
-    if(indice === 1) { document.getElementById('aKm').value = calcularOdometroVirtual(); renderAbast(); }
-    if(indice === 2) renderManut();
-    if(indice === 3) renderVeiculos();
-    if(indice === 4) carregarConfig();
-}
-
-const campoSwipe = document.getElementById('swipeArea');
-campoSwipe.addEventListener('touchstart', e => {
-    toqueInicioX = e.touches[0].clientX;
-    toqueInicioY = e.touches[0].clientY;
-}, {passive: true});
-
-campoSwipe.addEventListener('touchend', e => {
-    if (!toqueInicioX || !toqueInicioY) return;
-    let toqueFimX = e.changedTouches[0].clientX;
-    let toqueFimY = e.changedTouches[0].clientY;
-    if (Math.abs(toqueInicioX - toqueFimX) > Math.abs(toqueInicioY - toqueFimY) && Math.abs(toqueInicioX - toqueFimX) > 70) {
-        if (toqueInicioX - toqueFimX > 0) navegarParaIndice(abaAtualIndice + 1);
         else navegarParaIndice(abaAtualIndice - 1);
     }
     toqueInicioX = 0; toqueInicioY = 0;
@@ -645,6 +541,433 @@ function atualizarPainel() {
             const dataFormatada = dataObj.toLocaleDateString('pt-BR', { 
                 weekday: 'short', 
                 day: '2-digit', 
+const DEFAULT_ID = "honda_lead_110";
+const FIESTA_ID = "ford_fiesta_2012";
+
+let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
+if(!veiculos.length) {
+    veiculos = [
+        {id: DEFAULT_ID, tipo: "Moto", marca: "Honda", modelo: "Lead 110", ano: 2010, km: 93290, data: "2026-04-10"},
+        {id: FIESTA_ID, tipo: "Carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2014, km: 82500, data: "2026-01-08"}
+    ];
+}
+
+let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || DEFAULT_ID;
+let abastecimentos = JSON.parse(localStorage.getItem('abast') || '[]');
+let manutencoes = JSON.parse(localStorage.getItem('manut') || '[]');
+
+if(!manutencoes.length) {
+    manutencoes = [
+        {id: 1, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Idler / Correia CVT", valor: "370.00", proxKm: 110000},
+        {id: 5, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Troca Óleo Motor", valor: "73.00", proxKm: 94290},
+        {id: 15, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Troca Óleo Motor", valor: "250.00", proxKm: 92100}
+    ];
+}
+
+if(!abastecimentos.length) {
+    abastecimentos = [
+        {id: 101, veiculoId: DEFAULT_ID, km: 94208, data: "2026-07-01", litros: "5.5", valorL: "5.80", total: "31.90", tipo: "gasolina"}
+    ];
+}
+
+let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
+if(!configsGerais[DEFAULT_ID]) {
+    configsGerais[DEFAULT_ID] = {
+        "kmBase": 93290, "dataBase": "2026-04-10T12:00",
+        "modoKm": "dia", "kmValor": 0, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 0.0
+    };
+}
+if(!configsGerais[FIESTA_ID]) {
+    configsGerais[FIESTA_ID] = {
+        "kmBase": 82500, "dataBase": "2026-01-08T12:00",
+        "modoKm": "dia", "kmValor": 40, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
+    };
+}
+
+let editandoAbastId = null;
+let editandoManutId = null;
+let editandoVeiculoId = null;
+let abaAtualIndice = 0;
+const totalAbas = 5;
+let toqueInicioX = 0;
+let toqueInicioY = 0;
+
+document.getElementById('mTipo').addEventListener('change', function() {
+    document.getElementById('mTipoCustom').style.display = this.value === 'Outro' ? 'block' : 'none';
+});
+
+function toggleFormulario(formId, btnId, textoOriginal) {
+    const form = document.getElementById(formId);
+    const btn = document.getElementById(btnId);
+    if(form.style.display === "block") {
+        form.style.display = "none";
+        btn.innerText = textoOriginal;
+    } else {
+        form.style.display = "block";
+        btn.innerText = "✖ Fechar Formulário";
+    }
+}
+
+function obterConfigAtual() {
+    if(!configsGerais[veiculoAtivoId]) {
+        let vObj = veiculos.find(v => v.id == veiculoAtivoId);
+        configsGerais[veiculoAtivoId] = {
+            "kmBase": vObj ? vObj.km : 0,
+            "dataBase": vObj ? vObj.data + "T12:00" : "2026-01-01T12:00",
+            "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
+        };
+    }
+    return configsGerais[veiculoAtivoId];
+}
+
+function navegarParaIndice(indice) {
+    if (indice < 0 || indice >= totalAbas) return;
+    abaAtualIndice = indice;
+    document.getElementById('tabsFluid').style.transform = `translateX(-${indice * 20}%)`;
+    document.querySelectorAll('.btn-nav').forEach((b, idx) => b.classList.toggle('active', idx === indice));
+    
+    if(indice === 0) atualizarPainel();
+    if(indice === 1) { document.getElementById('aKm').value = calcularOdometroVirtual(); renderAbast(); }
+    if(indice === 2) renderManut();
+    if(indice === 3) renderVeiculos();
+    if(indice === 4) carregarConfig();
+}
+
+const campoSwipe = document.getElementById('swipeArea');
+campoSwipe.addEventListener('touchstart', e => {
+    toqueInicioX = e.touches[0].clientX;
+    toqueInicioY = e.touches[0].clientY;
+}, {passive: true});
+
+campoSwipe.addEventListener('touchend', e => {
+    if (!toqueInicioX || !toqueInicioY) return;
+    let toqueFimX = e.changedTouches[0].clientX;
+    let toqueFimY = e.changedTouches[0].clientY;
+    if (Math.abs(toqueInicioX - toqueFimX) > Math.abs(toqueInicioY - toqueFimY) && Math.abs(toqueInicioX - toqueFimX) > 70) {
+        if (toqueInicioX - toqueFimX > 0) navegarParaIndice(abaAtualIndice + 1);
+        else navegarParaIndice(abaAtualIndice - 1);
+    }
+    toqueInicioX = 0; toqueInicioY = 0;
+}, {passive: true});
+
+function toggleTheme() { 
+    document.body.classList.toggle('dark'); 
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); 
+}
+
+function salvar() { 
+    localStorage.setItem('veiculos', JSON.stringify(veiculos)); 
+    localStorage.setItem('veiculoAtivoId', veiculoAtivoId);
+    localStorage.setItem('abast', JSON.stringify(abastecimentos)); 
+    localStorage.setItem('manut', JSON.stringify(manutencoes)); 
+    localStorage.setItem('configsGerais', JSON.stringify(configsGerais)); 
+}
+
+function mudarVeiculoAtivo() {
+    veiculoAtivoId = document.getElementById('seletorVeiculoPrincipal').value;
+    salvar();
+    atualizarPainel();
+}
+
+function atualizarSeletorCabecalho() {
+    const sel = document.getElementById('seletorVeiculoPrincipal');
+    sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id == veiculoAtivoId ? 'selected':''}>${v.marca} ${v.modelo}</option>`).join('');
+}
+
+function salvarConfig() {
+    let conf = obterConfigAtual();
+    conf.kmBase = parseInt(document.getElementById('kmBase').value) || 0;
+    conf.dataBase = document.getElementById('dataBase').value;
+    conf.kmValor = parseInt(document.getElementById('kmValor').value) || 30;
+    conf.horaAtualizacao = document.getElementById('horaAtualizacao').value;
+    conf.tanqueL = parseFloat(document.getElementById('tanqueL').value) || 54.0;
+    conf.diasSemana = [...document.querySelectorAll('.dia-btn.active')].map(b => parseInt(b.dataset.dia));
+    salvar();
+    atualizarPainel();
+}
+
+function carregarConfig() {
+    let conf = obterConfigAtual();
+    document.getElementById('kmBase').value = conf.kmBase || '';
+    document.getElementById('dataBase').value = conf.dataBase || '';
+    document.getElementById('kmValor').value = conf.kmValor || 30;
+    document.getElementById('horaAtualizacao').value = conf.horaAtualizacao || '19:00';
+    document.getElementById('tanqueL').value = conf.tanqueL || 54.0;
+    document.querySelectorAll('.dia-btn').forEach(b => { b.classList.toggle('active', conf.diasSemana.includes(parseInt(b.dataset.dia))); });
+    document.querySelectorAll('#modoKm button').forEach(b => { b.classList.toggle('active', b.dataset.modo === conf.modoKm); });
+}
+
+document.querySelectorAll('.dia-btn').forEach(b => { 
+    b.onclick = () => { b.classList.toggle('active'); salvarConfig(); }; 
+});
+
+document.querySelectorAll('#modoKm button').forEach(b => {
+    b.onclick = () => {
+        document.querySelectorAll('#modoKm button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        obterConfigAtual().modoKm = b.dataset.modo;
+        salvarConfig();
+    };
+});
+
+function calcTotal() {
+    const litros = parseFloat(document.getElementById('aLitros').value) || 0;
+    const valorLitro = parseFloat(document.getElementById('aValorL').value) || 0;
+    document.getElementById('aTotal').value = (litros * valorLitro > 0) ? (litros * valorLitro).toFixed(2) : '';
+}
+
+function addAbast() {
+    const km = parseInt(document.getElementById('aKm').value);
+    const data = document.getElementById('aData').value;
+    const litros = document.getElementById('aLitros').value;
+    const valorL = document.getElementById('aValorL').value;
+    const total = document.getElementById('aTotal').value;
+    const tipo = document.getElementById('aTipo').value;
+    if(!km || !data || !litros || !valorL) { alert("Preencha todos os campos!"); return; }
+    if(editandoAbastId) {
+        abastecimentos = abastecimentos.map(a => a.id === editandoAbastId ? {id:a.id, veiculoId:veiculoAtivoId, km, data, litros, valorL, total, tipo} : a);
+        editandoAbastId = null;
+    } else {
+        abastecimentos.push({id: Date.now(), veiculoId: veiculoAtivoId, km, data, litros, valorL, total, tipo});
+    }
+    salvar(); renderAbast(); toggleFormulario('formAbast', 'btnToggleAbast', '➕ Registrar Novo Abastecimento'); cancelarEditAbast(); atualizarPainel();
+}
+
+function renderAbast() {
+    const lista = document.getElementById('listaAbast');
+    const filtrados = abastecimentos.filter(a => a.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
+    lista.innerHTML = filtrados.map(a => `
+        <div class="historico-item">
+            <div>
+                <strong>${a.km} km</strong> - ${a.litros}L (${a.tipo})<br>
+                <small class="muted">R$ ${a.total} (${a.data})</small>
+            </div>
+            <div class="historico-acoes">
+                <button onclick="prepararEditAbast(${a.id})"><i class="fas fa-edit"></i></button>
+                <button class="del" onclick="deletarAbast(${a.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function ajustarOdometro() {
+    const novoKm = prompt("Digite o Km atual exato do painel:");
+    if (!novoKm) return;
+    let conf = obterConfigAtual();
+    conf.kmBase = parseInt(novoKm) || 0;
+    conf.dataBase = new Date().toISOString().slice(0,16);
+    salvar();
+    atualizarPainel();
+}
+
+function calcularOdometroVirtual() {
+    let conf = obterConfigAtual();
+    const kmBase = Number(conf.kmBase) || 0;
+    if (!conf.dataBase) return kmBase;
+    const dataBase = new Date(conf.dataBase);
+    const agora = new Date();
+    if (agora <= dataBase) return kmBase;
+    let kmPorDia = 0;
+    switch (conf.modoKm) {
+        case "dia": kmPorDia = Number(conf.kmValor) || 0; break;
+        case "semana": kmPorDia = (Number(conf.kmValor) || 0) / 7; break;
+        case "mes": kmPorDia = (Number(conf.kmValor) || 0) / 30.4375; break;
+    }
+    let kmRodados = 0;
+    const diasPermitidos = conf.diasSemana || [0,1,2,3,4,5,6];
+    const data = new Date(dataBase);
+    while (data < agora) {
+        const diaSemana = data.getDay();
+        if (diasPermitidos.includes(diaSemana)) {
+            const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+            const [h,m] = (conf.horaAtualizacao || "19:00").split(":");
+            const horaProgramada = Number(h) * 60 + Number(m);
+            if (data.toDateString() !== agora.toDateString() || horaAtual >= horaProgramada) {
+                kmRodados += kmPorDia;
+            }
+        }
+        data.setDate(data.getDate() + 1);
+    }
+    return Math.round(kmBase + kmRodados);
+}
+
+function prepararEditAbast(id) {
+    const a = abastecimentos.find(x => x.id === id);
+    if(!a) return;
+    editandoAbastId = a.id;
+    document.getElementById('aKm').value = a.km;
+    document.getElementById('aData').value = a.data;
+    document.getElementById('aLitros').value = a.litros;
+    document.getElementById('aValorL').value = a.valorL;
+    document.getElementById('aTotal').value = a.total;
+    document.getElementById('aTipo').value = a.tipo;
+    document.getElementById('tituloAbast').innerText = "Editar Abastecimento";
+    document.getElementById('btnCancelarAbast').style.display = "inline-block";
+    document.getElementById('formAbast').style.display = "block";
+}
+
+function cancelarEditAbast() {
+    editandoAbastId = null;
+    document.getElementById('tituloAbast').innerText = "Novo Abastecimento";
+    document.getElementById('btnCancelarAbast').style.display = "none";
+    document.getElementById('aLitros').value = ''; document.getElementById('aValorL').value = ''; document.getElementById('aTotal').value = '';
+}
+
+function deletarAbast(id) {
+    if(confirm("Excluir este abastecimento?")) { abastecimentos = abastecimentos.filter(a => a.id !== id); salvar(); renderAbast(); atualizarPainel(); }
+}
+
+function renderManut() {
+    const lista = document.getElementById('listaManut');
+    const filtrados = manutencoes.filter(m => m.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
+    lista.innerHTML = filtrados.map(m => `
+        <div class="historico-item">
+            <div>
+                <strong>${m.tipo}</strong> - Realizado com ${m.km} km<br>
+                <small class="muted">Próxima troca: ${m.proxKm ? m.proxKm + ' km' : 'Não definida'} - R$ ${m.valor}</small>
+            </div>
+            <div class="historico-acoes">
+                <button onclick="prepararEditManut(${m.id})"><i class="fas fa-edit"></i></button>
+                <button class="del" onclick="deletarManut(${m.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function addManut() {
+    const km = parseInt(document.getElementById('mKm').value);
+    const data = document.getElementById('mData').value;
+    let tipo = document.getElementById('mTipo').value;
+    if(tipo === 'Outro') tipo = document.getElementById('mTipoCustom').value;
+    const valor = document.getElementById('mValor').value;
+    const proxKm = parseInt(document.getElementById('mProxKm').value) || "";
+    if(!km || !data || !tipo) { alert("Preencha os campos obrigatórios!"); return; }
+    if(editandoManutId) {
+        manutencoes = manutencoes.map(m => m.id === editandoManutId ? {id:m.id, veiculoId:veiculoAtivoId, km, data, tipo, valor, proxKm} : m);
+        editandoManutId = null;
+    } else {
+        manutencoes.push({ id: Date.now(), veiculoId: veiculoAtivoId, km, data, tipo, valor, proxKm });
+    }
+    salvar(); renderManut(); toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção'); cancelarEditManut(); atualizarPainel();
+}
+
+function prepararEditManut(id) {
+    const m = manutencoes.find(x => x.id === id);
+    if(!m) return;
+    editandoManutId = m.id;
+    document.getElementById('mKm').value = m.km;
+    document.getElementById('mData').value = m.data;
+    document.getElementById('mValor').value = m.valor;
+    document.getElementById('mProxKm').value = m.proxKm;
+    document.getElementById('tituloManut').innerText = "Editar Registro de Serviço";
+    document.getElementById('btnCancelarManut').style.display = "inline-block";
+    document.getElementById('formManut').style.display = "block";
+}
+
+function cancelarEditManut() {
+    editandoManutId = null;
+    document.getElementById('tituloManut').innerText = "Registrar Realização de Serviço";
+    document.getElementById('btnCancelarManut').style.display = "none";
+}
+
+function deletarManut(id) {
+    if(confirm("Excluir esta manutenção?")) { manutencoes = manutencoes.filter(m => m.id !== id); salvar(); renderManut(); atualizarPainel(); }
+}
+
+function renderVeiculos() {
+    const lista = document.getElementById('listaVeiculos');
+    lista.innerHTML = veiculos.map(v => `
+        <div class="historico-item">
+            <div>
+                <strong>${v.marca} ${v.modelo}</strong> (${v.ano})<br>
+                <small class="muted">Km de Entrada: ${v.km} km</small>
+            </div>
+            <div class="historico-acoes">
+                <button onclick="prepararEditVeiculo('${v.id}')"><i class="fas fa-edit"></i></button>
+                <button class="del" onclick="deletarVeiculo('${v.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function addVeiculo() {
+    const tipo = document.getElementById('vTipo').value;
+    const marca = document.getElementById('vMarca').value;
+    const modelo = document.getElementById('vModelo').value;
+    const ano = document.getElementById('vAno').value;
+    const km = parseInt(document.getElementById('vKm').value);
+    const data = document.getElementById('vData').value;
+    if(!marca || !modelo || !km) { alert("Preencha os dados básicos do veículo!"); return; }
+    if(editandoVeiculoId) {
+        veiculos = veiculos.map(v => v.id === editandoVeiculoId ? {id: v.id, tipo, marca, modelo, ano, km, data} : v);
+        editandoVeiculoId = null;
+    } else {
+        const id = (marca + "_" + modelo + "_" + ano).toLowerCase().replace(/ /g, "_");
+        veiculos.push({ id, tipo, marca, modelo, ano, km, data });
+        veiculoAtivoId = id;
+    }
+    salvar(); renderVeiculos(); toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo'); cancelarEditVeiculo(); atualizarPainel();
+}
+
+function prepararEditVeiculo(id) {
+    const v = veiculos.find(x => x.id === id);
+    if(!v) return;
+    editandoVeiculoId = v.id;
+    document.getElementById('vTipo').value = v.tipo;
+    document.getElementById('vMarca').value = v.marca;
+    document.getElementById('vModelo').value = v.modelo;
+    document.getElementById('vAno').value = v.ano;
+    document.getElementById('vKm').value = v.km;
+    document.getElementById('vData').value = v.data || '';
+    document.getElementById('tituloVeiculo').innerText = "Editar Veículo";
+    document.getElementById('btnCancelarVeiculo').style.display = "inline-block";
+    document.getElementById('formVeiculo').style.display = "block";
+}
+
+function cancelarEditVeiculo() {
+    editandoVeiculoId = null;
+    document.getElementById('tituloVeiculo').innerText = "Cadastrar / Editar Veículo";
+    document.getElementById('btnCancelarVeiculo').style.display = "none";
+    document.getElementById('vMarca').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vAno').value = ''; document.getElementById('vKm').value = ''; document.getElementById('vData').value = '';
+}
+
+function deletarVeiculo(id) {
+    if(veiculos.length <= 1) { alert("Você deve manter pelo menos um veículo cadastrado!"); return; }
+    if(confirm("Deseja deletar permanentemente este veículo e trocar de perfil?")) {
+        veiculos = veiculos.filter(v => v.id !== id);
+        if(veiculoAtivoId === id) veiculoAtivoId = veiculos[0].id;
+        salvar(); renderVeiculos(); atualizarPainel();
+    }
+}
+
+function atualizarPainel() {
+    atualizarSeletorCabecalho();
+    const kmVirtual = calcularOdometroVirtual();
+    document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
+
+    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId).sort((a,b) => b.km - a.km);
+    const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
+    document.getElementById('gastoTotal').innerText = `R$ ${gastoTotal.toFixed(2).replace('.', ',')}`;
+
+    let mediaReal = 0;
+    if (abastDoVeiculo.length >= 2) {
+        const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
+        const litrosConsumidos = parseFloat(abastDoVeiculo[0].litros) || 1;
+        mediaReal = kmRodados / litrosConsumidos;
+        document.getElementById('mediaReal').innerText = `${mediaReal.toFixed(1)} km/l`;
+    } else {
+        document.getElementById('mediaReal').innerText = `0 km/l`;
+    }
+
+    if(abastDoVeiculo.length > 0) {
+        const ultimoKm = abastDoVeiculo[0].km;
+        const ultimaDataRaw = abastDoVeiculo[0].data; 
+        
+        if(ultimaDataRaw) {
+            const dataObj = new Date(ultimaDataRaw + 'T00:00:00');
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR', { 
+                weekday: 'short', 
+                day: '2-digit', 
                 month: '2-digit' 
             });
             document.getElementById('ultimoKmAbast').innerHTML = `${ultimoKm} km <span class="sub-data">(${dataFormatada})</span>`;
@@ -663,51 +986,7 @@ function atualizarPainel() {
             
             let dataTexto = "";
             if (kmDiario > 0 && estimativaProxKm > kmVirtual) {
-                let kmRestantes = estimativaProxKm - kmVirtual;
-                let diasRestantes = Math.ceil(kmRestantes / kmDiario);
-                let dataEstimada = new Date();
-                dataEstimada.setDate(dataEstimada.getDate() + diasRestantes);
-                
-                // MUDANÇA PARA MOSTRAR DIA DA SEMANA NO PRÓXIMO ABASTECIMENTO
-                dataTexto = `<span class="sub-data">(${dataEstimada.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })})</span>`;
-            }
-            
-            document.getElementById('autonomia').innerHTML = `${estimativaProxKm} km ${dataTexto}`;
-        } else {
-            document.getElementById('autonomia').innerText = `--`;
-        }
-    } else {
-        document.getElementById('ultimoKmAbast').innerText = `0 km`;
-        document.getElementById('autonomia').innerText = `--`;
-    }
-
-    const alertaBox = document.getElementById('alertaOleoPainel');
-    const manutOleo = manutencoes.filter(m => m.veiculoId === veiculoAtivoId && m.tipo === "Troca Óleo Motor").sort((a,b) => b.km - a.km);
-
-    if(manutOleo.length > 0 && manutOleo[0].proxKm) {
-        const proxTrocaKm = parseInt(manutOleo[0].proxKm);
-        if(kmVirtual >= proxTrocaKm) {
-            const passou = kmVirtual - proxTrocaKm;
-            alertaBox.className = "alerta-oleo-container critico";
-            alertaBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 🚨 Óleo vencido há ${passou} km!`;
-            alertaBox.style.display = "inline-flex";
-        } else {
-            const falta = proxTrocaKm - kmVirtual;
-            alertaBox.className = "alerta-oleo-container";
-            alertaBox.innerHTML = `<i class="fas fa-circle-info"></i> ⚠️ Troca de Óleo em ${falta} km`;
-            alertaBox.style.display = "inline-flex";
-        }
-    } else {
-        alertaBox.style.display = "none";
-    }
-}
-
-function limparTudo() {
-    if(confirm("Atenção! Apagar tudo de forma definitiva?")) { localStorage.clear(); location.reload(); }
-}
-
-if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-atualizarPainel();
+                let kmRestantes = es
 </script>
 </body>
 </html>
