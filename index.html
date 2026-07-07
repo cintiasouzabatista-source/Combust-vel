@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+⁸<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -628,12 +628,18 @@ function atualizarPainel() {
     if(abastDoVeiculo.length > 0) {
         const ultimoKm = abastDoVeiculo[0].km;
         const ultimaDataRaw = abastDoVeiculo[0].data; // Ex: "2026-07-01"
-        let dataFormatada = "";
-        if(ultimaDataRaw) {
-            dataFormatada = ultimaDataRaw.split('-').reverse().join('/'); // Torna "01/07/2026"
-        }
         
-        document.getElementById('ultimoKmAbast').innerHTML = `${ultimoKm} km ${dataFormatada ? `<span class="sub-data">(${dataFormatada})</span>` : ''}`;
+        // CORREÇÃO PARA MOSTRAR DIA DA SEMANA
+        if(ultimaDataRaw) {
+            // Adicionamos 'T00:00:00' para evitar erro de fuso horário do JS
+            const dataObj = new Date(ultimaDataRaw + 'T00:00:00');
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR', { 
+                weekday: 'short', 
+                day: '2-digit', 
+                month: '2-digit' 
+            });
+            document.getElementById('ultimoKmAbast').innerHTML = `${ultimoKm} km <span class="sub-data">(${dataFormatada})</span>`;
+        }
         
         let conf = obterConfigAtual();
         let tamanhoTanque = parseFloat(conf.tanqueL) || 0;
@@ -652,7 +658,9 @@ function atualizarPainel() {
                 let diasRestantes = Math.ceil(kmRestantes / kmDiario);
                 let dataEstimada = new Date();
                 dataEstimada.setDate(dataEstimada.getDate() + diasRestantes);
-                dataTexto = `<span class="sub-data">(${dataEstimada.toLocaleDateString('pt-BR')})</span>`;
+                
+                // MUDANÇA PARA MOSTRAR DIA DA SEMANA NO PRÓXIMO ABASTECIMENTO
+                dataTexto = `<span class="sub-data">(${dataEstimada.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })})</span>`;
             }
             
             document.getElementById('autonomia').innerHTML = `${estimativaProxKm} km ${dataTexto}`;
