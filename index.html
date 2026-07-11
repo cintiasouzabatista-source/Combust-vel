@@ -34,6 +34,9 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .kpi p { font-size: 13px; margin-bottom: 4px; }
 .kpi h3 { font-size: 18px; font-weight: 700; line-height: 1.2; }
 .kpi span.sub-data { display: block; font-size: 14px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+        .hidden {
+    display: none !important;
+}
 
 .tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
 .tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); align-items: flex-start; }
@@ -55,9 +58,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .grid-3 button { padding: 10px; font-size: 14px; }
 .grid-3 button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .hidden {
-    display: none !important;
-}
+
 
 .historico-item { padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
 .historico-acoes { display:flex; gap:8px; }
