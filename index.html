@@ -517,20 +517,25 @@ function renderManut() {
 }
 
 function addManut() {
-    // Pegue o valor diretamente do elemento HTML
-    const tipo = document.getElementById('mTipo').value;
+    // 1. Defina a variável aqui, no topo da função
+    const selectTipo = document.getElementById('mTipo');
+    const tipo = selectTipo.value; // Agora 'tipo' está definida
     const km = document.getElementById('mKm').value;
 
-    // Agora sim, a variável 'tipo' existe aqui dentro!
-    
-    // Validação corrigida:
-    // Só exige o KM se o tipo for diferente de "Outro"
+    // 2. Validação: só exige KM se NÃO for "Outro"
+    // Se for "Outro" e o KM estiver vazio, o código ignora e pula para o salvamento
     if (tipo !== 'Outro' && (km === "" || km === null)) {
         alert("Por favor, preencha o KM!");
-        return; // Para a execução aqui
+        return; 
     }
 
-    // ... resto do seu código que salva os dados
+    // 3. O resto do seu código de salvamento continua aqui...
+    // Exemplo:
+    // const mData = document.getElementById('mData').value;
+    // ...
+    
+    console.log("Salvando:", { tipo, km });
+    // Restante da sua lógica original...
 }
 function prepararEditManut(id) {
     const m = manutencoes.find(x => x.id === id);
