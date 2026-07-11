@@ -517,79 +517,21 @@ function renderManut() {
 }
 
 function addManut() {
-    const km = parseInt(document.getElementById('mKm').value);
-    const data = document.getElementById('mData').value;
-   function addManut() {
-    let km = document.getElementById('mKm').value;
-    let tipo = document.getElementById('mTipo').value;
+    // Pegue o valor diretamente do elemento HTML
+    const tipo = document.getElementById('mTipo').value;
+    const km = document.getElementById('mKm').value;
 
-    // Se o serviço for "Outro", você pode definir o KM como null ou deixar vazio
-    let valorParaSalvarKm = (tipo === 'Outro') ? null : km;
-
-    // ... restante da sua lógica de salvar
-    console.log("Salvando:", { tipo, km: valorParaSalvarKm });
-}
-    if(tipo === 'Outro') tipo = document.getElementById('mTipoCustom').value;
-    // Adicione um event listener no seu select no carregamento da página
-document.getElementById('mTipo').addEventListener('change', function() {
-    const tipo = this.value;
-    const camposKm = [
-        document.getElementById('mKm'), 
-        document.getElementById('mValor'), 
-        document.getElementById('mProxKm')
-    ];
-
-    // Define se os campos devem ser obrigatórios ou não
-    // Se for um serviço que não exige controle de KM, desabilitamos ou escondemos
-    const ehServicoSimples = (tipo === 'Outro'); 
-
-    camposKm.forEach(campo => {
-        campo.disabled = ehServicoSimples;
-        campo.placeholder = ehServicoSimples ? "Não aplicável" : "Em qual Km foi feito?";
-        if (ehServicoSimples) campo.value = ""; // Limpa o valor se for simples
-    });
-});
-    const proxKm = parseInt(document.getElementById('mProxKm').value) || "";
-    if(!km || !data || !tipo) { alert("Preencha os campos obrigatórios!"); return; }
-    if(editandoManutId) {
-        manutencoes = manutencoes.map(m => m.id === editandoManutId ? {id:m.id, veiculoId:veiculoAtivoId, km, data, tipo, valor, proxKm} : m);
-        editandoManutId = null;
-    } else {
-        manutencoes.push({ id: Date.now(), veiculoId: veiculoAtivoId, km, data, tipo, valor, proxKm });
-    }
-    salvar(); renderManut(); toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção'); cancelarEditManut(); atualizarPainel();
-}
-document.addEventListener('DOMContentLoaded', () => {
-    const selectTipo = document.getElementById('mTipo');
+    // Agora sim, a variável 'tipo' existe aqui dentro!
     
-    selectTipo.addEventListener('change', function() {
-        // IDs dos campos que queremos esconder/mostrar
-        const camposParaOcultar = [
-            document.getElementById('mKm').parentElement, // se estiverem dentro de uma div
-            document.getElementById('mKm'),
-            document.getElementById('mValor'),
-            document.getElementById('mProxKm')
-        ];
+    // Validação corrigida:
+    // Só exige o KM se o tipo for diferente de "Outro"
+    if (tipo !== 'Outro' && (km === "" || km === null)) {
+        alert("Por favor, preencha o KM!");
+        return; // Para a execução aqui
+    }
 
-        // Define quais serviços NÃO exigem KM
-        // Adicione aqui todos os tipos que não precisam de controle de KM
-        const servicosSemKm = ['Outro']; 
-
-        const ehSimples = servicosSemKm.includes(this.value);
-
-        // Aplica a classe 'hidden' se for serviço simples
-        [document.getElementById('mKm'), 
-         document.getElementById('mValor'), 
-         document.getElementById('mProxKm')].forEach(el => {
-            if (ehSimples) {
-                el.classList.add('hidden');
-                el.value = ""; // Limpa o valor para não salvar lixo
-            } else {
-                el.classList.remove('hidden');
-            }
-        });
-    });
-});
+    // ... resto do seu código que salva os dados
+}
 function prepararEditManut(id) {
     const m = manutencoes.find(x => x.id === id);
     if(!m) return;
