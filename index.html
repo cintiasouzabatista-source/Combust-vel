@@ -55,6 +55,9 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .grid-3 button { padding: 10px; font-size: 14px; }
 .grid-3 button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .hidden {
+    display: none !important;
+}
 
 .historico-item { padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
 .historico-acoes { display:flex; gap:8px; }
@@ -555,7 +558,37 @@ document.getElementById('mTipo').addEventListener('change', function() {
     }
     salvar(); renderManut(); toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção'); cancelarEditManut(); atualizarPainel();
 }
+document.addEventListener('DOMContentLoaded', () => {
+    const selectTipo = document.getElementById('mTipo');
+    
+    selectTipo.addEventListener('change', function() {
+        // IDs dos campos que queremos esconder/mostrar
+        const camposParaOcultar = [
+            document.getElementById('mKm').parentElement, // se estiverem dentro de uma div
+            document.getElementById('mKm'),
+            document.getElementById('mValor'),
+            document.getElementById('mProxKm')
+        ];
 
+        // Define quais serviços NÃO exigem KM
+        // Adicione aqui todos os tipos que não precisam de controle de KM
+        const servicosSemKm = ['Outro']; 
+
+        const ehSimples = servicosSemKm.includes(this.value);
+
+        // Aplica a classe 'hidden' se for serviço simples
+        [document.getElementById('mKm'), 
+         document.getElementById('mValor'), 
+         document.getElementById('mProxKm')].forEach(el => {
+            if (ehSimples) {
+                el.classList.add('hidden');
+                el.value = ""; // Limpa o valor para não salvar lixo
+            } else {
+                el.classList.remove('hidden');
+            }
+        });
+    });
+});
 function prepararEditManut(id) {
     const m = manutencoes.find(x => x.id === id);
     if(!m) return;
