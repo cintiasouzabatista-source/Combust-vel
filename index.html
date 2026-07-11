@@ -515,9 +515,36 @@ function renderManut() {
 function addManut() {
     const km = parseInt(document.getElementById('mKm').value);
     const data = document.getElementById('mData').value;
+   function addManut() {
+    let km = document.getElementById('mKm').value;
     let tipo = document.getElementById('mTipo').value;
+
+    // Se o serviço for "Outro", você pode definir o KM como null ou deixar vazio
+    let valorParaSalvarKm = (tipo === 'Outro') ? null : km;
+
+    // ... restante da sua lógica de salvar
+    console.log("Salvando:", { tipo, km: valorParaSalvarKm });
+}
     if(tipo === 'Outro') tipo = document.getElementById('mTipoCustom').value;
-    const valor = document.getElementById('mValor').value;
+    // Adicione um event listener no seu select no carregamento da página
+document.getElementById('mTipo').addEventListener('change', function() {
+    const tipo = this.value;
+    const camposKm = [
+        document.getElementById('mKm'), 
+        document.getElementById('mValor'), 
+        document.getElementById('mProxKm')
+    ];
+
+    // Define se os campos devem ser obrigatórios ou não
+    // Se for um serviço que não exige controle de KM, desabilitamos ou escondemos
+    const ehServicoSimples = (tipo === 'Outro'); 
+
+    camposKm.forEach(campo => {
+        campo.disabled = ehServicoSimples;
+        campo.placeholder = ehServicoSimples ? "Não aplicável" : "Em qual Km foi feito?";
+        if (ehServicoSimples) campo.value = ""; // Limpa o valor se for simples
+    });
+});
     const proxKm = parseInt(document.getElementById('mProxKm').value) || "";
     if(!km || !data || !tipo) { alert("Preencha os campos obrigatórios!"); return; }
     if(editandoManutId) {
