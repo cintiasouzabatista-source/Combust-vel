@@ -127,34 +127,94 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
                 <div class="card"><h3>Histórico de Abastecimentos</h3><div id="listaAbast"></div></div>
             </div>
 
-            <!-- ABA 3: MANUTENÇÃO -->
-            <div id="manutencao" class="tab-content">
-                <button class="btn btn-toggle-form" id="btnToggleManut" onclick="toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção')">➕ Registrar Nova Manutenção</button>
+          <!-- ABA 3: MANUTENÇÃO (Código Atualizado) -->
+<div id="manutencao" class="tab-content">
+    <button class="btn btn-toggle-form" id="btnToggleManut" onclick="toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção')">➕ Registrar Nova Manutenção</button>
 
-                <div class="card form-retratil" id="formManut">
-                    <h3 id="tituloManut">Registrar Realização de Serviço</h3>
-                    <div style="display:grid; gap:12px">
-                        <input id="mData" type="date"><input id="mKm" type="number" placeholder="Em qual Km foi feito?">
-                        <select id="mTipo">
-                            <option value="Troca Óleo Motor">Troca Óleo Motor</option>
-                            <option value="Sistema de Arrefecimento">Sistema de Arrefecimento</option>
-                            <option value="Juntas do Motor">Juntas do Motor</option>
-                            <option value="Correia Dentada / Auxiliar">Correia Dentada / Auxiliar</option>
-                            <option value="Coxim do Motor">Coxim do Motor</option>
-                            <option value="Filtros (Ar/Combustível)">Filtros (Ar/Combustível)</option>
-                            <option value="Óleo de Câmbio">Óleo de Câmbio</option>
-                            <option value="Outro">Outro serviço/manutenção geral</option>
-                        </select>
-                        <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
-                        <input id="mValor" type="number" placeholder="Trocar a cada quantos Km? (Ex: 5000)">
-                        <input id="mProxKm" type="number" placeholder="Próxima troca em qual Km?">
-                        <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar Registro</button>
-                        <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
-                    </div>
-                </div>
-                <div class="card"><h3>Histórico de Serviços Executados</h3><div id="listaManut"></div></div>
-            </div>
+    <div class="card form-retratil" id="formManut">
+        <h3 id="tituloManut">Registrar Realização de Serviço</h3>
+        <div style="display:grid; gap:12px">
+            <input id="mData" type="date">
+            
+            <!-- Select com id="mTipo" -->
+            <select id="mTipo">
+                <option value="Troca Óleo Motor">Troca Óleo Motor</option>
+                <option value="Sistema de Arrefecimento">Sistema de Arrefecimento</option>
+                <option value="Juntas do Motor">Juntas do Motor</option>
+                <option value="Correia Dentada / Auxiliar">Correia Dentada / Auxiliar</option>
+                <option value="Coxim do Motor">Coxim do Motor</option>
+                <option value="Filtros (Ar/Combustível)">Filtros (Ar/Combustível)</option>
+                <option value="Óleo de Câmbio">Óleo de Câmbio</option>
+                <option value="Outro">Outro serviço/manutenção geral</option>
+            </select>
+            
+            <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
+            
+            <!-- Campos de KM que serão controlados -->
+            <input id="mKm" type="number" placeholder="Em qual Km foi feito?">
+            <input id="mValor" type="number" placeholder="Trocar a cada quantos Km?">
+            <input id="mProxKm" type="number" placeholder="Próxima troca em qual Km?">
+            
+            <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar Registro</button>
+            <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
+        </div>
+    </div>
+    <div class="card"><h3>Histórico de Serviços Executados</h3><div id="listaManut"></div></div>
+</div>
 
+<script>
+// Lógica para esconder campos quando for serviço simples
+document.getElementById('mTipo').addEventListener('change', function() {
+    const isOutro = this.value === 'Outro';
+    const camposKm = [
+        document.getElementById('mKm'),
+        document.getElementById('mValor'),
+        document.getElementById('mProxKm')
+    ];
+    
+    camposKm.forEach(el => {
+        el.classList.toggle('hidden', isOutro);
+    });
+    document.getElementById('mTipoCustom').style.display = isOutro ? 'block' : 'none';
+});
+
+function addManut() {
+    const tipo = document.getElementById('mTipo').value;
+    const km = document.getElementById('mKm').value;
+    const data = document.getElementById('mData').value;
+    const valor = document.getElementById('mValor').value;
+    const proxKm = document.getElementById('mProxKm').value;
+
+    // Validação: Só exige KM se não for "Outro"
+    if (tipo !== 'Outro' && !km) {
+        alert("Por favor, preencha o KM!");
+        return; 
+    }
+
+    // Objeto limpo: se for Outro, KM fica nulo
+    const novaManut = {
+        id: editandoManutId || Date.now(),
+        veiculoId: veiculoAtivoId,
+        data: data,
+        tipo: tipo === 'Outro' ? document.getElementById('mTipoCustom').value : tipo,
+        km: tipo === 'Outro' ? null : km,
+        valor: valor,
+        proxKm: proxKm
+    };
+
+    if(editandoManutId) {
+        manutencoes = manutencoes.map(m => m.id === editandoManutId ? novaManut : m);
+    } else {
+        manutencoes.push(novaManut);
+    }
+
+    salvar();
+    renderManut();
+    toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção');
+    cancelarEditManut();
+    alert("Registro salvo com sucesso!");
+}
+</script>
             <!-- ABA 4: VEÍCULO -->
             <div id="veiculo" class="tab-content">
                 <button class="btn btn-toggle-form" id="btnToggleVeiculo" onclick="toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo')">➕ Cadastrar Novo Veículo</button>
