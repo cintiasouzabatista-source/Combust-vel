@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Veiculos</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link rel="manifest" href="./manifest.json">
+<link rel="manifest" href="manifest.json">
 <style>
 
     /**CSS**/
@@ -85,28 +85,30 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
     </div>
 
     <div class="tabs-view-wrapper" id="swipeArea">
-        <div class="tabs-container-fluid" id="tabsFluid">
-            
-            
-                <div class="grid-2">
-                    <div class="card kpi"><p>Média Real</p><h3 id="mediaReal">0 km/l</h3></div>
-                    <div class="card kpi"><p>Gasto Total</p><h3 id="gastoTotal">R$ 0,00</h3></div>
-                </div>
-                <div class="grid-2">
-                    <div class="card kpi" id="cardUltimoAbast"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
-                    <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">--</h3></div>
+    <div class="tabs-container-fluid" id="tabsFluid">
+        
+        <!-- ABA 1: PAINEL -->
+        <div id="painel" class="tab-content">
+            <div class="card odometro-destaque">
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                        <p>Odômetro Manual</p>
+                        <h1 id="odometroManual">0 km</h1>
+                    </div>
+                    <button class="btn-ajuste" onclick="ajustarOdometroManual()"><i class="fas fa-sliders-h"></i></button>
                 </div>
             </div>
-<div class="card odometro-destaque">
-    <div style="display:flex; justify-content:space-between; align-items:center">
-        <div>
-            <p>Odômetro Manual</p>
-            <h1 id="odometroManual">0 km</h1>
+            <div class="grid-2">
+                <div class="card kpi"><p>Média Real</p><h3 id="mediaReal">0 km/l</h3></div>
+                <div class="card kpi"><p>Gasto Total</p><h3 id="gastoTotal">R$ 0,00</h3></div>
+            </div>
+            <div class="grid-2">
+                <div class="card kpi" id="cardUltimoAbast"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
+                <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">--</h3></div>
+            </div>
         </div>
-        <button class="btn-ajuste" onclick="ajustarOdometroManual()"><i class="fas fa-sliders-h"></i></button>
-    </div>
-</div>
-            <!-- ABA 2: ABASTECER -->
+
+              <!-- ABA 2: ABASTECER -->
             <div id="abastecer" class="tab-content">
                 <button class="btn btn-toggle-form" id="btnToggleAbast" onclick="toggleFormulario('formAbast', 'btnToggleAbast', '➕ Registrar Novo Abastecimento')">➕ Registrar Novo Abastecimento</button>
                 
@@ -159,6 +161,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
 </div>
 
 <script>
+    
 // Lógica para esconder campos quando for serviço simples
 document.getElementById('mTipo').addEventListener('change', function() {
     const isOutro = this.value === 'Outro';
@@ -188,17 +191,16 @@ function addManut() {
     }
 
     // Objeto limpo: se for Outro, KM fica nulo
-    const novaManut = {
-        id: editandoManutId || Date.now(),
-        veiculoId: veiculoAtivoId,
-        data: data,
-        tipo: tipo === 'Outro' ? document.getElementById('mTipoCustom').value : tipo,
-        km: tipo === 'Outro' ? null : km,
-        valor: valor,
-        proxKm: proxKm
-    };
-
-    if(editandoManutId) {
+   const novaManut = {
+    id: editandoManutId || Date.now(),
+    veiculoId: veiculoAtivoId,
+    data: document.getElementById('mData').value,
+    tipo: tipo === 'Outro' ? customTipo : tipo, // Usa a variável validada
+    km: km === "" ? null : parseFloat(km),      // Converte para número
+    valor: document.getElementById('mValor').value,
+    proxKm: document.getElementById('mProxKm').value
+       
+};    if(editandoManutId) {
         manutencoes = manutencoes.map(m => m.id === editandoManutId ? novaManut : m);
     } else {
         manutencoes.push(novaManut);
@@ -557,6 +559,13 @@ function addManut() {
     const selectTipo = document.getElementById('mTipo');
     const tipo = selectTipo.value; // Agora 'tipo' está definida
     const km = document.getElementById('mKm').value;
+    // Dentro da função addManut(), após a validação do KM:
+const customTipo = document.getElementById('mTipoCustom').value;
+
+if (tipo === 'Outro' && !customTipo) {
+    alert("Por favor, descreva o serviço!");
+    return;
+}
 
     // 2. Validação: só exige KM se NÃO for "Outro"
     // Se for "Outro" e o KM estiver vazio, o código ignora e pula para o salvamento
