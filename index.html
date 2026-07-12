@@ -87,19 +87,7 @@ input, select, button { width: 100%; padding: 12px; border-radius: 10px; border:
     <div class="tabs-view-wrapper" id="swipeArea">
         <div class="tabs-container-fluid" id="tabsFluid">
             
-            <!-- ABA 1: PAINEL -->
-            <div id="painel" class="tab-content">
-                <div class="card odometro-destaque">
-                    <div style="display:flex; justify-content:space-between; align-items:center">
-                        <div>
-                            <p>Odômetro Virtual</p>
-                            <h1 id="odometroVirtual">0 km</h1>
-                            <p id="proxAtualizacao" style="opacity:0.8; margin-bottom: 4px;">Baseado no seu padrão de uso</p>
-                            <div id="alertaOleoPainel" style="display:none"></div>
-                        </div>
-                        <button class="btn-ajuste" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i></button>
-                    </div>
-                </div>
+            
                 <div class="grid-2">
                     <div class="card kpi"><p>Média Real</p><h3 id="mediaReal">0 km/l</h3></div>
                     <div class="card kpi"><p>Gasto Total</p><h3 id="gastoTotal">R$ 0,00</h3></div>
@@ -492,47 +480,27 @@ function renderAbast() {
     `).join('');
 }
 
-function ajustarOdometro() {
-    const novoKm = prompt("Digite o Km atual exato do painel:");
-    if (!novoKm) return;
-    let conf = obterConfigAtual();
-    conf.kmBase = parseInt(novoKm) || 0;
-    conf.dataBase = new Date().toISOString().slice(0,16);
-    salvar();
-    atualizarPainel();
+// Variável Global
+let odometroManual = parseInt(localStorage.getItem('odometroManual') || 0);
+
+// Função de Atualização Manual
+function ajustarOdometroManual() {
+    const novoKm = prompt("Digite o KM atual do painel:");
+    if (novoKm !== null) {
+        odometroManual = parseInt(novoKm);
+        localStorage.setItem('odometroManual', odometroManual);
+        localStorage.setItem('dataUltimaAtualizacao', new Date().toISOString());
+        atualizarPainel();
+    }
 }
 
-function calcularOdometroVirtual() {
-    let conf = obterConfigAtual();
-    const kmBase = Number(conf.kmBase) || 0;
-    if (!conf.dataBase) return kmBase;
-    const dataBase = new Date(conf.dataBase);
-    const agora = new Date();
-    if (agora <= dataBase) return kmBase;
-    let kmPorDia = 0;
-    switch (conf.modoKm) {
-        case "dia": kmPorDia = Number(conf.kmValor) || 0; break;
-        case "semana": kmPorDia = (Number(conf.kmValor) || 0) / 7; break;
-        case "mes": kmPorDia = (Number(conf.kmValor) || 0) / 30.4375; break;
-    }
-    let kmRodados = 0;
-    const diasPermitidos = conf.diasSemana || [0,1,2,3,4,5,6];
-    const data = new Date(dataBase);
-    while (data < agora) {
-        const diaSemana = data.getDay();
-        if (diasPermitidos.includes(diaSemana)) {
-            const horaAtual = agora.getHours() * 60 + agora.getMinutes();
-            const [h,m] = (conf.horaAtualizacao || "19:00").split(":");
-            const horaProgramada = Number(h) * 60 + Number(m);
-            if (data.toDateString() !== agora.toDateString() || horaAtual >= horaProgramada) {
-                kmRodados += kmPorDia;
-            }
-        }
-        data.setDate(data.getDate() + 1);
-    }
-    return Math.round(kmBase + kmRodados);
+// Verifica se passaram 3 dias da última atualização
+function verificarAlertaAtualizacao() {
+    const dataUltima = localStorage.getItem('dataUltimaAtualizacao');
+    if (!dataUltima) return true;
+    const diff = (new Date() - new Date(dataUltima)) / (1000 * 60 * 60 * 24);
+    return diff >= 3;
 }
-
 function prepararEditAbast(id) {
     const a = abastecimentos.find(x => x.id === id);
     if(!a) return;
@@ -687,9 +655,28 @@ function deletarVeiculo(id) {
 }
 
 function atualizarPainel() {
-    atualizarSeletorCabecalho();
-    const kmVirtual = calcularOdometroVirtual();
-    document.getElementById('odometroVirtual').innerText = `${kmVirtual.toLocaleString('pt-BR')} km`;
+    document.getElementById('odometroManual').innerText = `${odometroManual.toLocaleString('pt-BR')} km`;
+    
+    // Alerta de 3 dias para atualizar KM
+    const alerta = document.getElementById('alertaAtualizacao');
+    alerta.style.display = verificarAlertaAtualizacao() ? 'block' : 'none';
+
+    // Lógica do Card Vermelho (Abastecimento)
+    const cardAutonomia = document.getElementById('cardAutonomia');
+    const abast = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId);
+    
+    if (abast.length > 0) {
+        // Exemplo: se faltar menos de 50km ou 1 dia de uso pela média
+        const kmRodados = odometroManual - abast[0].km;
+        const limiteTanque = (parseFloat(abast[0].litros) * 10); // Simplificação: média de 10km/l
+        
+        if (kmRodados > (limiteTanque * 0.9)) {
+            cardAutonomia.style.backgroundColor = 'var(--danger)'; // Fica vermelho
+        } else {
+            cardAutonomia.style.backgroundColor = 'transparent';
+        }
+    }
+}
 
     const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId).sort((a,b) => b.km - a.km);
     const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
