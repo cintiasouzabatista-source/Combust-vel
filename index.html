@@ -281,14 +281,14 @@ function addManut() {
 
 //JS SCRIPT//
     
-        const DEFAULT_ID = "honda_lead_110";
-const FIESTA_ID = "ford_fiesta_2012";
+        const DEFAULT_ID = "";
+const FIESTA_ID = "";
 
 let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
 if(!veiculos.length) {
     veiculos = [
-        {id: DEFAULT_ID, tipo: "Moto", marca: "Honda", modelo: "Lead 110", ano: 2010, km: 93290, data: "2026-04-10"},
-        {id: FIESTA_ID, tipo: "Carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2014, km: 82500, data: "2026-01-08"}
+        {id: DEFAULT_ID, tipo: "Moto", marca: "", modelo: "", ano: , km: 0, data: ""},
+        {id: FIESTA_ID, tipo: "Carro", marca: "", modelo: "", ano: , km: 0, data: ""}
     ];
 }
 
@@ -554,34 +554,103 @@ function renderManut() {
     `).join('');
 }
 
+// --- CORREÇÃO: Função Salvar Manutenção ---
 function addManut() {
-    // 1. Defina a variável aqui, no topo da função
-    const selectTipo = document.getElementById('mTipo');
-    const tipo = selectTipo.value; // Agora 'tipo' está definida
+    const tipoSelect = document.getElementById('mTipo');
+    const tipoCustom = document.getElementById('mTipoCustom');
     const km = document.getElementById('mKm').value;
-    // Dentro da função addManut(), após a validação do KM:
-const customTipo = document.getElementById('mTipoCustom').value;
+    const data = document.getElementById('mData').value;
+    const valor = document.getElementById('mValor').value;
+    const proxKm = document.getElementById('mProxKm').value;
+    
+    // Define o tipo corretamente
+    const tipoFinal = tipoSelect.value === 'Outro' ? tipoCustom.value : tipoSelect.value;
 
-if (tipo === 'Outro' && !customTipo) {
-    alert("Por favor, descreva o serviço!");
-    return;
-}
+    // Validação
+    if (!data) { alert("Preencha a data!"); return; }
+    if (tipoSelect.value !== 'Outro' && !km) { alert("Preencha o KM!"); return; }
+    if (tipoSelect.value === 'Outro' && !tipoCustom.value) { alert("Especifique o serviço!"); return; }
 
-    // 2. Validação: só exige KM se NÃO for "Outro"
-    // Se for "Outro" e o KM estiver vazio, o código ignora e pula para o salvamento
-    if (tipo !== 'Outro' && (km === "" || km === null)) {
-        alert("Por favor, preencha o KM!");
-        return; 
+    const novaManut = {
+        id: editandoManutId || Date.now(),
+        veiculoId: veiculoAtivoId,
+        data: data,
+        tipo: tipoFinal,
+        km: km === "" ? null : parseFloat(km),
+        valor: valor,
+        proxKm: proxKm
+    };
+
+    if(editandoManutId) {
+        manutencoes = manutencoes.map(m => m.id === editandoManutId ? novaManut : m);
+    } else {
+        manutencoes.push(novaManut);
     }
 
-    // 3. O resto do seu código de salvamento continua aqui...
-    // Exemplo:
-    // const mData = document.getElementById('mData').value;
-    // ...
-    
-    console.log("Salvando:", { tipo, km });
-    // Restante da sua lógica original...
+    salvar();
+    renderManut();
+    toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção');
+    cancelarEditManut();
+    alert("Registro salvo com sucesso!");
 }
+
+// --- CORREÇÃO: Painel (Cor do texto + Data) ---
+function atualizarPainel() {
+    document.getElementById('odometroManual').innerText = `${odometroManual.toLocaleString('pt-BR')} km`;
+    
+    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId).sort((a,b) => b.km - a.km);
+    const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
+    document.getElementById('gastoTotal').innerText = `R$ ${gastoTotal.toFixed(2).replace('.', ',')}`;
+
+    let mediaReal = 0;
+    if (abastDoVeiculo.length >= 0) {
+        // Cálculo de média
+        if (abastDoVeiculo.length >= 2) {
+             const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
+             const litros = parseFloat(abastDoVeiculo[0].litros) || 1;
+             mediaReal = kmRodados / litros;
+        } else {
+             mediaReal = 40; // Média padrão se não houver histórico suficiente
+        }
+        document.getElementById('mediaReal').innerText = `${mediaReal.toFixed(1)} km/l`;
+    }
+
+    // Lógica do Próximo Abastecimento
+    const elAutonomia = document.getElementById('autonomia');
+    const elCard = document.getElementById('cardAutonomia');
+    
+    if (abastDoVeiculo.length > 0) {
+        const conf = obterConfigAtual();
+        const ultimoAbast = abastDoVeiculo[0];
+        const tanqueCapacidade = conf.tanqueL || 54;
+        const autonomiaTotal = tanqueCapacidade * mediaReal;
+        const kmParaAbastecer = (ultimoAbast.km + (autonomiaTotal * 0.9)) - odometroManual;
+        
+        // Calcular dias restantes
+        const usoDiario = conf.kmValor || 30; // KM por dia configurado
+        const diasRestantes = Math.max(0, Math.floor(kmParaAbastecer / usoDiario));
+        
+        const dataProx = new Date();
+        dataProx.setDate(dataProx.getDate() + diasRestantes);
+        
+        const dataFormatada = dataProx.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+        const diaSemana = dataProx.toLocaleDateString('pt-BR', {weekday: 'short'});
+
+        elAutonomia.innerHTML = `<strong>${dataFormatada}</strong><br><small>${diaSemana}</small>`;
+        
+        // Mudar cor do texto para vermelho se estiver próximo (menos de 50km ou 1 dia)
+        if (kmParaAbastecer < 50) {
+            elAutonomia.style.color = 'var(--danger)';
+            elCard.style.borderColor = 'var(--danger)'; // Opcional: borda vermelha
+        } else {
+            elAutonomia.style.color = 'inherit';
+            elCard.style.borderColor = 'var(--border)';
+        }
+        
+        document.getElementById('ultimoKmAbast').innerText = `${ultimoAbast.km} km`;
+    }
+}
+
 function prepararEditManut(id) {
     const m = manutencoes.find(x => x.id === id);
     if(!m) return;
