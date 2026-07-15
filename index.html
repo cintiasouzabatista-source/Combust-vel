@@ -2,721 +2,127 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Veiculos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Frota</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link rel="manifest" href="manifest.json">
 <style>
-
-    /**CSS**/
-    
-:root {
-    --primary: #2563eb; --bg: #f1f5f9; --card: #fff; --text: #0f172a; --muted: #64748b; --border: #e2e8f0; --danger: #ef4444; --warn: #f59e0b; --success: #10b981;
-}
-body.dark {
-    --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334155;
-}
+:root { --primary: #2563eb; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334155; --danger: #ef4444; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; overflow-x: hidden; }
+body { font-family: system-ui; background: var(--bg); color: var(--text); padding-bottom: 80px; }
 .container { max-width: 600px; margin: 0 auto; padding: 16px; }
-.header-area { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
-.header-select { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 16px; }
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-h1 { font-size: 20px; }
-h3 { font-size: 16px; margin-bottom: 8px; }
-p { color: var(--muted); font-size: 14px; }
-.muted { color: var(--muted); font-size: 13px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-input, select, button { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; }
-.btn { background: var(--primary); color: #fff; border: none; font-weight: 600; cursor: pointer; }
-.btn-danger { background: var(--danger); }
-.btn-outline { background: transparent; border: 1px solid var(--border); }
-.kpi p { font-size: 13px; margin-bottom: 4px; }
-.kpi h3 { font-size: 18px; font-weight: 700; line-height: 1.2; }
-.kpi span.sub-data { display: block; font-size: 14px; font-weight: 500; color: var(--muted); margin-top: 2px; }
-        .hidden {
-    display: none !important;
-}
-
-.tabs-view-wrapper { width: 100%; overflow: hidden; touch-action: pan-y; }
-.tabs-container-fluid { display: flex; width: 500%; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); align-items: flex-start; }
-.tab-content { width: 20%; flex-shrink: 0; padding: 0 4px; }
-
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; z-index: 10; }
-.btn-nav { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; }
-.btn-nav.active { color: var(--primary); }
-.btn-nav i { font-size: 20px; }
-.theme-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-
-.odometro-destaque { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 14px 16px; margin-bottom: 12px; }
-.odometro-destaque p { color: rgba(255,255,255,0.8); font-size: 13px; }
-.odometro-destaque h1 { font-size: 28px; font-weight: 700; margin: 2px 0; line-height: 1.1; }
-.btn-ajuste { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; }
-.dias-semana { display: flex; gap: 6px; flex-wrap: nowrap; }
-.dia-btn { padding: 8px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--card); cursor: pointer; flex:1; min-width: 0; aspect-ratio: 1/1; font-size: 12px; }
-.dia-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.grid-3 button { padding: 10px; font-size: 14px; }
-.grid-3 button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-
-.historico-item { padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); }
-.historico-acoes { display:flex; gap:8px; }
-.historico-acoes button { background:none; border:none; cursor:pointer; padding:6px; width:auto; color: var(--primary); }
-.historico-acoes button.del { color:var(--danger); }
-
-.form-retratil { display: none; margin-top: 12px; }
-.btn-toggle-form { background: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: 600; margin-bottom: 12px; text-align: center; cursor: pointer; }
-
-.alerta-oleo-container { margin-top: 8px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
-.alerta-oleo-container.critico { background: rgba(239, 68, 68, 0.3); border: 1px solid #ef4444; }
+.btn-icon { background: var(--card); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; cursor: pointer; color: var(--text); font-weight: 600; }
+input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); margin-top: 6px; }
+.kpi p { color: var(--muted); font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.kpi h3 { font-size: 24px; font-weight: 700; }
+.odometro { background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; color: #fff; }
+.odometro p,.odometro small { color: rgba(255,255,255,0.8); }
+.nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; }
+.nav-btn { background: none; border: none; color: var(--muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 33%; }
+.nav-btn.active { color: var(--primary); }
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:100 }
+.modal-content { background:var(--card); padding:20px; border-radius:16px; width:90%; max-width:400px }
+.modal-actions { display:flex; gap:8px; margin-top:12px }
 </style>
 </head>
 <body>
-
-<!-- HTML-->
-    
-    
 <div class="container">
-    <div class="header-area">
-        <h1>Veículos</h1>
-        <select id="seletorVeiculoPrincipal" class="header-select" onchange="mudarVeiculoAtivo()"></select>
-        <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+    <div class="header"><h1>Controle Frota</h1></div>
+    <select id="selectVeiculo" class="card" style="width:100%; padding:12px" onchange="trocarVeiculo(this.value)"></select>
+
+    <div class="grid-2" style="margin: 12px 0">
+        <button class="btn-icon" onclick="abrirModalAbast()"><i class="fas fa-gas-pump"></i> Combustível</button>
+        <button class="btn-icon" onclick="abrirModalManut()"><i class="fas fa-wrench"></i> Manutenção</button>
     </div>
 
-    <div class="tabs-view-wrapper" id="swipeArea">
-    <div class="tabs-container-fluid" id="tabsFluid">
-        
-        <!-- ABA 1: PAINEL -->
-        <div id="painel" class="tab-content">
-            <div class="card odometro-destaque">
-                <div style="display:flex; justify-content:space-between; align-items:center">
-                    <div>
-                        <p>Odômetro Manual</p>
-                        <h1 id="odometroManual">0 km</h1>
-                    </div>
-                    <button class="btn-ajuste" onclick="ajustarOdometroManual()"><i class="fas fa-sliders-h"></i></button>
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="card kpi"><p>Média Real</p><h3 id="mediaReal">0 km/l</h3></div>
-                <div class="card kpi"><p>Gasto Total</p><h3 id="gastoTotal">R$ 0,00</h3></div>
-            </div>
-            <div class="grid-2">
-                <div class="card kpi" id="cardUltimoAbast"><p>Último Abastecimento</p><h3 id="ultimoKmAbast">0 km</h3></div>
-                <div class="card kpi" id="cardAutonomia"><p>Próximo Abastecimento</p><h3 id="autonomia">--</h3></div>
-            </div>
-        </div>
-
-              <!-- ABA 2: ABASTECER -->
-            <div id="abastecer" class="tab-content">
-                <button class="btn btn-toggle-form" id="btnToggleAbast" onclick="toggleFormulario('formAbast', 'btnToggleAbast', '➕ Registrar Novo Abastecimento')">➕ Registrar Novo Abastecimento</button>
-                
-                <div class="card form-retratil" id="formAbast">
-                    <h3 id="tituloAbast">Novo Abastecimento</h3>
-                    <div style="display:grid; gap:12px">
-                        <input id="aData" type="date"><input id="aKm" type="number" placeholder="Km odômetro">
-                        <div class="grid-2"><input id="aLitros" type="number" step="0.01" placeholder="Litros" oninput="calcTotal()"><input id="aValorL" type="number" step="0.01" placeholder="R$ / L" oninput="calcTotal()"></div>
-                        <div class="grid-2"><input id="aTotal" type="number" step="0.01" placeholder="Total R$" readonly><select id="aTipo"><option value="gasolina">Gasolina</option><option value="alcool">Álcool</option></select></div>
-                        <button class="btn" id="btnSalvarAbast" onclick="addAbast()">Salvar Abastecimento</button>
-                        <button class="btn-outline" id="btnCancelarAbast" onclick="cancelarEditAbast()" style="display:none">Cancelar</button>
-                    </div>
-                </div>
-                <div class="card"><h3>Histórico de Abastecimentos</h3><div id="listaAbast"></div></div>
-            </div>
-
-          <!-- ABA 3: MANUTENÇÃO (Código Atualizado) -->
-<div id="manutencao" class="tab-content">
-    <button class="btn btn-toggle-form" id="btnToggleManut" onclick="toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção')">➕ Registrar Nova Manutenção</button>
-
-    <div class="card form-retratil" id="formManut">
-        <h3 id="tituloManut">Registrar Realização de Serviço</h3>
-        <div style="display:grid; gap:12px">
-            <input id="mData" type="date">
-            
-            <!-- Select com id="mTipo" -->
-            <select id="mTipo">
-                <option value="Troca Óleo Motor">Troca Óleo Motor</option>
-                <option value="Sistema de Arrefecimento">Sistema de Arrefecimento</option>
-                <option value="Juntas do Motor">Juntas do Motor</option>
-                <option value="Correia Dentada / Auxiliar">Correia Dentada / Auxiliar</option>
-                <option value="Coxim do Motor">Coxim do Motor</option>
-                <option value="Filtros (Ar/Combustível)">Filtros (Ar/Combustível)</option>
-                <option value="Óleo de Câmbio">Óleo de Câmbio</option>
-                <option value="Outro">Outro serviço/manutenção geral</option>
-            </select>
-            
-            <input id="mTipoCustom" type="text" placeholder="Especifique o nome do serviço" style="display:none">
-            
-            <!-- Campos de KM que serão controlados -->
-            <input id="mKm" type="number" placeholder="Em qual Km foi feito?">
-            <input id="mValor" type="number" placeholder="Trocar a cada quantos Km?">
-            <input id="mProxKm" type="number" placeholder="Próxima troca em qual Km?">
-            
-            <button class="btn" id="btnSalvarManut" onclick="addManut()">Salvar Registro</button>
-            <button class="btn-outline" id="btnCancelarManut" onclick="cancelarEditManut()" style="display:none">Cancelar</button>
-        </div>
+    <div class="card odometro kpi">
+        <p><i class="fas fa-road"></i> KM ATUAL</p>
+        <h3 id="kmRodados">0 km</h3>
+        <small id="consumoMedia">Consumo: -- km/L</small><br>
+        <button class="btn-icon" style="background:rgba(0,0,0,0.3); border:none; margin-top:8px" onclick="ajustarOdometro()"><i class="fas fa-sliders-h"></i> Ajustar KM</button>
     </div>
-    <div class="card"><h3>Histórico de Serviços Executados</h3><div id="listaManut"></div></div>
-</div>
 
-<script>
-    
-// Lógica para esconder campos quando for serviço simples
-document.getElementById('mTipo').addEventListener('change', function() {
-    const isOutro = this.value === 'Outro';
-    const camposKm = [
-        document.getElementById('mKm'),
-        document.getElementById('mValor'),
-        document.getElementById('mProxKm')
-    ];
-    
-    camposKm.forEach(el => {
-        el.classList.toggle('hidden', isOutro);
-    });
-    document.getElementById('mTipoCustom').style.display = isOutro ? 'block' : 'none';
-});
-
-function addManut() {
-    const tipo = document.getElementById('mTipo').value;
-    const km = document.getElementById('mKm').value;
-    const data = document.getElementById('mData').value;
-    const valor = document.getElementById('mValor').value;
-    const proxKm = document.getElementById('mProxKm').value;
-
-    // Validação: Só exige KM se não for "Outro"
-    if (tipo !== 'Outro' && !km) {
-        alert("Por favor, preencha o KM!");
-        return; 
-    }
-
-    // Objeto limpo: se for Outro, KM fica nulo
-   const novaManut = {
-    id: editandoManutId || Date.now(),
-    veiculoId: veiculoAtivoId,
-    data: document.getElementById('mData').value,
-    tipo: tipo === 'Outro' ? customTipo : tipo, // Usa a variável validada
-    km: km === "" ? null : parseFloat(km),      // Converte para número
-    valor: document.getElementById('mValor').value,
-    proxKm: document.getElementById('mProxKm').value
-       
-};    if(editandoManutId) {
-        manutencoes = manutencoes.map(m => m.id === editandoManutId ? novaManut : m);
-    } else {
-        manutencoes.push(novaManut);
-    }
-
-    salvar();
-    renderManut();
-    toggleFormulario('formManut', 'btnToggleManut', '➕ Registrar Nova Manutenção');
-    cancelarEditManut();
-    alert("Registro salvo com sucesso!");
-}
-</script>
-            <!-- ABA 4: VEÍCULO -->
-            <div id="veiculo" class="tab-content">
-                <button class="btn btn-toggle-form" id="btnToggleVeiculo" onclick="toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo')">➕ Cadastrar Novo Veículo</button>
-
-                <div class="card form-retratil" id="formVeiculo">
-                    <h3 id="tituloVeiculo">Cadastrar / Editar Veículo</h3>
-                    <div style="display:grid; gap:12px">
-                        <select id="vTipo"><option value="carro">Carro</option><option value="moto">Moto</option></select>
-                        <div class="grid-2">
-                            <input id="vMarca" type="text" placeholder="Marca Ex: Ford">
-                            <input id="vModelo" type="text" placeholder="Modelo Ex: Fiesta 1.6">
-                        </div>
-                        <div class="grid-2">
-                            <input id="vAno" type="number" placeholder="Ano Modelo">
-                            <input id="vKm" type="number" placeholder="Km Atual">
-                        </div>
-                        <input id="vData" type="date">
-                        <button class="btn" id="btnSalvarVeiculo" onclick="addVeiculo()">Salvar Veículo</button>
-                        <button class="btn-outline" id="btnCancelarVeiculo" onclick="cancelarEditVeiculo()" style="display:none">Cancelar</button>
-                    </div>
-                </div>
-                <div class="card"><h3>Meus Veículos Gerenciados</h3><div id="listaVeiculos"></div></div>
-            </div>
-
-            <!-- ABA 5: CONFIG -->
-            <div id="config" class="tab-content">
-                <div class="card"><h3>Odômetro Virtual - Config (Veículo Atual)</h3>
-                    <div style="display:grid; gap:12px">
-                        <label>Ponto de Partida</label>
-                        <div class="grid-2"><input id="kmBase" type="number" placeholder="Km inicial" onchange="salvarConfig()"><input id="dataBase" type="datetime-local" onchange="salvarConfig()"></div>
-                        <label>Como você quer calcular?</label>
-                        <div class="grid-3" id="modoKm">
-                            <button type="button" data-modo="dia">Por Dia</button>
-                            <button type="button" data-modo="semana">Por Semana</button>
-                            <button type="button" data-modo="mes">Por Mês</button>
-                        </div>
-                        <input id="kmValor" type="number" value="30" placeholder="Ex: 30" onchange="salvarConfig()">
-                        <label>Capacidade Total Tanque (Litros)</label>
-                        <input id="tanqueL" type="number" step="0.1" value="54" onchange="salvarConfig()">
-                        <label>Horário da atualização</label>
-                        <input id="horaAtualizacao" type="time" value="19:00" onchange="salvarConfig()">
-                        <label>Dias que roda</label>
-                        <div class="dias-semana" id="diasSemana">
-                            <button type="button" class="dia-btn" data-dia="0">Dom</button><button type="button" class="dia-btn" data-dia="1">Seg</button>
-                            <button type="button" class="dia-btn" data-dia="2">Ter</button><button type="button" class="dia-btn" data-dia="3">Qua</button>
-                            <button type="button" class="dia-btn" data-dia="4">Qui</button><button type="button" class="dia-btn" data-dia="5">Sex</button>
-                            <button type="button" class="dia-btn" data-dia="6">Sáb</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card"><button class="btn btn-danger" onclick="limparTudo()">Limpar Todos os Dados</button></div>
-            </div>
-
-        </div>
+    <div class="grid-2">
+        <div class="card kpi"><p><i class="fas fa-gas-pump"></i> ABASTECIMENTO</p><h3 id="ultimoAbastData">--/--</h3><small id="ultimoAbastValor">R$ 0</small></div>
+        <div class="card kpi"><p><i class="fas fa-calculator"></i> PRÓX. ABAST.</p><h3 id="proxAbastKm">-- km</h3><small>Estimativa</small></div>
+    </div>
+    <div class="grid-2">
+        <div class="card kpi"><p><i class="fas fa-oil-can"></i> TROCA ÓLEO</p><h3 id="ultimaTrocaData">--/--</h3><small id="ultimaTrocaKm">KM: -----</small></div>
+        <div class="card kpi"><p><i class="fas fa-bell"></i> PRÓX. TROCA</p><h3 id="proxTrocaKm">-- km</h3><small id="proxTrocaFaltam">Faltam -- km</small></div>
     </div>
 </div>
 
-<nav class="bottom-nav">
-    <button class="btn-nav active" onclick="navegarParaIndice(0)"><i class="fas fa-gauge-high"></i><span>Painel</span></button>
-    <button class="btn-nav" onclick="navegarParaIndice(1)"><i class="fas fa-gas-pump"></i><span>Abastecer</span></button>
-    <button class="btn-nav" onclick="navegarParaIndice(2)"><i class="fas fa-wrench"></i><span>Manutenção</span></button>
-    <button class="btn-nav" onclick="navegarParaIndice(3)"><i class="fas fa-car"></i><span>Veículo</span></button>
-    <button class="btn-nav" onclick="navegarParaIndice(4)"><i class="fas fa-gear"></i><span>Config</span></button>
+<nav class="nav-bottom">
+    <button class="nav-btn active"><i class="fas fa-home"></i> Início</button>
+    <button class="nav-btn" onclick="abrirModalHistorico()"><i class="fas fa-list"></i> Histórico</button>
+    <button class="nav-btn" onclick="abrirModalVeiculo()"><i class="fas fa-plus-circle"></i> Veículo</button>
 </nav>
+
+<!-- MODAIS -->
+<div id="modalVeiculo" class="modal"><div class="modal-content"><h3><i class="fas fa-motorcycle"></i> Novo Veículo</h3><label>Nome</label><input id="vNome"><label>KM Atual</label><input id="vKm" type="number"><label>Tanque L</label><input id="vTanque" type="number" value="6.5"><label>KM/Dia</label><input id="vKmDia" type="number" value="50"><div class="modal-actions"><button onclick="fecharModalVeiculo()" class="btn-icon">Cancelar</button><button onclick="salvarVeiculo()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
+<div id="modalHistorico" class="modal"><div class="modal-content"><h3>Histórico</h3><div id="listaHistorico"></div><button onclick="fecharModalHistorico()" class="btn-icon" style="margin-top:12px">Fechar</button></div></div>
+<div id="modalAbast" class="modal"><div class="modal-content"><h3>Novo Abastecimento</h3><label>Data</label><input id="aData" type="date"><label>KM</label><input id="aKm" type="number"><label>Litros</label><input id="aLitros" type="number" step="0.001"><label>Valor/L</label><input id="aValor" type="number" step="0.01"><div class="modal-actions"><button onclick="fecharModalAbast()" class="btn-icon">Cancelar</button><button onclick="salvarAbast()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
+<div id="modalManut" class="modal"><div class="modal-content"><h3>Nova Manutenção</h3><label>Data</label><input id="mData" type="date"><label>KM</label><input id="mKm" type="number"><label>Tipo</label><input id="mTipo"><label>Valor</label><input id="mValor" type="number"><label>Próx. em KM</label><input id="mProxKm" type="number" value="5000"><div class="modal-actions"><button onclick="fecharModalManut()" class="btn-icon">Cancelar</button><button onclick="salvarManut()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
+
 <script>
+let veiculos = JSON.parse(localStorage.getItem('veiculos_frota_v8') || '[]');
+let veiculoAtivoId = localStorage.getItem('veiculoAtivoId_frota_v8') || null;
 
-//JS SCRIPT//
-    
-        const DEFAULT_ID = "honda_lead_110";
-const FIESTA_ID = "ford_fiesta_2012";
+function getVeiculoAtivo() { if(!veiculoAtivoId && veiculos.length) { veiculoAtivoId = veiculos[0].id; salvarTudo(); } return veiculos.find(v => v.id === veiculoAtivoId) || null; }
+function salvarTudo() { localStorage.setItem('veiculos_frota_v8', JSON.stringify(veiculos)); localStorage.setItem('veiculoAtivoId_frota_v8', veiculoAtivoId); }
 
-let veiculos = JSON.parse(localStorage.getItem('veiculos') || '[]');
-if(!veiculos.length) {
-    veiculos = [
-        {id: DEFAULT_ID, tipo: "Moto", marca: "Honda", modelo: "Lead 110", ano: 2010, km: 93290, data: "2026-04-10"},
-        {id: FIESTA_ID, tipo: "Carro", marca: "Ford", modelo: "Fiesta 1.6", ano: 2014, km: 82500, data: "2026-01-08"}
-    ];
-}
-
-let veiculoAtivoId = localStorage.getItem('veiculoAtivoId') || DEFAULT_ID;
-let abastecimentos = JSON.parse(localStorage.getItem('abast') || '[]');
-let manutencoes = JSON.parse(localStorage.getItem('manut') || '[]');
-
-if(!manutencoes.length) {
-    manutencoes = [
-        {id: 1, veiculoId: DEFAULT_ID, data: "2025-10-24", km: 90000, tipo: "Idler / Correia CVT", valor: "370.00", proxKm: 110000},
-        {id: 5, veiculoId: DEFAULT_ID, data: "2026-04-10", km: 93290, tipo: "Troca Óleo Motor", valor: "73.00", proxKm: 94290},
-        {id: 15, veiculoId: FIESTA_ID, data: "2026-01-08", km: 82100, tipo: "Troca Óleo Motor", valor: "250.00", proxKm: 92100}
-    ];
-}
-
-if(!abastecimentos.length) {
-    abastecimentos = [
-        {id: 101, veiculoId: DEFAULT_ID, km: 94208, data: "2026-07-01", litros: "5.5", valorL: "5.80", total: "31.90", tipo: "gasolina"}
-    ];
-}
-
-let configsGerais = JSON.parse(localStorage.getItem('configsGerais') || '{}');
-if(!configsGerais[DEFAULT_ID]) {
-    configsGerais[DEFAULT_ID] = {
-        "kmBase": 93290, "dataBase": "2026-04-10T12:00",
-        "modoKm": "dia", "kmValor": 0, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 0.0
-    };
-}
-if(!configsGerais[FIESTA_ID]) {
-    configsGerais[FIESTA_ID] = {
-        "kmBase": 82500, "dataBase": "2026-01-08T12:00",
-        "modoKm": "dia", "kmValor": 40, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
-    };
-}
-
-let editandoAbastId = null;
-let editandoManutId = null;
-let editandoVeiculoId = null;
-let abaAtualIndice = 0;
-const totalAbas = 5;
-let toqueInicioX = 0;
-let toqueInicioY = 0;
-
-document.getElementById('mTipo').addEventListener('change', function() {
-    document.getElementById('mTipoCustom').style.display = this.value === 'Outro' ? 'block' : 'none';
-});
-
-function toggleFormulario(formId, btnId, textoOriginal) {
-    const form = document.getElementById(formId);
-    const btn = document.getElementById(btnId);
-    if(form.style.display === "block") {
-        form.style.display = "none";
-        btn.innerText = textoOriginal;
-    } else {
-        form.style.display = "block";
-        btn.innerText = "✖ Fechar Formulário";
-    }
-}
-
-function obterConfigAtual() {
-    if(!configsGerais[veiculoAtivoId]) {
-        let vObj = veiculos.find(v => v.id == veiculoAtivoId);
-        configsGerais[veiculoAtivoId] = {
-            "kmBase": vObj ? vObj.km : 0,
-            "dataBase": vObj ? vObj.data + "T12:00" : "2026-01-01T12:00",
-            "modoKm": "dia", "kmValor": 30, "horaAtualizacao": "19:00", "diasSemana": [1,2,3,4,5], "tanqueL": 54.0
-        };
-    }
-    return configsGerais[veiculoAtivoId];
-}
-
-function navegarParaIndice(indice) {
-    if (indice < 0 || indice >= totalAbas) return;
-    abaAtualIndice = indice;
-    document.getElementById('tabsFluid').style.transform = `translateX(-${indice * 20}%)`;
-    document.querySelectorAll('.btn-nav').forEach((b, idx) => b.classList.toggle('active', idx === indice));
-    
-    if(indice === 0) atualizarPainel();
-    if(indice === 1) { document.getElementById('aKm').value = calcularOdometroVirtual(); renderAbast(); }
-    if(indice === 2) renderManut();
-    if(indice === 3) renderVeiculos();
-    if(indice === 4) carregarConfig();
-}
-
-const campoSwipe = document.getElementById('swipeArea');
-campoSwipe.addEventListener('touchstart', e => {
-    toqueInicioX = e.touches[0].clientX;
-    toqueInicioY = e.touches[0].clientY;
-}, {passive: true});
-
-campoSwipe.addEventListener('touchend', e => {
-    if (!toqueInicioX || !toqueInicioY) return;
-    let toqueFimX = e.changedTouches[0].clientX;
-    let toqueFimY = e.changedTouches[0].clientY;
-    if (Math.abs(toqueInicioX - toqueFimX) > Math.abs(toqueInicioY - toqueFimY) && Math.abs(toqueInicioX - toqueFimX) > 70) {
-        if (toqueInicioX - toqueFimX > 0) navegarParaIndice(abaAtualIndice + 1);
-        else navegarParaIndice(abaAtualIndice - 1);
-    }
-    toqueInicioX = 0; toqueInicioY = 0;
-}, {passive: true});
-
-function toggleTheme() { 
-    document.body.classList.toggle('dark'); 
-    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); 
-}
-
-function salvar() { 
-    localStorage.setItem('veiculos', JSON.stringify(veiculos)); 
-    localStorage.setItem('veiculoAtivoId', veiculoAtivoId);
-    localStorage.setItem('abast', JSON.stringify(abastecimentos)); 
-    localStorage.setItem('manut', JSON.stringify(manutencoes)); 
-    localStorage.setItem('configsGerais', JSON.stringify(configsGerais)); 
-}
-
-function mudarVeiculoAtivo() {
-    veiculoAtivoId = document.getElementById('seletorVeiculoPrincipal').value;
-    salvar();
-    atualizarPainel();
-}
-
-function atualizarSeletorCabecalho() {
-    const sel = document.getElementById('seletorVeiculoPrincipal');
-    sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id == veiculoAtivoId ? 'selected':''}>${v.marca} ${v.modelo}</option>`).join('');
-}
-
-function salvarConfig() {
-    let conf = obterConfigAtual();
-    conf.kmBase = parseInt(document.getElementById('kmBase').value) || 0;
-    conf.dataBase = document.getElementById('dataBase').value;
-    conf.kmValor = parseInt(document.getElementById('kmValor').value) || 30;
-    conf.horaAtualizacao = document.getElementById('horaAtualizacao').value;
-    conf.tanqueL = parseFloat(document.getElementById('tanqueL').value) || 54.0;
-    conf.diasSemana = [...document.querySelectorAll('.dia-btn.active')].map(b => parseInt(b.dataset.dia));
-    salvar();
-    atualizarPainel();
-}
-
-function carregarConfig() {
-    let conf = obterConfigAtual();
-    document.getElementById('kmBase').value = conf.kmBase || '';
-    document.getElementById('dataBase').value = conf.dataBase || '';
-    document.getElementById('kmValor').value = conf.kmValor || 30;
-    document.getElementById('horaAtualizacao').value = conf.horaAtualizacao || '19:00';
-    document.getElementById('tanqueL').value = conf.tanqueL || 54.0;
-    document.querySelectorAll('.dia-btn').forEach(b => { b.classList.toggle('active', conf.diasSemana.includes(parseInt(b.dataset.dia))); });
-    document.querySelectorAll('#modoKm button').forEach(b => { b.classList.toggle('active', b.dataset.modo === conf.modoKm); });
-}
-
-document.querySelectorAll('.dia-btn').forEach(b => { 
-    b.onclick = () => { b.classList.toggle('active'); salvarConfig(); }; 
-});
-
-document.querySelectorAll('#modoKm button').forEach(b => {
-    b.onclick = () => {
-        document.querySelectorAll('#modoKm button').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        obterConfigAtual().modoKm = b.dataset.modo;
-        salvarConfig();
-    };
-});
-
-function calcTotal() {
-    const litros = parseFloat(document.getElementById('aLitros').value) || 0;
-    const valorLitro = parseFloat(document.getElementById('aValorL').value) || 0;
-    document.getElementById('aTotal').value = (litros * valorLitro > 0) ? (litros * valorLitro).toFixed(2) : '';
-}
-
-function addAbast() {
-    const km = parseInt(document.getElementById('aKm').value);
-    const data = document.getElementById('aData').value;
-    const litros = document.getElementById('aLitros').value;
-    const valorL = document.getElementById('aValorL').value;
-    const total = document.getElementById('aTotal').value;
-    const tipo = document.getElementById('aTipo').value;
-    if(!km || !data || !litros || !valorL) { alert("Preencha todos os campos!"); return; }
-    if(editandoAbastId) {
-        abastecimentos = abastecimentos.map(a => a.id === editandoAbastId ? {id:a.id, veiculoId:veiculoAtivoId, km, data, litros, valorL, total, tipo} : a);
-        editandoAbastId = null;
-    } else {
-        abastecimentos.push({id: Date.now(), veiculoId: veiculoAtivoId, km, data, litros, valorL, total, tipo});
-    }
-    salvar(); renderAbast(); toggleFormulario('formAbast', 'btnToggleAbast', '➕ Registrar Novo Abastecimento'); cancelarEditAbast(); atualizarPainel();
-}
-
-function renderAbast() {
-    const lista = document.getElementById('listaAbast');
-    const filtrados = abastecimentos.filter(a => a.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
-    lista.innerHTML = filtrados.map(a => `
-        <div class="historico-item">
-            <div>
-                <strong>${a.km} km</strong> - ${a.litros}L (${a.tipo})<br>
-                <small class="muted">R$ ${a.total} (${a.data})</small>
-            </div>
-            <div class="historico-acoes">
-                <button onclick="prepararEditAbast(${a.id})"><i class="fas fa-edit"></i></button>
-                <button class="del" onclick="deletarAbast(${a.id})"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Variável Global
-let odometroManual = parseInt(localStorage.getItem('odometroManual') || 0);
-
-// Função de Atualização Manual
-function ajustarOdometroManual() {
-    const novoKm = prompt("Digite o KM atual do painel:");
-    if (novoKm !== null) {
-        odometroManual = parseInt(novoKm);
-        localStorage.setItem('odometroManual', odometroManual);
-        localStorage.setItem('dataUltimaAtualizacao', new Date().toISOString());
-        atualizarPainel();
-    }
-}
-
-// Verifica se passaram 3 dias da última atualização
-function verificarAlertaAtualizacao() {
-    const dataUltima = localStorage.getItem('dataUltimaAtualizacao');
-    if (!dataUltima) return true;
-    const diff = (new Date() - new Date(dataUltima)) / (1000 * 60 * 60 * 24);
-    return diff >= 3;
-}
-function prepararEditAbast(id) {
-    const a = abastecimentos.find(x => x.id === id);
-    if(!a) return;
-    editandoAbastId = a.id;
-    document.getElementById('aKm').value = a.km;
-    document.getElementById('aData').value = a.data;
-    document.getElementById('aLitros').value = a.litros;
-    document.getElementById('aValorL').value = a.valorL;
-    document.getElementById('aTotal').value = a.total;
-    document.getElementById('aTipo').value = a.tipo;
-    document.getElementById('tituloAbast').innerText = "Editar Abastecimento";
-    document.getElementById('btnCancelarAbast').style.display = "inline-block";
-    document.getElementById('formAbast').style.display = "block";
-}
-
-function cancelarEditAbast() {
-    editandoAbastId = null;
-    document.getElementById('tituloAbast').innerText = "Novo Abastecimento";
-    document.getElementById('btnCancelarAbast').style.display = "none";
-    document.getElementById('aLitros').value = ''; document.getElementById('aValorL').value = ''; document.getElementById('aTotal').value = '';
-}
-
-function deletarAbast(id) {
-    if(confirm("Excluir este abastecimento?")) { abastecimentos = abastecimentos.filter(a => a.id !== id); salvar(); renderAbast(); atualizarPainel(); }
-}
-
-function renderManut() {
-    const lista = document.getElementById('listaManut');
-    const filtrados = manutencoes.filter(m => m.veiculoId === veiculoAtivoId).sort((a,b) => new Date(b.data) - new Date(a.data));
-    lista.innerHTML = filtrados.map(m => `
-        <div class="historico-item">
-            <div>
-                <strong>${m.tipo}</strong> - Realizado com ${m.km} km<br>
-                <small class="muted">Próxima troca: ${m.proxKm ? m.proxKm + ' km' : 'Não definida'} - R$ ${m.valor}</small>
-            </div>
-            <div class="historico-acoes">
-                <button onclick="prepararEditManut(${m.id})"><i class="fas fa-edit"></i></button>
-                <button class="del" onclick="deletarManut(${m.id})"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function addManut() {
-    // 1. Defina a variável aqui, no topo da função
-    const selectTipo = document.getElementById('mTipo');
-    const tipo = selectTipo.value; // Agora 'tipo' está definida
-    const km = document.getElementById('mKm').value;
-    // Dentro da função addManut(), após a validação do KM:
-const customTipo = document.getElementById('mTipoCustom').value;
-
-if (tipo === 'Outro' && !customTipo) {
-    alert("Por favor, descreva o serviço!");
-    return;
-}
-
-    // 2. Validação: só exige KM se NÃO for "Outro"
-    // Se for "Outro" e o KM estiver vazio, o código ignora e pula para o salvamento
-    if (tipo !== 'Outro' && (km === "" || km === null)) {
-        alert("Por favor, preencha o KM!");
-        return; 
-    }
-
-    // 3. O resto do seu código de salvamento continua aqui...
-    // Exemplo:
-    // const mData = document.getElementById('mData').value;
-    // ...
-    
-    console.log("Salvando:", { tipo, km });
-    // Restante da sua lógica original...
-}
-function prepararEditManut(id) {
-    const m = manutencoes.find(x => x.id === id);
-    if(!m) return;
-    editandoManutId = m.id;
-    document.getElementById('mKm').value = m.km;
-    document.getElementById('mData').value = m.data;
-    document.getElementById('mValor').value = m.valor;
-    document.getElementById('mProxKm').value = m.proxKm;
-    document.getElementById('tituloManut').innerText = "Editar Registro de Serviço";
-    document.getElementById('btnCancelarManut').style.display = "inline-block";
-    document.getElementById('formManut').style.display = "block";
-}
-
-function cancelarEditManut() {
-    editandoManutId = null;
-    document.getElementById('tituloManut').innerText = "Registrar Realização de Serviço";
-    document.getElementById('btnCancelarManut').style.display = "none";
-}
-
-function deletarManut(id) {
-    if(confirm("Excluir esta manutenção?")) { manutencoes = manutencoes.filter(m => m.id !== id); salvar(); renderManut(); atualizarPainel(); }
-}
-
-function renderVeiculos() {
-    const lista = document.getElementById('listaVeiculos');
-    lista.innerHTML = veiculos.map(v => `
-        <div class="historico-item">
-            <div>
-                <strong>${v.marca} ${v.modelo}</strong> (${v.ano})<br>
-                <small class="muted">Km de Entrada: ${v.km} km</small>
-            </div>
-            <div class="historico-acoes">
-                <button onclick="prepararEditVeiculo('${v.id}')"><i class="fas fa-edit"></i></button>
-                <button class="del" onclick="deletarVeiculo('${v.id}')"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function addVeiculo() {
-    const tipo = document.getElementById('vTipo').value;
-    const marca = document.getElementById('vMarca').value;
-    const modelo = document.getElementById('vModelo').value;
-    const ano = document.getElementById('vAno').value;
-    const km = parseInt(document.getElementById('vKm').value);
-    const data = document.getElementById('vData').value;
-    if(!marca || !modelo || !km) { alert("Preencha os dados básicos do veículo!"); return; }
-    if(editandoVeiculoId) {
-        veiculos = veiculos.map(v => v.id === editandoVeiculoId ? {id: v.id, tipo, marca, modelo, ano, km, data} : v);
-        editandoVeiculoId = null;
-    } else {
-        const id = (marca + "_" + modelo + "_" + ano).toLowerCase().replace(/ /g, "_");
-        veiculos.push({ id, tipo, marca, modelo, ano, km, data });
-        veiculoAtivoId = id;
-    }
-    salvar(); renderVeiculos(); toggleFormulario('formVeiculo', 'btnToggleVeiculo', '➕ Cadastrar Novo Veículo'); cancelarEditVeiculo(); atualizarPainel();
-}
-
-function prepararEditVeiculo(id) {
-    const v = veiculos.find(x => x.id === id);
-    if(!v) return;
-    editandoVeiculoId = v.id;
-    document.getElementById('vTipo').value = v.tipo;
-    document.getElementById('vMarca').value = v.marca;
-    document.getElementById('vModelo').value = v.modelo;
-    document.getElementById('vAno').value = v.ano;
-    document.getElementById('vKm').value = v.km;
-    document.getElementById('vData').value = v.data || '';
-    document.getElementById('tituloVeiculo').innerText = "Editar Veículo";
-    document.getElementById('btnCancelarVeiculo').style.display = "inline-block";
-    document.getElementById('formVeiculo').style.display = "block";
-}
-
-function cancelarEditVeiculo() {
-    editandoVeiculoId = null;
-    document.getElementById('tituloVeiculo').innerText = "Cadastrar / Editar Veículo";
-    document.getElementById('btnCancelarVeiculo').style.display = "none";
-    document.getElementById('vMarca').value = ''; document.getElementById('vModelo').value = ''; document.getElementById('vAno').value = ''; document.getElementById('vKm').value = ''; document.getElementById('vData').value = '';
-}
-
-function deletarVeiculo(id) {
-    if(veiculos.length <= 1) { alert("Você deve manter pelo menos um veículo cadastrado!"); return; }
-    if(confirm("Deseja deletar permanentemente este veículo e trocar de perfil?")) {
-        veiculos = veiculos.filter(v => v.id !== id);
-        if(veiculoAtivoId === id) veiculoAtivoId = veiculos[0].id;
-        salvar(); renderVeiculos(); atualizarPainel();
-    }
-}
+function calcularOdometroVirtual(v) { if(!v) return 0; const kmBase = v.config.kmBase || 0; const dataBase = new Date(v.config.dataBase); const kmDia = v.config.kmValor || 50; let kmTotal = kmBase; let dataCalc = new Date(dataBase); const agora = new Date(); while (dataCalc < agora) { dataCalc.setDate(dataCalc.getDate() + 1); if (v.config.diasSemana.includes(dataCalc.getDay())) kmTotal += kmDia; } return Math.floor(kmTotal); }
 
 function atualizarPainel() {
-    // 1. Atualizar Odômetro Manual
-    document.getElementById('odometroManual').innerText = `${odometroManual.toLocaleString('pt-BR')} km`;
-    
-    // Alerta de 3 dias para atualizar KM
-    const alerta = document.getElementById('alertaAtualizacao');
-    if (alerta) alerta.style.display = verificarAlertaAtualizacao() ? 'block' : 'none';
+    const v = getVeiculoAtivo(); if(!v) return; renderSelectVeiculo(); const kmVirtual = calcularOdometroVirtual(v);
+    document.getElementById('kmRodados').textContent = kmVirtual.toLocaleString('pt-BR') + ' km';
+    if(v.abast.length >= 2){
+        let totalKm = 0, totalL = 0;
+        for(let i = 1; i < v.abast.length; i++) { totalKm += v.abast[i].km - v.abast[i-1].km; totalL += v.abast[i].litros; }
+        const media = totalL > 0? (totalKm / totalL) : 0;
+        document.getElementById('consumoMedia').textContent = `Consumo: ${media.toFixed(2)} km/L`;
+        const ultimoAbast = v.abast[v.abast.length - 1];
+        document.getElementById('ultimoAbastData').textContent = new Date(ultimoAbast.data).toLocaleDateString('pt-BR');
+        // AQUI MOSTRA VALOR/L TAMBEM
+        document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L - R$ ${ultimoAbast.valorL.toFixed(2)}/L`;
 
-    // 2. Cálculos de Média e Gastos
-    const abastDoVeiculo = abastecimentos.filter(a => a.veiculoId == veiculoAtivoId).sort((a,b) => b.km - a.km);
-    const gastoTotal = abastDoVeiculo.reduce((acc, curr) => acc + (parseFloat(curr.total) || 0), 0);
-    document.getElementById('gastoTotal').innerText = `R$ ${gastoTotal.toFixed(2).replace('.', ',')}`;
-
-    let mediaReal = 0;
-    if (abastDoVeiculo.length >= 2) {
-        const kmRodados = abastDoVeiculo[0].km - abastDoVeiculo[1].km;
-        const litrosConsumidos = parseFloat(abastDoVeiculo[0].litros) || 1;
-        mediaReal = kmRodados / litrosConsumidos;
-        document.getElementById('mediaReal').innerText = `${mediaReal.toFixed(1)} km/l`;
-    } else {
-        document.getElementById('mediaReal').innerText = `0 km/l`;
+        const autonomia = Math.floor(media * v.tanqueL);
+        const proxAbast = ultimoAbast.km + autonomia;
+        document.getElementById('proxAbastKm').textContent = proxAbast.toLocaleString('pt-BR') + ' km';
     }
-
-    // 3. Lógica do Card Vermelho (Abastecimento)
-    const cardAutonomia = document.getElementById('cardAutonomia');
-    if (abastDoVeiculo.length > 0) {
-        const ultimoKm = abastDoVeiculo[0].km;
-        const kmRodados = odometroManual - ultimoKm;
-        const limiteTanque = (parseFloat(abastDoVeiculo[0].litros) * 10); 
-        
-        if (kmRodados > (limiteTanque * 0.9)) {
-            cardAutonomia.style.backgroundColor = 'var(--danger)';
-        } else {
-            cardAutonomia.style.backgroundColor = 'transparent';
-        }
-        document.getElementById('ultimoKmAbast').innerText = `${ultimoKm} km`;
+    const ultimaTroca = v.manut.filter(m => m.tipo.toLowerCase().includes('óleo')).pop();
+    if(ultimaTroca){
+        document.getElementById('ultimaTrocaData').textContent = new Date(ultimaTroca.data).toLocaleDateString('pt-BR');
+        document.getElementById('ultimaTrocaKm').textContent = `KM: ${ultimaTroca.km.toLocaleString('pt-BR')}`;
+        const proxTroca = ultimaTroca.km + (ultimaTroca.proxKm || 5000);
+        document.getElementById('proxTrocaKm').textContent = proxTroca.toLocaleString('pt-BR') + ' km';
+        document.getElementById('proxTrocaFaltam').textContent = `Faltam ${(proxTroca - kmVirtual).toLocaleString('pt-BR')} km`;
     }
+    const hist = [...v.abast.map(a => ({...a, tipo:'abast'})),...v.manut.map(m => ({...m, tipo:'manut'}))].sort((a,b) => new Date(b.data) - new Date(a.data));
+    document.getElementById('listaHistorico').innerHTML = hist.length? hist.map(h => `<div style="border-bottom:1px solid var(--border); padding:10px 0"><b>${h.tipo==='abast'?'Abastecimento':'Manutenção'}</b><br>${h.km.toLocaleString('pt-BR')} km - ${new Date(h.data).toLocaleDateString('pt-BR')} - R$${h.tipo==='abast'?h.total.toFixed(2):h.valor.toFixed(2)}</div>`).join('') : '<p>Nenhum registro</p>';
 }
+function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.nome}</option>`).join(''); }
+function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
 
-// Limpar Tudo
-function limparTudo() {
-    if(confirm("Atenção! Apagar tudo de forma definitiva?")) { localStorage.clear(); location.reload(); }
-}
+function abrirModalVeiculo(){ document.getElementById('modalVeiculo').style.display='flex'; }
+function fecharModalVeiculo(){ document.getElementById('modalVeiculo').style.display='none'; }
+function salvarVeiculo(){ const nome = document.getElementById('vNome').value; if(!nome) return alert('Digite um nome'); const id = 'v'+Date.now(); veiculos.push({id, nome, tanqueL: parseFloat(document.getElementById('vTanque').value) || 6.5, abast:[], manut:[], config:{ kmBase: parseInt(document.getElementById('vKm').value) || 0, dataBase: new Date().toISOString(), kmValor: parseInt(document.getElementById('vKmDia').value) || 50, diasSemana:[1,2,3,4,5,6,0] }}); veiculoAtivoId = id; salvarTudo(); fecharModalVeiculo(); atualizarPainel(); }
 
-// Inicialização
-if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-atualizarSeletorCabecalho();
-atualizarPainel();
+function ajustarOdometro() { const v = getVeiculoAtivo(); const km = prompt('Km real da moto agora?'); if(!km) return; v.config.kmBase = parseInt(km); v.config.dataBase = new Date().toISOString(); salvarTudo(); atualizarPainel(); }
+
+function abrirModalAbast(){ document.getElementById('modalAbast').style.display='flex'; document.getElementById('aData').value=new Date().toISOString().slice(0,10); }
+function fecharModalAbast(){ document.getElementById('modalAbast').style.display='none'; }
+function salvarAbast(){ const v=getVeiculoAtivo(); const obj={id:'a'+Date.now(),data:document.getElementById('aData').value,km:+document.getElementById('aKm').value,litros:+document.getElementById('aLitros').value,valorL:+document.getElementById('aValor').value}; obj.total=obj.litros*obj.valorL; v.abast.push(obj); v.abast.sort((a,b)=>new Date(a.data)-new Date(b.data)); salvarTudo(); fecharModalAbast(); atualizarPainel(); }
+function abrirModalManut(){ document.getElementById('modalManut').style.display='flex'; document.getElementById('mData').value=new Date().toISOString().slice(0,10); }
+function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
+function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
+
+function abrirModalHistorico(){ document.getElementById('modalHistorico').style.display='flex'; }
+function fecharModalHistorico(){ document.getElementById('modalHistorico').style.display='none'; }
+
+document.addEventListener('DOMContentLoaded', () => { if(!veiculos.length) { veiculos.push({id:'v1', nome:'Honda Lead', tanqueL:6.5, abast:[{id:'a1',data:'2026-06-30',km:94208,litros:3.58,valorL:6.079,total:21.76},{id:'a2',data:'2026-07-07',km:94367,litros:3.587,valorL:6.07,total:21.77}], manut:[{id:'m1',data:'2026-06-21',km:94014,tipo:'Troca Óleo',valor:75,proxKm:5000}], config:{kmBase:94367, dataBase:new Date().toISOString(), kmValor:50, diasSemana:[1,2,3,4,5,6,0]}}); veiculoAtivoId = 'v1'; } atualizarPainel(); });
 </script>
+</body>
+</html>
