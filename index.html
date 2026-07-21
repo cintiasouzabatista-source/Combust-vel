@@ -43,6 +43,10 @@ label { font-size: 12px; color: var(--muted); }
 .historico-item:hover { background: rgba(0,0,0,0.1); border-radius: 8px; }
 .total-display { font-weight:700; font-size:18px; color:var(--primary); margin-top:8px }
 .select-wrapper { display:flex; gap:8px; align-items:center }
+    .view { display:none }
+.view.ativa { display:block }
+.nav-btn { width: 25%; } /* era 33% */
+canvas { max-width: 100%; background: var(--bg); border-radius: 12px; padding: 10px; }
 </style>
 </head>
 <body>
@@ -84,11 +88,21 @@ label { font-size: 12px; color: var(--muted); }
 </div>
 
 <nav class="nav-bottom">
-    <button class="nav-btn active"><i class="fas fa-home"></i> Início</button>
-    <button class="nav-btn" onclick="abrirModalHistorico()"><i class="fas fa-list"></i> Histórico</button>
-    <button class="nav-btn" onclick="abrirModalNovoVeiculo()"><i class="fas fa-plus"></i> Novo Veículo</button>
+    <button class="nav-btn active" onclick="trocarView('inicio')"><i class="fas fa-home"></i> Início</button>
+    <button class="nav-btn" onclick="trocarView('graficos')"><i class="fas fa-chart-bar"></i> Gráficos</button>
+    <button class="nav-btn" onclick="trocarView('historico')"><i class="fas fa-list"></i> Histórico</button>
+    <button class="nav-btn" onclick="abrirModalNovoVeiculo()"><i class="fas fa-plus"></i> Novo</button>
 </nav>
-
+<div id="view-graficos" class="view">
+    <div class="card">
+        <h3><i class="fas fa-chart-line"></i> Consumo Médio Mensal</h3>
+        <canvas id="graficoConsumo"></canvas>
+    </div>
+    <div class="card">
+        <h3><i class="fas fa-chart-pie"></i> Gasto por Combustível</h3>
+        <canvas id="graficoCombustivel"></canvas>
+    </div>
+</div>
 <div id="modalNovoVeiculo" class="modal">
   <div class="modal-content">
     <h3><i class="fas fa-plus-circle"></i> Cadastrar Novo Veículo</h3>
@@ -150,13 +164,37 @@ let veiculoAtivoId = localStorage.getItem('veiculoAtivoId_frota_v10') || null;
 let temas = ['dark', 'estrada', 'white'];
 let tema = localStorage.getItem('tema_frota') || 'dark';
 let itemEditando = null;
+let chartConsumo, chartComb;
 
 function aplicarTema() { document.body.className = tema; const icon = document.getElementById('iconTema'); if(tema === 'dark') icon.className = 'fas fa-moon'; if(tema === 'estrada') icon.className = 'fas fa-road'; if(tema === 'white') icon.className = 'fas fa-sun'; }
 function trocarTema() { let index = temas.indexOf(tema); tema = temas[(index + 1) % 3]; localStorage.setItem('tema_frota', tema); aplicarTema(); }
 function getVeiculoAtivo() { if(!veiculoAtivoId && veiculos.length) { veiculoAtivoId = veiculos[0].id; salvarTudo(); } return veiculos.find(v => v.id === veiculoAtivoId) || null; }
 function salvarTudo() { localStorage.setItem('veiculos_frota_v10', JSON.stringify(veiculos)); localStorage.setItem('veiculoAtivoId_frota_v10', veiculoAtivoId); }
-function formatarDataBR(dataStr) { if(!dataStr) return '--/--'; const [ano, mes, dia] = dataStr.split('-'); return `${dia}/${mes}`; }
-
+function salvarAbast(){ 
+    const v=getVeiculoAtivo(); 
+    const obj={
+        id:'a'+Date.now(),
+        data:document.getElementById('aData').value,
+        km:+document.getElementById('aKm').value,
+        combustivel:document.getElementById('aCombustivel').value, // <-- NOVO
+        litros:+document.getElementById('aLitros').value,
+        valorL:+document.getElementById('aValor').value
+    }; 
+    obj.total=obj.litros*obj.valorL; 
+    v.abast.push(obj); 
+    v.abast.sort((a,b)=>a.data.localeCompare(b.data)); 
+    salvarTudo(); 
+    fecharModalAbast(); 
+    atualizarPainel(); 
+}
+    function formatarDataBR(dataStr) { if(!dataStr) return '--/--'; const [ano, mes, dia] = dataStr.split('-'); return `${dia}/${mes}`; }
+function trocarView(nome) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('ativa'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`view-${nome}`).classList.add('ativa');
+    event.target.closest('.nav-btn').classList.add('active');
+    if(nome === 'graficos') renderGraficos();
+}
 function atualizarPainel() {
     const v = getVeiculoAtivo(); if(!v) return; renderSelectVeiculo();
     const kmAtual = v.config.kmBase || 0;
@@ -245,10 +283,18 @@ function excluirVeiculo(){ if(!confirm('Tem certeza?')) return; if(veiculos.leng
 function ajustarOdometro() { const v = getVeiculoAtivo(); const km = prompt('Atualizar KM atual:', v.config.kmBase); if(!km) return; v.config.kmBase = parseInt(km); salvarTudo(); atualizarPainel(); }
 function calcularTotal(){ const litros = parseFloat(document.getElementById('aLitros').value) || 0; const valorL = parseFloat(document.getElementById('aValor').value) || 0; const total = litros * valorL; document.getElementById('aTotal').innerText = `Total: R$ ${total.toFixed(2)}`; }
 function abrirModalAbast(){ document.getElementById('modalAbast').style.display='flex'; document.getElementById('aData').value=new Date().toISOString().slice(0,10); document.getElementById('aTotal').innerText = 'Total: R$ 0,00'; }
-function fecharModalAbast(){ document.getElementById('modalAbast').style.display='none'; }
+<label>Combustível</label>
+<select id="aCombustivel">
+    <option value="Gasolina">Gasolina</option>
+    <option value="Etanol">Etanol</option>
+    <option value="Diesel">Diesel</option>
+    <option value="GNV">GNV</option>
+</select>
+    function fecharModalAbast(){ document.getElementById('modalAbast').style.display='none'; }
 function salvarAbast(){ const v=getVeiculoAtivo(); const obj={id:'a'+Date.now(),data:document.getElementById('aData').value,km:+document.getElementById('aKm').value,litros:+document.getElementById('aLitros').value,valorL:+document.getElementById('aValor').value}; obj.total=obj.litros*obj.valorL; v.abast.push(obj); v.abast.sort((a,b)=>a.data.localeCompare(b.data)); salvarTudo(); fecharModalAbast(); atualizarPainel(); }
 function abrirModalManut(){ document.getElementById('modalManut').style.display='flex'; document.getElementById('mData').value=new Date().toISOString().slice(0,10); }
-function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
+<label>Combustível</label><select id="eCombustivel"><option>Gasolina</option><option>Etanol</option><option>Diesel</option><option>GNV</option></select>
+    function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
 function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
 function abrirModalHistorico(){ document.getElementById('modalHistorico').style.display='flex'; }
 function fecharModalHistorico(){ document.getElementById('modalHistorico').style.display='none'; }
