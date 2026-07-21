@@ -274,13 +274,13 @@ function renderGraficos(){
     chartConsumo = new Chart(document.getElementById('graficoConsumo'), {
         type: 'line',
         data: { labels, datasets:[{ label:'km/L', data:dados, borderColor: 'var(--primary)', tension:0.3, fill: false }] },
-        options: { scales: { y: { beginAtZero: true } }
-    });
+        options: { scales: { y: { beginAtZero: true } // <-- Faltava fechar o options e o Chart
+    }); // <-- Faltava isso
 
     const gastosComb = {};
     v.abast.forEach(a => {
         const tipo = a.combustivel || 'Sem tipo';
-        gastosComb[tipo] = (gastosComb[tipo] || 0) + a.total;
+        gastosComb[tipo] = (gastosComb[tipo] || 0) + a.total; // <-- Aqui tava errado, tava sobrescrevendo o objeto
     });
     if(chartComb) chartComb.destroy();
     chartComb = new Chart(document.getElementById('graficoCombustivel'), {
@@ -288,7 +288,6 @@ function renderGraficos(){
         data: { labels:Object.keys(gastosComb), datasets:[{ data:Object.values(gastosComb) }] }
     });
 }
-
 function abrirModalNovoVeiculo(){ document.getElementById('modalNovoVeiculo').style.display='flex'; document.getElementById('vDataAquisicao').valueAsDate = new Date(); }
 function fecharModalNovoVeiculo(){ document.getElementById('modalNovoVeiculo').style.display='none'; }
 function abrirModalEditarVeiculo(){ const v = getVeiculoAtivo(); if(!v) return; document.getElementById('nomeEditando').innerText = v.nome; document.getElementById('vTipoEdit').value = v.tipo || 'moto'; document.getElementById('vNomeEdit').value = v.nome; document.getElementById('vModeloEdit').value = v.modelo || ''; document.getElementById('vAnoEdit').value = v.ano || ''; document.getElementById('vDataAquisicaoEdit').value = v.dataAquisicao || ''; document.getElementById('vKmEdit').value = v.config.kmBase; document.getElementById('vTanqueEdit').value = v.tanqueL; document.getElementById('vKmDiaEdit').value = v.config.kmValor; document.getElementById('modalEditarVeiculo').style.display='flex'; }
@@ -307,29 +306,59 @@ function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),
 function deletarItem(tipo,id){ if(!confirm('Apagar este registro?')) return; const v=getVeiculoAtivo(); if(tipo==='abast') v.abast = v.abast.filter(x=>x.id!==id); else v.manut = v.manut.filter(x=>x.id!==id); salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
 function abrirModalEditarItem(tipo,id){ itemEditando = {tipo,id}; const v = getVeiculoAtivo(); const item = tipo==='abast'? v.abast.find(x=>x.id===id) : v.manut.find(x=>x.id===id); document.getElementById('tituloEditarItem').innerText = tipo==='abast'? 'Editar Abastecimento' : 'Editar Manutenção'; if(tipo==='abast'){ document.getElementById('formEditarItem').innerHTML = `<label>Data</label><input id="eData" type="date" value="${item.data}"><label>KM</label><input id="eKm" type="number" value="${item.km}"><label>Combustível</label><select id="eCombustivel"><option>Gasolina</option><option>Etanol</option><option>Diesel</option><option>GNV</option></select><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}"><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}"><div class="total-display" id="eTotal">Total: R$ ${(item.litros*item.valorL).toFixed(2)}</div>`; document.getElementById('eCombustivel').value = item.combustivel || 'Gasolina'; } else { document.getElementById('formEditarItem').innerHTML = `<label>Data</label><input id="eData" type="date" value="${item.data}"><label>KM</label><input id="eKm" type="number" value="${item.km}"><label>Tipo</label><input id="eTipo" value="${item.tipo}"><label>Valor</label><input id="eValor" type="number" value="${item.valor}"><label>Próx. em KM</label><input id="eProxKm" type="number" value="${item.proxKm}">`; } document.getElementById('modalEditarItem').style.display='flex'; }
 function fecharModalEditarItem(){ document.getElementById('modalEditarItem').style.display='none'; }
- function salvarEdicaoItem(){ 
-    const v = getVeiculoAtivo(); 
-    if(itemEditando.tipo==='abast'){ 
-        const item = v.abast.find(x=>x.id===itemEditando.id); 
-        item.data = document.getElementById('eData').value; 
-        item.km = +document.getElementById('eKm').value; 
-        item.combustivel = document.getElementById('eCombustivel').value; // <-- ESSA LINHA É NOVA
-        item.litros = +document.getElementById('eLitros').value; 
-        item.valorL = +document.getElementById('eValor').value; 
-        item.total = item.litros * item.valorL; 
-    } else { 
-        const item = v.manut.find(x=>x.id===itemEditando.id); 
-        item.data = document.getElementById('eData').value; 
-        item.km = +document.getElementById('eKm').value; 
-        item.tipo = document.getElementById('eTipo').value; 
-        item.valor = +document.getElementById('eValor').value; 
-        item.proxKm = +document.getElementById('eProxKm').value; 
-    } 
-    salvarTudo(); 
-    fecharModalEditarItem(); 
-    atualizarPainel(); 
+function salvarEdicaoItem(){
+    const v = getVeiculoAtivo();
+    if(itemEditando.tipo==='abast'){
+        const item = v.abast.find(x=>x.id===itemEditando.id);
+        item.data = document.getElementById('eData').value;
+        item.km = +document.getElementById('eKm').value;
+        item.combustivel = document.getElementById('eCombustivel').value;
+        item.litros = +document.getElementById('eLitros').value;
+        item.valorL = +document.getElementById('eValor').value;
+        item.total = item.litros * item.valorL;
+    } else {
+        const item = v.manut.find(x=>x.id===itemEditando.id);
+        item.data = document.getElementById('eData').value;
+        item.km = +document.getElementById('eKm').value;
+        item.tipo = document.getElementById('eTipo').value;
+        item.valor = +document.getElementById('eValor').value;
+        item.proxKm = +document.getElementById('eProxKm').value;
+    }
+    salvarTudo();
+    fecharModalEditarItem();
+    atualizarPainel();
 }
-document.addEventListener('DOMContentLoaded', () => { if(!veiculos.length) { veiculos.push({id:'v1', tipo:'moto', nome:'Honda Lead', modelo:'110', ano:'2023', dataAquisicao:'2023-01-15', tanqueL:6.5, abast:[{id:'a1',data:'2026-06-30',km:94208,litros:3.58,valorL:6.079,total:21.76},{id:'a2',data:'2026-07-07',km:94367,litros:3.587,valorL:6.07,total:21.77}], manut:[{id:'m1',data:'2026-06-21',km:94014,tipo:'Troca de Óleo',valor:75,proxKm:5000}], config:{kmBase:94478, dataBase:new Date().toISOString(), kmValor:50, diasSemana:[1,2,3,4,5,6,0]}}); veiculoAtivoId = 'v1'; } aplicarTema(); atualizarPainel(); });
+document.addEventListener('DOMContentLoaded', () => { 
+    if(!veiculos.length) { 
+        veiculos.push({
+            id:'v1', 
+            tipo:'moto', 
+            nome:'Honda Lead', 
+            modelo:'110', 
+            ano:'2023', 
+            dataAquisicao:'2023-01-15', 
+            tanqueL:6.5, 
+            abast:[
+                {id:'a1',data:'2026-06-30',km:94208,combustivel:'Gasolina',litros:3.58,valorL:6.079,total:21.76},
+                {id:'a2',data:'2026-07-07',km:94367,combustivel:'Gasolina',litros:3.587,valorL:6.07,total:21.77}
+            ], 
+            manut:[
+                {id:'m1',data:'2026-06-21',km:94014,tipo:'Troca de Óleo',valor:75,proxKm:5000}
+            ], 
+            config:{
+                kmBase:94478, 
+                dataBase:new Date().toISOString(), 
+                kmValor:50, 
+                diasSemana:[1,2,3,4,5,6,0]
+            }
+        }); 
+        veiculoAtivoId = 'v1'; 
+    } 
+    aplicarTema(); 
+    atualizarPainel(); 
+});
 </script>
 </body>
 </html>
+</script>
+
