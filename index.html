@@ -50,6 +50,7 @@ canvas { max-width: 100%; background: var(--bg); border-radius: 12px; padding: 1
 </style>
 </head>
 <body>
+    
 <div class="container">
 
 <div id="view-inicio" class="view ativa">
@@ -274,13 +275,13 @@ function renderGraficos(){
     chartConsumo = new Chart(document.getElementById('graficoConsumo'), {
         type: 'line',
         data: { labels, datasets:[{ label:'km/L', data:dados, borderColor: 'var(--primary)', tension:0.3, fill: false }] },
-        options: { scales: { y: { beginAtZero: true } // <-- Faltava fechar o options e o Chart
-    }); // <-- Faltava isso
+        options: { scales: { y: { beginAtZero: true } } }
+    }); // <-- FECHAVA AQUI
 
     const gastosComb = {};
     v.abast.forEach(a => {
         const tipo = a.combustivel || 'Sem tipo';
-        gastosComb[tipo] = (gastosComb[tipo] || 0) + a.total; // <-- Aqui tava errado, tava sobrescrevendo o objeto
+        gastosComb[tipo] = (gastosComb[tipo] || 0) + a.total; // <-- TAVA ERRADO AQUI TAMBÉM
     });
     if(chartComb) chartComb.destroy();
     chartComb = new Chart(document.getElementById('graficoCombustivel'), {
@@ -288,6 +289,7 @@ function renderGraficos(){
         data: { labels:Object.keys(gastosComb), datasets:[{ data:Object.values(gastosComb) }] }
     });
 }
+    
 function abrirModalNovoVeiculo(){ document.getElementById('modalNovoVeiculo').style.display='flex'; document.getElementById('vDataAquisicao').valueAsDate = new Date(); }
 function fecharModalNovoVeiculo(){ document.getElementById('modalNovoVeiculo').style.display='none'; }
 function abrirModalEditarVeiculo(){ const v = getVeiculoAtivo(); if(!v) return; document.getElementById('nomeEditando').innerText = v.nome; document.getElementById('vTipoEdit').value = v.tipo || 'moto'; document.getElementById('vNomeEdit').value = v.nome; document.getElementById('vModeloEdit').value = v.modelo || ''; document.getElementById('vAnoEdit').value = v.ano || ''; document.getElementById('vDataAquisicaoEdit').value = v.dataAquisicao || ''; document.getElementById('vKmEdit').value = v.config.kmBase; document.getElementById('vTanqueEdit').value = v.tanqueL; document.getElementById('vKmDiaEdit').value = v.config.kmValor; document.getElementById('modalEditarVeiculo').style.display='flex'; }
@@ -324,7 +326,7 @@ function salvarEdicaoItem(){
         item.valor = +document.getElementById('eValor').value;
         item.proxKm = +document.getElementById('eProxKm').value;
     }
-    salvarTudo();
+    salvarTudo(); // <-- TAVA CORTADO AQUI
     fecharModalEditarItem();
     atualizarPainel();
 }
