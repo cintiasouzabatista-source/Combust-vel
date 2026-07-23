@@ -207,8 +207,15 @@ function calcularTotal(){ const litros = parseFloat(document.getElementById('aLi
 
 function abrirModalAbast(){ document.getElementById('modalAbast').style.display='flex'; document.getElementById('aData').value=new Date().toISOString().slice(0,10); document.getElementById('aTotal').innerText = 'Total: R$ 0,00'; }
 function fecharModalAbast(){ document.getElementById('modalAbast').style.display='none'; }
-function salvarAbast(){ const v=getVeiculoAtivo(); const obj={id:'a'+Date.now(),data:document.getElementById('aData').value,km:+document.getElementById('aKm').value,litros:+document.getElementById('aLitros').value,valorL:+document.getElementById('aValor').value}; obj.total=obj.litros*obj.valorL; v.abast.push(obj); v.abast.sort((a,b)=>a.data.localeCompare(b.data)); salvarTudo(); fecharModalAbast(); atualizarPainel(); }
-function abrirModalManut(){ document.getElementById('modalManut').style.display='flex'; document.getElementById('mData').value=new Date().toISOString().slice(0,10); }
+function salvarAbast(){
+    const v=getVeiculoAtivo();
+    v.abast.push({id:Date.now(),data:aData.value,km:+aKm.value,combustivel:aCombustivel.value,litros:+aLitros.value,valorL:+aValor.value,total:+aLitros.value*+aValor.value});
+    v.config.kmBase = +aKm.value; // ATUALIZA KM ATUAL
+    salvarTudo();
+    fecharModalAbast();
+    atualizarPainel(); // <- ESSA LINHA É IMPORTANTE
+}
+    function abrirModalManut(){ document.getElementById('modalManut').style.display='flex'; document.getElementById('mData').value=new Date().toISOString().slice(0,10); }
 function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
 function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
 
@@ -221,7 +228,19 @@ function abrirModalEditarItem(tipo,id){ itemEditando = {tipo,id}; const v = getV
 function fecharModalEditarItem(){ document.getElementById('modalEditarItem').style.display='none'; }
 function salvarEdicaoItem(){ const v = getVeiculoAtivo(); if(itemEditando.tipo==='abast'){ const item = v.abast.find(x=>x.id===itemEditando.id); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.litros = +document.getElementById('eLitros').value; item.valorL = +document.getElementById('eValor').value; item.total = item.litros * item.valorL; } else { const item = v.manut.find(x=>x.id===itemEditando.id); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.tipo = document.getElementById('eTipo').value; item.valor = +document.getElementById('eValor').value; item.proxKm = +document.getElementById('eProxKm').value; } salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
 
-document.addEventListener('DOMContentLoaded', () => { if(!veiculos.length) { veiculos.push({id:'v1', tipo:'moto', nome:'Honda Lead', modelo:'110', ano:'2023', dataAquisicao:'2023-01-15', tanqueL:6.5, abast:[], manut:[], config:{kmBase:0, dataBase:new Date().toISOString(), kmValor:50, diasSemana:[1,2,3,4,5,6,0]}}); veiculoAtivoId = 'v1'; } aplicarTema(); atualizarPainel(); });
-</script>
+document.addEventListener('DOMContentLoaded', () => {
+    if(!veiculos.length ||!veiculos.find(v => v.id === veiculoAtivoId)){
+        localStorage.removeItem('veiculoAtivoId_v2'); // limpa o ID antigo
+        veiculoAtivoId = veiculos[0]?.id || null; // pega o primeiro da lista
+    }
+    if(!veiculos.length){
+        // Cria 1 veículo exemplo se tiver zerado
+        veiculos.push({id:Date.now(),nome:'Meu Veículo',tipo:'moto',modelo:'',ano:'',abast:[],manut:[],config:{kmBase:0,dataBase:new Date().toISOString(),kmValor:50,diasSemana:[1,2,3,4,5,6,0]}});
+        veiculoAtivoId=veiculos[0].id;
+    }
+    aplicarTema();
+    atualizarPainel();
+});
+    </script>
 </body>
 </html>
