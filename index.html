@@ -231,13 +231,8 @@ function atualizarPainel() {
     const v = getVeiculoAtivo(); if(!v) return; renderSelectVeiculo();
     const kmAtual = v.config.kmBase || 0;
     document.getElementById('kmRodados').textContent = kmAtual.toLocaleString('pt-BR') + ' km';
-
-    document.getElementById('ultimoAbastData').textContent = '--/--';
-    document.getElementById('ultimoAbastValor').textContent = 'R$ 0';
-    document.getElementById('proxAbastKm').textContent = '-- km';
-    document.getElementById('proxAbastTexto').textContent = 'Em ~150km';
-    document.getElementById('cardProxAbast').classList.remove('alerta-vermelho', 'alerta-amarelo');
-    document.getElementById('consumoMedia').textContent = 'Consumo: -- km/L';
+    const iconeTipo = v.tipo === 'carro'? '<i class="fas fa-car"></i>' : '<i class="fas fa-motorcycle"></i>';
+    document.getElementById('infoVeiculo').innerHTML = `${iconeTipo} ${v.nome} - ${v.modelo || ''} ${v.ano || ''}`;
 
     let media = 0;
     if(v.abast.length >= 2){
@@ -247,15 +242,38 @@ function atualizarPainel() {
         document.getElementById('consumoMedia').textContent = `Consumo: ${media.toFixed(2)} km/L`;
         const ultimoAbast = v.abast[v.abast.length - 1];
         document.getElementById('ultimoAbastData').textContent = formatarDataBR(ultimoAbast.data);
-        document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L ${ultimoAbast.combustivel || ''}`;
-        const proxAbast = ultimoAbast.km + 150;
+        document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L`;
+
+        // NOVA LÓGICA INTELIGENTE
         const kmRodadosAposAbast = kmAtual - ultimoAbast.km;
-        const autonomia = ultimoAbast.litros * media;
-        const kmRestantesTanque = autonomia - kmRodadosAposAbast;
+        const autonomiaTanque = ultimoAbast.litros * media; // Ex: 40L * 12km/L = 480km
+        const kmRestantesTanque = autonomiaTanque - kmRodadosAposAbast; // Quanto falta pra zerar
+        const proxAbast = kmAtual + kmRestantesTanque; // Próximo km pra abastecer
+
         document.getElementById('proxAbastKm').textContent = proxAbast.toLocaleString('pt-BR') + ' km';
+        
         const cardProxAbast = document.getElementById('cardProxAbast');
-        if(kmRestantesTanque <= 10 && kmRestantesTanque > 0){ cardProxAbast.classList.add('alerta-vermelho'); document.getElementById('proxAbastTexto').textContent = `Faltam ~${kmRestantesTanque.toFixed(0)}km no tanque!`; }
+        cardProxAbast.classList.remove('alerta-amarelo', 'alerta-vermelho');
+
+        if(kmRestantesTanque <= 50 && kmRestantesTanque > 10){
+            cardProxAbast.classList.add('alerta-amarelo');
+            document.getElementById('proxAbastTexto').textContent = `Faltam ~${kmRestantesTanque.toFixed(0)}km`;
+        } else if(kmRestantesTanque <= 10 && kmRestantesTanque > 0){
+            cardProxAbast.classList.add('alerta-vermelho');
+            document.getElementById('proxAbastTexto').textContent = `URGENTE! ~${kmRestantesTanque.toFixed(0)}km`;
+        } else if(kmRestantesTanque <= 0){
+            cardProxAbast.classList.add('alerta-vermelho');
+            document.getElementById('proxAbastTexto').textContent = `ABASTEÇA JÁ!`;
+        } else {
+            document.getElementById('proxAbastTexto').textContent = `Autonomia: ~${kmRestantesTanque.toFixed(0)}km`;
+        }
+
+    } else {
+        document.getElementById('consumoMedia').textContent = `Cadastre 2 abastecimentos`;
+        document.getElementById('proxAbastKm').textContent = '-- km';
+        document.getElementById('proxAbastTexto').textContent = `Precisa de histórico`;
     }
+
     const ultimaTroca = v.manut.filter(m => m.tipo.toLowerCase().includes('troca') || m.tipo.toLowerCase().includes('oleo')).pop();
     const cardProxTroca = document.getElementById('cardProxTroca');
     cardProxTroca.classList.remove('alerta-amarelo', 'alerta-vermelho');
@@ -266,46 +284,14 @@ function atualizarPainel() {
         const faltam = proxTroca - kmAtual;
         document.getElementById('proxTrocaKm').textContent = proxTroca.toLocaleString('pt-BR') + ' km';
         document.getElementById('proxTrocaFaltam').textContent = `Faltam ${faltam.toLocaleString('pt-BR')} km`;
-        if(faltam <= 0){ cardProxTroca.classList.add('alerta-vermelho'); document.getElementById('proxTrocaFaltam').textContent = `ATRASADO ${Math.abs(faltam).toLocaleString('pt-BR')} km!`; }
-        else if(faltam <= 200){ cardProxTroca.classList.add('alerta-amarelo'); }
-    } else { document.getElementById('ultimaTrocaData').textContent = '--/--'; document.getElementById('ultimaTrocaKm').textContent = 'KM: -----'; document.getElementById('proxTrocaKm').textContent = '-- km'; document.getElementById('proxTrocaFaltam').textContent = 'Cadastre uma troca'; }
+        if(faltam <= 0){ cardProxTroca.classList.add('alerta-vermelho'); document.getElementById('proxTrocaFaltam').textContent = `ATRASADO ${Math.abs(faltam).toLocaleString('pt-BR')} km!`; } else if(faltam <= 200){ cardProxTroca.classList.add('alerta-amarelo'); }
+    } else {
+        document.getElementById('ultimaTrocaData').textContent = '--/--';
+        document.getElementById('ultimaTrocaKm').textContent = 'KM: -----';
+        document.getElementById('proxTrocaKm').textContent = '-- km';
+        document.getElementById('proxTrocaFaltam').textContent = 'Cadastre uma troca';
+    }
     renderHistorico();
-}
-function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
-function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
-function renderHistorico(){ const v = getVeiculoAtivo(); const hist = [...v.abast.map(a => ({...a, tipo:'abast'})),...v.manut.map(m => ({...m, tipo:'manut'}))].sort((a,b) => b.data.localeCompare(a.data)); document.getElementById('listaHistorico').innerHTML = hist.length? hist.map(h => `<div class="historico-item" onclick="abrirModalEditarItem('${h.tipo}','${h.id}')"><div><b>${h.tipo==='abast'?'⛽ Abastecimento':'🔧 Manutenção'}</b><br>${h.km.toLocaleString('pt-BR')} km - ${formatarDataBR(h.data)}<br><small>${h.tipo==='abast'? `${h.litros}L ${h.combustivel || ''} - R$${h.valorL.toFixed(2)}/L` : h.tipo}</small></div><i class="fas fa-chevron-right" style="color:var(--muted)"></i></div>`).join('') : '<p>Nenhum registro</p>'; }
-
-function renderGraficos(){
-    const v = getVeiculoAtivo(); if(!v) return;
-    const meses = {};
-    v.abast.forEach((a,i) => {
-        if(i===0) return;
-        const mesAno = a.data.slice(0,7);
-        const kmRodado = a.km - v.abast[i-1].km;
-        const consumo = a.litros > 0? kmRodado / a.litros : 0;
-        if(!meses[mesAno]) meses[mesAno] = [];
-        meses[mesAno].push(consumo);
-    });
-    const labels = Object.keys(meses).map(m => m.split('-').reverse().join('/'));
-    const dados = Object.values(meses).map(arr => arr.reduce((a,b)=>a+b,0)/arr.length);
-
-    if(chartConsumo) chartConsumo.destroy();
-    chartConsumo = new Chart(document.getElementById('graficoConsumo'), {
-        type: 'line',
-        data: { labels, datasets:[{ label:'km/L', data:dados, borderColor: 'var(--primary)', tension:0.3, fill: false }] },
-        options: { scales: { y: { beginAtZero: true } } }
-    }); // <-- FECHAVA AQUI
-
-    const gastosComb = {};
-    v.abast.forEach(a => {
-        const tipo = a.combustivel || 'Sem tipo';
-        gastosComb[tipo] = (gastosComb[tipo] || 0) + a.total; // <-- TAVA ERRADO AQUI TAMBÉM
-    });
-    if(chartComb) chartComb.destroy();
-    chartComb = new Chart(document.getElementById('graficoCombustivel'), {
-        type: 'pie',
-        data: { labels:Object.keys(gastosComb), datasets:[{ data:Object.values(gastosComb) }] }
-    });
 }
     
 function abrirModalNovoVeiculo(){ document.getElementById('modalNovoVeiculo').style.display='flex'; document.getElementById('vDataAquisicao').valueAsDate = new Date(); }
