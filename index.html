@@ -128,8 +128,9 @@ function atualizarPainel() {
         document.getElementById('consumoMedia').textContent = `Consumo: ${media.toFixed(2)} km/L`;
         const ultimoAbast = v.abast[v.abast.length - 1];
         document.getElementById('ultimoAbastData').textContent = formatarDataBR(ultimoAbast.data);
-        document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L`;
+        document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L - ${ultimoAbast.combustivel}`;
 
+        // LÓGICA INTELIGENTE DE AUTONOMIA
         const kmRodadosAposAbast = kmAtual - ultimoAbast.km;
         const autonomiaTanque = ultimoAbast.litros * media;
         const kmRestantesTanque = autonomiaTanque - kmRodadosAposAbast;
@@ -152,6 +153,7 @@ function atualizarPainel() {
         } else {
             document.getElementById('proxAbastTexto').textContent = `Autonomia: ~${kmRestantesTanque.toFixed(0)}km`;
         }
+
     } else {
         document.getElementById('consumoMedia').textContent = `Cadastre 2 abastecimentos`;
         document.getElementById('proxAbastKm').textContent = '-- km';
