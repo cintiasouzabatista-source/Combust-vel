@@ -121,23 +121,25 @@ function atualizarPainel() {
     document.getElementById('infoVeiculo').innerHTML = `${iconeTipo} ${v.nome} - ${v.modelo || ''} ${v.ano || ''}`;
 
     let media = 0;
-    if(v.abast.length >= 2){
-        let totalKm = 0, totalL = 0;
-        for(let i = 1; i < v.abast.length; i++) { totalKm += v.abast[i].km - v.abast[i-1].km; totalL += v.abast[i].litros; }
-        media = totalL > 0? (totalKm / totalL) : 0;
-        document.getElementById('consumoMedia').textContent = `Consumo: ${media.toFixed(2)} km/L`;
+ if(v.abast.length >= 1){
         const ultimoAbast = v.abast[v.abast.length - 1];
         document.getElementById('ultimoAbastData').textContent = formatarDataBR(ultimoAbast.data);
         document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L - ${ultimoAbast.combustivel}`;
 
-        // LÓGICA INTELIGENTE DE AUTONOMIA
-        const kmRodadosAposAbast = kmAtual - ultimoAbast.km;
-        const autonomiaTanque = ultimoAbast.litros * media;
-        const kmRestantesTanque = autonomiaTanque - kmRodadosAposAbast;
-        const proxAbast = kmAtual + kmRestantesTanque;
+        let media = 0;
+        if(v.abast.length >= 2){
+            let totalKm = 0, totalL = 0;
+            for(let i = 1; i < v.abast.length; i++) { totalKm += v.abast[i].km - v.abast[i-1].km; totalL += v.abast[i].litros; }
+            media = totalL > 0? (totalKm / totalL) : 0;
+            document.getElementById('consumoMedia').textContent = `Consumo: ${media.toFixed(2)} km/L`;
 
-        document.getElementById('proxAbastKm').textContent = proxAbast.toLocaleString('pt-BR') + ' km';
-
+      // LÓGICA INTELIGENTE SÓ COM 2+
+            const kmRodadosAposAbast = kmAtual - ultimoAbast.km;
+            const autonomiaTanque = ultimoAbast.litros * media;
+            const kmRestantesTanque = autonomiaTanque - kmRodadosAposAbast;
+            const proxAbast = kmAtual + kmRestantesTanque;
+            document.getElementById('proxAbastKm').textContent = proxAbast.toLocaleString('pt-BR') + ' km';
+        
         const cardProxAbast = document.getElementById('cardProxAbast');
         cardProxAbast.classList.remove('alerta-amarelo', 'alerta-vermelho');
 
@@ -178,6 +180,11 @@ function atualizarPainel() {
         document.getElementById('proxTrocaFaltam').textContent = 'Cadastre uma troca';
     }
     renderHistorico();
+}
+    function formatarDataBR(data) {
+    if(!data) return '--/--';
+    const d = new Date(data + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR');
 }
 function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
 function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
