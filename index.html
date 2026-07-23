@@ -142,8 +142,8 @@ canvas { max-width: 100%; background: var(--bg); border-radius: 12px; padding: 1
       <div><label>Modelo</label><input id="vModelo" placeholder="110"></div>
       <div style="grid-column: 1 / -1;"><label>Data de Aquisição</label><input id="vDataAquisicao" type="date"></div>
       <div><label>KM Atual</label><input id="vKm" type="number" placeholder="0"></div>
-      <div><label>Tanque L</label><input id="vTanque" type="number" value="6.5"></div>
-      <div><label>KM/Dia</label><input id="vKmDia" type="number" value="50"></div>
+      <div><label>Tanque L</label><input id="vTanque" type="number" value="0"></div>
+      <div><label>KM/Dia</label><input id="vKmDia" type="number" value="0"></div>
     </div>
     <div class="modal-actions">
       <button onclick="fecharModalNovoVeiculo()" class="btn-icon">Cancelar</button>
@@ -198,16 +198,16 @@ canvas { max-width: 100%; background: var(--bg); border-radius: 12px; padding: 1
 
 <script>
 function migrarDados() {
-  let antigo = localStorage.getItem('frotaDbV10');
-  if(antigo &&!localStorage.getItem('veiculos_frota_v10')) {
-    localStorage.setItem('veiculos_frota_v10', antigo);
-    localStorage.removeItem('frotaDbV10');
+  let antigo = localStorage.getItem('frotaDbV8');
+  if(antigo &&!localStorage.getItem('veiculos_frota_v8)) {
+    localStorage.setItem('veiculos_frota_v8', antigo);
+    localStorage.removeItem('frotaDbV8');
   }
 }
 migrarDados();
 
-let veiculos = JSON.parse(localStorage.getItem('veiculos_frota_v10') || '[]');
-let veiculoAtivoId = localStorage.getItem('veiculoAtivoId_frota_v10') || null;
+let veiculos = JSON.parse(localStorage.getItem('veiculos_frota_v8') || '[]');
+let veiculoAtivoId = localStorage.getItem('veiculoAtivoId_frota_v8') || null;
 let temas = ['dark', 'estrada', 'white'];
 let tema = localStorage.getItem('tema_frota') || 'dark';
 let itemEditando = null;
@@ -216,7 +216,7 @@ let chartConsumo, chartComb;
 function aplicarTema() { document.body.className = tema; const icon = document.getElementById('iconTema'); if(tema === 'dark') icon.className = 'fas fa-moon'; if(tema === 'estrada') icon.className = 'fas fa-road'; if(tema === 'white') icon.className = 'fas fa-sun'; }
 function trocarTema() { let index = temas.indexOf(tema); tema = temas[(index + 1) % 3]; localStorage.setItem('tema_frota', tema); aplicarTema(); }
 function getVeiculoAtivo() { if(!veiculoAtivoId && veiculos.length) { veiculoAtivoId = veiculos[0].id; salvarTudo(); } return veiculos.find(v => v.id === veiculoAtivoId) || null; }
-function salvarTudo() { localStorage.setItem('veiculos_frota_v10', JSON.stringify(veiculos)); localStorage.setItem('veiculoAtivoId_frota_v10', veiculoAtivoId); }
+function salvarTudo() { localStorage.setItem('veiculos_frota_v8', JSON.stringify(veiculos)); localStorage.setItem('veiculoAtivoId_frota_v8', veiculoAtivoId); }
 function formatarDataBR(dataStr) { if(!dataStr) return '--/--'; const [ano, mes, dia] = dataStr.split('-'); return `${dia}/${mes}`; }
 
 function trocarView(nome) {
