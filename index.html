@@ -115,8 +115,27 @@ input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px sol
 <div id="modalManut" class="modal"><div class="modal-content"><h3>Nova Manutenção</h3><label>Data</label><input id="mData" type="date"><label>KM</label><input id="mKm" type="number"><label>Tipo</label><input id="mTipo" placeholder="Ex: Troca de Óleo"><label>Valor</label><input id="mValor" type="number"><label>Próx. em KM</label><input id="mProxKm" type="number" value="5000"><div class="modal-actions"><button onclick="fecharModalManut()" class="btn-icon">Cancelar</button><button onclick="salvarManut()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
 
 <script>
+// Sistema de migração automática para resgatar dados antigos (v8, v12, etc) para a v13
 const CHAVE_STORAGE = 'veiculos_frota_v13';
 const CHAVE_ATIVO = 'veiculoAtivoId_frota_v13';
+
+if (!localStorage.getItem(CHAVE_STORAGE)) {
+    for (let i = 0; i < localStorage.length; i++) {
+        let chave = localStorage.key(i);
+        if (chave.includes('veiculos_frota') && chave !== CHAVE_STORAGE) {
+            let dadosAntigos = localStorage.getItem(chave);
+            if (dadosAntigos) {
+                localStorage.setItem(CHAVE_STORAGE, dadosAntigos);
+                let versaoStr = chave.replace('veiculos_frota_', '');
+                let ativoAntigo = localStorage.getItem('veiculoAtivoId_frota_' + versaoStr);
+                if (ativoAntigo) {
+                    localStorage.setItem(CHAVE_ATIVO, ativoAntigo);
+                }
+                break;
+            }
+        }
+    }
+}
 
 let veiculos = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
 let veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
@@ -340,31 +359,32 @@ document.addEventListener('touchend', e => {
 });
 
 function tratarSwipe() {
-    const limiteSwipe = 70; // Mínimo de pixels para considerar um gesto
+    const limiteSwipe = 70;
     const diff = toqueXFim - toqueXInicio;
 
     if (Math.abs(diff) > limiteSwipe) {
         const abaInicioAtiva = document.getElementById('viewInicio').classList.contains('active');
         const abaGraficosAtiva = document.getElementById('viewGraficos').classList.contains('active');
 
-        // Se arrastar para a esquerda (ir para Gráficos)
         if (diff < 0 && abaInicioAtiva) {
             mudarAba('Graficos', document.getElementById('btnNavGraficos'));
-        }
-        // Se arrastar para a direita (ir para Início)
-        else if (diff > 0 && abaGraficosAtiva) {
+        } else if (diff > 0 && abaGraficosAtiva) {
             mudarAba('Inicio', document.getElementById('btnNavInicio'));
         }
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    veiculos = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
+    veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
+
     if(!veiculos.length || !veiculos.find(v => v.id === veiculoAtivoId)){
         veiculoAtivoId = veiculos[0]?.id || null;
     }
     if(!veiculos.length){
         veiculos.push({id:Date.now(),nome:'Meu Veículo',tipo:'moto',modelo:'',ano:'',abast:[],manut:[],config:{kmBase:0,dataBase:new Date().toISOString(),kmValor:50,diasSemana:[1,2,3,4,5,6,0]}});
         veiculoAtivoId=veiculos[0].id;
+        salvarTudo();
     }
     aplicarTema();
     atualizarPainel();
