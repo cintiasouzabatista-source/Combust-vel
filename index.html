@@ -581,6 +581,17 @@ document.addEventListener('DOMContentLoaded', () => {
     aplicarTema();
     atualizarPainel();
 });
+    // Ouve alterações no localStorage feitas em outras abas ou instâncias
+window.addEventListener('storage', (event) => {
+    if (event.key === CHAVE_STORAGE || event.key === CHAVE_ATIVO) {
+        // Recarrega os dados da memória local
+        veiculos = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
+        veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
+        
+        // Atualiza a interface instantaneamente
+        atualizarPainel();
+    }
+});
 </script>
 </body>
 </html>
