@@ -72,6 +72,11 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 .doc-info i { font-size: 22px; color: var(--danger); flex-shrink: 0; }
 .doc-info div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
 .doc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* Estilho Moderno para Gráficos em Barras Horizontais Customizadas */
+.chart-horiz-row { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; height: 38px; position: relative; }
+.chart-horiz-bar { background: var(--primary); height: 100%; display: flex; align-items: center; padding: 0 10px; color: #fff; font-weight: 700; font-size: 12px; transition: width 0.4s ease; white-space: nowrap; gap: 6px; }
+.chart-horiz-info { position: absolute; right: 12px; font-size: 12px; color: var(--muted); font-weight: 600; z-index: 2; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -117,12 +122,12 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
     <!-- ABA GRÁFICOS -->
     <div id="viewGraficos" class="view-section">
         <div class="card">
-            <h3 style="margin-bottom: 12px; font-size: 16px;"><i class="fas fa-chart-line"></i> Histórico de Consumo (km/L)</h3>
-            <canvas id="graficoConsumo" style="max-height: 220px;"></canvas>
+            <h3 style="margin-bottom: 12px; font-size: 15px;"><i class="fas fa-chart-line"></i> Eficiência de Consumo (km/L por Abastecimento)</h3>
+            <div id="containerGraficoConsumo"></div>
         </div>
         <div class="card">
-            <h3 style="margin-bottom: 12px; font-size: 16px;"><i class="fas fa-chart-bar"></i> Gastos com Abastecimentos (R$)</h3>
-            <canvas id="graficoGastos" style="max-height: 220px;"></canvas>
+            <h3 style="margin-bottom: 12px; font-size: 15px;"><i class="fas fa-chart-bar"></i> Gastos por Abastecimento (R$)</h3>
+            <div id="containerGraficoGastos"></div>
         </div>
     </div>
 </div>
@@ -233,9 +238,9 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 
 <div id="modalConfig" class="modal">
     <div class="modal-content">
-        <h3 style="margin-bottom: 10px;"><i class="fas fa-cog"></i> Configurações & Ajustes</h3>
+        <h3 style="margin-bottom: 12px;"><i class="fas fa-cog"></i> Configurações & Ajustes</h3>
         <button class="btn-icon" style="width:100%; margin-bottom:8px;" onclick="exportarBackup()"><i class="fas fa-download"></i> Baixar Backup (JSON)</button>
-        <label class="btn-icon" style="width:100%; margin-bottom:8px;"  cursor:pointer;"><i class="fas fa-upload"></i> Restaurar Backup <input type="file" id="fileBackup" style="display:none" onchange="importarBackup(event)"></label>
+        <label class="btn-icon" style="margin-bottom:12px; cursor:pointer;"><i class="fas fa-upload"></i> Restaurar Backup <input type="file" id="fileBackup" style="display:none" onchange="importarBackup(event)"></label>
         <hr style="border-color:var(--border); margin:12px 0;">
         <button class="btn-icon btn-danger" style="width:100%;" onclick="resetarApp()"><i class="fas fa-trash-alt"></i> Resetar / Limpar Tudo</button>
         <div class="modal-actions" style="margin-top:14px;"><button onclick="fecharModalConfig()" class="btn-icon" style="width:100%;">Fechar</button></div>
@@ -274,7 +279,6 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 const CHAVE_STORAGE = 'veiculos_frota_v15_2';
 const CHAVE_ATIVO = 'veiculoAtivoId_frota_v15_2';
 
-// Rotina inteligente para resgatar dados salvos em QUALQUER versão anterior do app
 function recuperarDadosAntigos() {
     let dadosSalvos = localStorage.getItem(CHAVE_STORAGE);
     if (dadosSalvos) return;
@@ -303,8 +307,6 @@ let veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
 let temas = ['dark', 'estrada', 'white'];
 let tema = localStorage.getItem('tema_frota') || 'dark';
 let itemEditando = null;
-let chartConsumo = null;
-let chartGastos = null;
 
 function aplicarTema() { document.body.className = tema; const icon = document.getElementById('iconTema'); if(tema === 'dark') icon.className = 'fas fa-moon'; if(tema === 'estrada') icon.className = 'fas fa-road'; if(tema === 'white') icon.className = 'fas fa-sun'; }
 function trocarTema() { let index = temas.indexOf(tema); tema = temas[(index + 1) % 3]; localStorage.setItem('tema_frota', tema); aplicarTema(); }
@@ -424,34 +426,58 @@ function atualizarPainel() {
 function renderizarGraficos() {
     const v = getVeiculoAtivo(); if(!v) return;
     const abastOrdenados = [...v.abast].sort((a,b) => a.data.localeCompare(b.data));
-    const labels = abastOrdenados.map(a => formatarDataCurta(a.data));
-    const gastos = abastOrdenados.map(a => a.total);
+    
+    if(abastOrdenados.length === 0) {
+        document.getElementById('containerGraficoConsumo').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
+        document.getElementById('containerGraficoGastos').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
+        return;
+    }
 
+    // 1. Gráfico de Consumo (km/L) em barras horizontais
     let consumos = [];
     for(let i = 0; i < abastOrdenados.length; i++) {
         if(i === 0) consumos.push(0);
         else {
             let kmRodados = abastOrdenados[i].km - abastOrdenados[i-1].km;
             let litros = abastOrdenados[i].litros;
-            consumos.push(litros > 0 ? (kmRodados / litros).toFixed(2) : 0);
+            consumos.push(litros > 0 ? parseFloat((kmRodados / litros).toFixed(2)) : 0);
         }
     }
-
-    const ctxConsumo = document.getElementById('graficoConsumo').getContext('2d');
-    if(chartConsumo) chartConsumo.destroy();
-    chartConsumo = new Chart(ctxConsumo, {
-        type: 'line',
-        data: { labels: labels, datasets: [{ label: 'km/L', data: consumos, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 2, fill: true, tension: 0.2 }] },
-        options: { responsive: true, maintainAspectRatio: false }
+    const maxConsumo = Math.max(...consumos, 10);
+    
+    let htmlConsumo = '';
+    abastOrdenados.forEach((a, idx) => {
+        const val = consumos[idx];
+        const pct = Math.min(Math.max((val / maxConsumo) * 100, 5), 100);
+        htmlConsumo += `
+            <div class="chart-horiz-row">
+                <div class="chart-horiz-bar" style="width: ${pct}%">
+                    <i class="fas fa-road"></i> ${formatarDataCurta(a.data)}
+                </div>
+                <div class="chart-horiz-info">${val > 0 ? val + ' km/L' : 'Inicial'}</div>
+            </div>
+        `;
     });
+    document.getElementById('containerGraficoConsumo').innerHTML = htmlConsumo;
 
-    const ctxGastos = document.getElementById('graficoGastos').getContext('2d');
-    if(chartGastos) chartGastos.destroy();
-    chartGastos = new Chart(ctxGastos, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Valor (R$)', data: gastos, backgroundColor: '#ea580c', borderWidth: 1 }] },
-        options: { responsive: true, maintainAspectRatio: false }
+    // 2. Gráfico de Gastos (R$) em barras horizontais
+    const gastos = abastOrdenados.map(a => a.total);
+    const maxGasto = Math.max(...gastos, 50);
+
+    let htmlGastos = '';
+    abastOrdenados.forEach((a, idx) => {
+        const val = gastos[idx];
+        const pct = Math.min(Math.max((val / maxGasto) * 100, 5), 100);
+        htmlGastos += `
+            <div class="chart-horiz-row">
+                <div class="chart-horiz-bar" style="width: ${pct}%; background: #ea580c;">
+                    <i class="fas fa-gas-pump"></i> ${formatarDataCurta(a.data)}
+                </div>
+                <div class="chart-horiz-info">R$ ${val.toFixed(2)}</div>
+            </div>
+        `;
     });
+    document.getElementById('containerGraficoGastos').innerHTML = htmlGastos;
 }
 
 function adicionarPdf() {
