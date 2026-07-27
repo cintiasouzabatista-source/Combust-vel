@@ -38,14 +38,20 @@ input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px sol
 @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; }
-.nav-btn { background: none; border: none; color: var(--muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 25%; }
+.nav-btn { background: none; border: none; color: var(--muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 20%; }
 .nav-btn.active { color: var(--primary); }
 .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:100 }
 .modal-content { background:var(--card); padding:20px; border-radius:16px; width:90%; max-width:500px; max-height:90vh; overflow-y:auto }
 .modal-actions { display:flex; gap:8px; margin-top:12px }
-.tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap: wrap; }
-.tab { flex:1; padding:8px; border-radius:8px; background:var(--bg); border:1px solid var(--border); cursor:pointer; text-align:center; font-size: 13px; }
-.tab.active { background:var(--primary); color:#fff }
+
+/* Estilização das Sanfonas (Acordions) para Encolher/Estender */
+.accordion-grupo { margin-bottom: 10px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.accordion-header { padding: 12px 16px; background: var(--card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; color: var(--text); user-select: none; }
+.accordion-header:hover { color: var(--primary); }
+.accordion-body { padding: 16px; display: none; border-top: 1px solid var(--border); }
+.accordion-grupo.aberto .accordion-body { display: block; }
+.accordion-grupo.aberto .accordion-header { background: var(--primary); color: #fff; }
+
 .historico-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor:pointer; transition: 0.2s; }
 .historico-item:hover { border-color: var(--primary); }
 .historico-resumo { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
@@ -58,7 +64,6 @@ input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px sol
 </head>
 <body>
 
-<!-- Container para exibir notificações em banner -->
 <div id="containerNotificacoes"></div>
 
 <div class="container">
@@ -114,56 +119,88 @@ input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px sol
     <button class="nav-btn active" onclick="mudarAba('Inicio', this)" id="btnNavInicio"><i class="fas fa-home"></i> Início</button>
     <button class="nav-btn" onclick="mudarAba('Graficos', this)" id="btnNavGraficos"><i class="fas fa-chart-pie"></i> Gráficos</button>
     <button class="nav-btn" onclick="abrirModalHistorico()"><i class="fas fa-list"></i> Histórico</button>
-    <button class="nav-btn" onclick="abrirModalVeiculo()"><i class="fas fa-motorcycle"></i> Veículo</button>
+    <button class="nav-btn" onclick="abrirModalVeiculo()"><i class="fas fa-motorcycle"></i> Veículos</button>
+    <button class="nav-btn" onclick="abrirModalConfig()"><i class="fas fa-cog"></i> Ajustes</button>
 </nav>
 
 <!-- MODAIS -->
 <div id="modalKm" class="modal"><div class="modal-content"><h3>Atualizar KM</h3><label>KM Atual</label><input id="kmInput" type="number"><div class="modal-actions"><button onclick="fecharModalKm()" class="btn-icon">Cancelar</button><button onclick="salvarKm()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
 
+<!-- MODAL 1: CADASTRAR E GERENCIAR VEÍCULOS (Com Sanfona Expansível) -->
 <div id="modalVeiculo" class="modal">
     <div class="modal-content">
-        <h3><i class="fas fa-motorcycle"></i> Gerenciar Veículo & Dados</h3>
-        <div class="tabs">
-            <div class="tab active" onclick="mudarTabVeiculo('novo')">Novo</div>
-            <div class="tab" onclick="mudarTabVeiculo('editar')">Editar</div>
-            <div class="tab" onclick="mudarTabVeiculo('excluir')">Excluir</div>
-            <div class="tab" onclick="mudarTabVeiculo('backup')">Backup/Reset</div>
+        <h3 style="margin-bottom: 12px;"><i class="fas fa-motorcycle"></i> Gerenciar Veículos</h3>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">Clique nas opções abaixo para abrir ou fechar:</p>
+        
+        <!-- Acordion: Novo Veículo -->
+        <div class="accordion-grupo aberto" id="accNovo">
+            <div class="accordion-header" onclick="alternarAccordion('accNovo')">
+                <span><i class="fas fa-plus-circle"></i> Cadastrar Novo Veículo</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="accordion-body">
+                <label>Tipo</label><select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select>
+                <label>Nome</label><input id="vNome">
+                <label>Modelo</label><input id="vModelo">
+                <label>Ano</label><input id="vAno" type="number">
+                <label>Data de Aquisição</label><input id="vDataAquisicao" type="date">
+                <label>KM Atual</label><input id="vKm" type="number">
+                <label>Tanque L</label><input id="vTanque" type="number" value="6.5">
+                <label>KM/Dia</label><input id="vKmDia" type="number" value="50">
+                <div class="modal-actions"><button onclick="salvarVeiculo()" class="btn-icon" style="background:var(--primary); color:#fff; width:100%;">Salvar Novo Veículo</button></div>
+            </div>
         </div>
-        <div id="tabNovo">
-            <label>Tipo</label><select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select>
-            <label>Nome</label><input id="vNome">
-            <label>Modelo</label><input id="vModelo">
-            <label>Ano</label><input id="vAno" type="number">
-            <label>Data de Aquisição</label><input id="vDataAquisicao" type="date">
-            <label>KM Atual</label><input id="vKm" type="number">
-            <label>Tanque L</label><input id="vTanque" type="number" value="6.5">
-            <label>KM/Dia</label><input id="vKmDia" type="number" value="50">
-            <div class="modal-actions"><button onclick="fecharModalVeiculo()" class="btn-icon">Cancelar</button><button onclick="salvarVeiculo()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div>
+
+        <!-- Acordion: Editar Veículo -->
+        <div class="accordion-grupo" id="accEditar">
+            <div class="accordion-header" onclick="alternarAccordion('accEditar')">
+                <span><i class="fas fa-edit"></i> Editar Veículo Atual (<span id="nomeEditandoTitulo"></span>)</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="accordion-body">
+                <label>Tipo</label><select id="vTipoEdit"><option value="moto">Moto</option><option value="carro">Carro</option></select>
+                <label>Nome</label><input id="vNomeEdit">
+                <label>Modelo</label><input id="vModeloEdit">
+                <label>Ano</label><input id="vAnoEdit" type="number">
+                <label>Data de Aquisição</label><input id="vDataAquisicaoEdit" type="date">
+                <label>KM Atual</label><input id="vKmEdit" type="number">
+                <label>Tanque L</label><input id="vTanqueEdit" type="number">
+                <label>KM/Dia</label><input id="vKmDiaEdit" type="number">
+                <div class="modal-actions"><button onclick="atualizarVeiculo()" class="btn-icon" style="background:var(--primary); color:#fff; width:100%;">Atualizar Veículo</button></div>
+            </div>
         </div>
-        <div id="tabEditar" style="display:none">
-            <p>Editando: <b id="nomeEditando"></b></p>
-            <label>Tipo</label><select id="vTipoEdit"><option value="moto">Moto</option><option value="carro">Carro</option></select>
-            <label>Nome</label><input id="vNomeEdit">
-            <label>Modelo</label><input id="vModeloEdit">
-            <label>Ano</label><input id="vAnoEdit" type="number">
-            <label>Data de Aquisição</label><input id="vDataAquisicaoEdit" type="date">
-            <label>KM Atual</label><input id="vKmEdit" type="number">
-            <label>Tanque L</label><input id="vTanqueEdit" type="number">
-            <label>KM/Dia</label><input id="vKmDiaEdit" type="number">
-            <div class="modal-actions"><button onclick="fecharModalVeiculo()" class="btn-icon">Cancelar</button><button onclick="atualizarVeiculo()" class="btn-icon" style="background:var(--primary); color:#fff">Atualizar</button></div>
+
+        <!-- Acordion: Excluir Veículo -->
+        <div class="accordion-grupo" id="accExcluir">
+            <div class="accordion-header" onclick="alternarAccordion('accExcluir')">
+                <span><i class="fas fa-trash-alt"></i> Excluir Veículo Atual</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="accordion-body">
+                <p style="font-size:13px; margin-bottom:10px;">Tem certeza que deseja excluir permanentemente o veículo <b id="nomeExcluir"></b>?</p>
+                <button onclick="excluirVeiculo()" class="btn-icon btn-danger" style="width:100%;">Excluir Veículo</button>
+            </div>
         </div>
-        <div id="tabExcluir" style="display:none">
-            <p>Excluir <b id="nomeExcluir"></b>?</p>
-            <div class="modal-actions"><button onclick="fecharModalVeiculo()" class="btn-icon">Cancelar</button><button onclick="excluirVeiculo()" class="btn-icon btn-danger">Excluir</button></div>
-        </div>
-        <div id="tabBackup" style="display:none">
-            <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">Faça backup ou restaure seus dados para não perder nada.</p>
-            <button class="btn-icon" style="width:100%; margin-bottom:8px;" onclick="exportarBackup()"><i class="fas fa-download"></i> Baixar Backup (JSON)</button>
-            <label class="btn-icon" style="display:block; text-align:center; width:100%; cursor:pointer; margin-bottom:12px;"><i class="fas fa-upload"></i> Restaurar Backup <input type="file" id="fileBackup" style="display:none" onchange="importarBackup(event)"></label>
-            <hr style="border-color:var(--border); margin:12px 0;">
-            <button class="btn-icon btn-danger" style="width:100%;" onclick="resetarApp()"><i class="fas fa-trash-alt"></i> Resetar / Limpar Tudo</button>
-            <div class="modal-actions"><button onclick="fecharModalVeiculo()" class="btn-icon" style="width:100%;">Fechar</button></div>
-        </div>
+
+        <div class="modal-actions" style="margin-top:16px;"><button onclick="fecharModalVeiculo()" class="btn-icon" style="width:100%;">Fechar</button></div>
+    </div>
+</div>
+
+<!-- MODAL 2: AJUSTES, BACKUP E RESET (Separado dos Veículos) -->
+<div id="modalConfig" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 12px;"><i class="fas fa-cog"></i> Configurações & Backup</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Gerencie seus dados e realize cópias de segurança.</p>
+        
+        <button class="btn-icon" style="width:100%; margin-bottom:10px;" onclick="exportarBackup()"><i class="fas fa-download"></i> Baixar Backup (JSON)</button>
+        
+        <label class="btn-icon" style="display:block; text-align:center; width:100%; cursor:pointer; margin-bottom:14px;"><i class="fas fa-upload"></i> Restaurar Backup <input type="file" id="fileBackup" style="display:none" onchange="importarBackup(event)"></label>
+        
+        <hr style="border-color:var(--border); margin:14px 0;">
+        
+        <button class="btn-icon btn-danger" style="width:100%;" onclick="resetarApp()"><i class="fas fa-trash-alt"></i> Resetar / Limpar Tudo</button>
+        
+        <div class="modal-actions" style="margin-top:16px;"><button onclick="fecharModalConfig()" class="btn-icon" style="width:100%;">Fechar</button></div>
     </div>
 </div>
 
@@ -213,7 +250,6 @@ function salvarTudo() { localStorage.setItem(CHAVE_STORAGE, JSON.stringify(veicu
 function formatarDataBR(dataStr) { if(!dataStr) return '--/--'; const [ano, mes, dia] = dataStr.split('-'); return `${dia}/${mes}/${ano}`; }
 function formatarDataCurta(dataStr) { if(!dataStr) return '--/--'; const [ano, mes, dia] = dataStr.split('-'); return `${dia}/${mes}`; }
 
-// Função para exibir Notificação Flutuante no App
 function dispararNotificacao(titulo, mensagem, tipo = 'amarelo') {
     const container = document.getElementById('containerNotificacoes');
     const toast = document.createElement('div');
@@ -226,11 +262,7 @@ function dispararNotificacao(titulo, mensagem, tipo = 'amarelo') {
         <button class="toast-fechar" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
     `;
     container.appendChild(toast);
-    
-    // Auto-remover após 6 segundos
-    setTimeout(() => {
-        if(toast.parentElement) toast.remove();
-    }, 6000);
+    setTimeout(() => { if(toast.parentElement) toast.remove(); }, 6000);
 }
 
 function mudarAba(nomeAba, el) {
@@ -415,17 +447,24 @@ function toggleExpandirHistorico(el) {
     el.classList.toggle('expandido');
 }
 
-function abrirModalVeiculo(){ mudarTabVeiculo('novo'); document.getElementById('modalVeiculo').style.display='flex'; }
-function fecharModalVeiculo(){ document.getElementById('modalVeiculo').style.display='none'; }
-function mudarTabVeiculo(tab){ 
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); 
-    document.querySelectorAll('#tabNovo, #tabEditar, #tabExcluir, #tabBackup').forEach(d => d.style.display='none'); 
-    document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block'; 
-    event && event.currentTarget && event.currentTarget.classList.add('active');
+/* Funções de Abrir/Fechar Sanfonas (Acordions) */
+function alternarAccordion(id) {
+    const el = document.getElementById(id);
+    const estaAberto = el.classList.contains('aberto');
     
-    const v = getVeiculoAtivo(); 
-    if(tab==='editar' && v){ 
-        document.getElementById('nomeEditando').innerText = v.nome; 
+    // Fecha todos os outros para manter limpo (opcional, remova se quiser deixar múltiplos abertos ao mesmo tempo)
+    document.querySelectorAll('.accordion-grupo').forEach(grupo => grupo.classList.remove('aberto'));
+    
+    if(!estaAberto) {
+        el.classList.add('aberto');
+    }
+}
+
+function abrirModalVeiculo(){ 
+    const v = getVeiculoAtivo();
+    if(v){
+        document.getElementById('nomeEditandoTitulo').innerText = v.nome;
+        document.getElementById('nomeExcluir').innerText = v.nome;
         document.getElementById('vTipoEdit').value = v.tipo || 'moto'; 
         document.getElementById('vNomeEdit').value = v.nome; 
         document.getElementById('vModeloEdit').value = v.modelo || ''; 
@@ -433,12 +472,14 @@ function mudarTabVeiculo(tab){
         document.getElementById('vDataAquisicaoEdit').value = v.dataAquisicao || ''; 
         document.getElementById('vKmEdit').value = v.config.kmBase; 
         document.getElementById('vTanqueEdit').value = v.tanqueL; 
-        document.getElementById('vKmDiaEdit').value = v.config.kmValor; 
-    } 
-    if(tab==='excluir' && v){ 
-        document.getElementById('nomeExcluir').innerText = v.nome; 
-    } 
+        document.getElementById('vKmDiaEdit').value = v.config.kmValor;
+    }
+    document.getElementById('modalVeiculo').style.display='flex'; 
 }
+function fecharModalVeiculo(){ document.getElementById('modalVeiculo').style.display='none'; }
+
+function abrirModalConfig() { document.getElementById('modalConfig').style.display = 'flex'; }
+function fecharModalConfig() { document.getElementById('modalConfig').style.display = 'none'; }
 
 function salvarVeiculo(){ const nome = document.getElementById('vNome').value; if(!nome) return alert('Digite um nome'); const id = 'v'+Date.now(); veiculos.push({id, tipo: document.getElementById('vTipo').value, nome, modelo: document.getElementById('vModelo').value, ano: document.getElementById('vAno').value, dataAquisicao: document.getElementById('vDataAquisicao').value, tanqueL: parseFloat(document.getElementById('vTanque').value) || 6.5, abast:[], manut:[], config:{ kmBase: parseInt(document.getElementById('vKm').value) || 0, dataBase: new Date().toISOString(), kmValor: parseInt(document.getElementById('vKmDia').value) || 50, diasSemana:[1,2,3,4,5,6,0] }}); veiculoAtivoId = id; salvarTudo(); fecharModalVeiculo(); atualizarPainel(); }
 function atualizarVeiculo(){ const v = getVeiculoAtivo(); v.tipo = document.getElementById('vTipoEdit').value; v.nome = document.getElementById('vNomeEdit').value; v.modelo = document.getElementById('vModeloEdit').value; v.ano = document.getElementById('vAnoEdit').value; v.dataAquisicao = document.getElementById('vDataAquisicaoEdit').value; v.tanqueL = parseFloat(document.getElementById('vTanqueEdit').value) || 6.5; v.config.kmBase = parseInt(document.getElementById('vKmEdit').value) || 0; v.config.kmValor = parseInt(document.getElementById('vKmDiaEdit').value) || 50; salvarTudo(); fecharModalVeiculo(); atualizarPainel(); }
@@ -468,7 +509,7 @@ function importarBackup(event) {
                 if(dados.tema) { tema = dados.tema; localStorage.setItem('tema_frota', tema); aplicarTema(); }
                 salvarTudo();
                 alert('Backup restaurado com sucesso!');
-                fecharModalVeiculo();
+                fecharModalConfig();
                 atualizarPainel();
             } else {
                 alert('Arquivo de backup inválido.');
@@ -581,14 +622,21 @@ document.addEventListener('DOMContentLoaded', () => {
     aplicarTema();
     atualizarPainel();
 });
-    // Ouve alterações no localStorage feitas em outras abas ou instâncias
+
+// Sincronização automática entre abas (PC)
 window.addEventListener('storage', (event) => {
     if (event.key === CHAVE_STORAGE || event.key === CHAVE_ATIVO) {
-        // Recarrega os dados da memória local
         veiculos = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
         veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
-        
-        // Atualiza a interface instantaneamente
+        atualizarPainel();
+    }
+});
+
+// Sincronização automática ao voltar para o app no celular ou trocar de app
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        veiculos = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
+        veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
         atualizarPainel();
     }
 });
