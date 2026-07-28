@@ -471,8 +471,109 @@ function atualizarPainel() {
     if(document.getElementById('viewGraficos').classList.contains('active')) renderizarGraficos();
 }
 
+function renderizarGraficos() {
+    const v = getVeiculoAtivo(); if(!v) return;
+    
+    const abastOrdenados = [...v.abast].sort((a,b) => b.data.localeCompare(a.data));
+    
+    // --- TRECHO AJUSTADO DENTRO DE atualizarPainel() ---
+if(abastOrdenadosParaCalculo.length >= 2 && media > 0) {
+    // Agora o cálculo usa os LITROS inseridos no último abastecimento
+    const litrosAbastecidos = ultimoAbast.litros || 0;
+    const autonomiaLitrosColocados = litrosAbastecidos * media;
+    
+    // KM estimado onde deve ocorrer o próximo abastecimento
+    const proxAbastEstimado = ultimoAbast.km + autonomiaLitrosColocados;
+    const kmRestantes = proxAbastEstimado - kmAtual;
 
-  
+    if (kmRestantes > 0) {
+        document.getElementById('proxAbastKm').textContent = proxAbastEstimado.toLocaleString('pt-BR', {maximumFractionDigits: 0}) + ' km';
+        document.getElementById('proxAbastTexto').textContent = `Est. Abast.: ~${kmRestantes.toFixed(0)}km restantes`;
+    } else {
+        document.getElementById('cardProxAbast').classList.add('alerta-amarelo');
+        document.getElementById('proxAbastKm').textContent = 'ATENÇÃO!';
+        document.getElementById('proxAbastTexto').textContent = `Atingiu a km estimada do combustível`;
+    }
+}
+
+
+    const abastParaCalculo = [...v.abast].sort((a,b) => a.data.localeCompare(b.data));
+    let consumosMap = {};
+    let consumosValidos = [];
+    
+    for(let i = 0; i < abastParaCalculo.length; i++) {
+        if(i === 0) {
+            consumosMap[abastParaCalculo[i].id] = 0;
+        } else {
+            let kmRodados = abastParaCalculo[i].km - abastParaCalculo[i-1].km;
+            let litros = abastParaCalculo[i].litros;
+            let val = litros > 0 ? parseFloat((kmRodados / litros).toFixed(2)) : 0;
+            consumosMap[abastParaCalculo[i].id] = val;
+            if(val > 0) consumosValidos.push(val);
+        }
+    }
+
+    let consumosArray = Object.values(consumosMap);
+    const maxConsumo = Math.max(...consumosArray, 10);
+    
+    let htmlConsumo = '';
+    abastOrdenados.forEach((a) => {
+        const val = consumosMap[a.id] || 0;
+        const pct = Math.min(Math.max((val / maxConsumo) * 100, 5), 100);
+        htmlConsumo += `
+            <div class="chart-horiz-row">
+                <div class="chart-horiz-bar" style="width: ${pct}%">
+                    <i class="fas fa-road"></i> ${formatarDataCurta(a.data)}
+                </div>
+                <div class="chart-horiz-info">${val > 0 ? val + ' km/L' : 'Inicial'}</div>
+            </div>
+        `;
+    });
+    document.getElementById('containerGraficoConsumo').innerHTML = htmlConsumo;
+
+    const gastos = abastOrdenados.map(a => a.total);
+    const maxGasto = Math.max(...gastos, 50);
+
+    let htmlGastos = '';
+    abastOrdenados.forEach((a) => {
+        const val = a.total;
+        const pct = Math.min(Math.max((val / maxGasto) * 100, 5), 100);
+        htmlGastos += `
+            <div class="chart-horiz-row">
+                <div class="chart-horiz-bar" style="width: ${pct}%; background: #ea580c;">
+                    <i class="fas fa-gas-pump"></i> ${formatarDataCurta(a.data)}
+                </div>
+                <div class="chart-horiz-info">R$ ${val.toFixed(2)}</div>
+            </div>
+        `;
+    });
+    document.getElementById('containerGraficoGastos').innerHTML = htmlGastos;
+
+    let analiseHtml = '';
+    if (consumosValidos.length > 0) {
+        const mediaGeral = consumosValidos.reduce((a, b) => a + b, 0) / consumosValidos.length;
+        const melhorConsumo = Math.max(...consumosValidos);
+        const piorConsumo = Math.min(...consumosValidos);
+        const ultimoConsumo = consumosValidos[consumosValidos.length - 1];
+        
+        let tendenciaTexto = "estável em relação à média.";
+        if (ultimoConsumo > mediaGeral * 1.05) {
+            tendenciaTexto = "acima da média (ótimo rendimento recente!).";
+        } else if (ultimoConsumo < mediaGeral * 0.95) {
+            tendenciaTexto = "abaixo da média (consumo um pouco elevado recentemente).";
+        }
+
+        analiseHtml = `
+            <p><i class="fas fa-chart-line"></i> <span>Média geral de eficiência em <b>${mediaGeral.toFixed(2)} km/L</b> considerando os abastecimentos com histórico completo.</span></p>
+            <p><i class="fas fa-trophy"></i> <span>Melhor marca registrada: <b>${melhorConsumo.toFixed(2)} km/L</b> | Pior marca: <b>${piorConsumo.toFixed(2)} km/L</b>.</span></p>
+            <p><i class="fas fa-info-circle"></i> <span>O último abastecimento registrou <b>${ultimoConsumo.toFixed(2)} km/L</b>, estando ${tendenciaTexto}</span></p>
+        `;
+    } else {
+        analiseHtml = `<p style="color:var(--muted); text-align:center;"><i class="fas fa-info-circle" style="margin-top:0;"></i> Cadastre pelo menos 2 abastecimentos preenchendo o KM corretamente para gerar a análise inteligente de consumo.</p>`;
+    }
+    document.getElementById('containerAnaliseConsumo').innerHTML = analiseHtml;
+}
+
 /* LÓGICA DE GERENCIAMENTO DE ARQUIVOS */
 function arquivoSelecionado(file) {
     if (!file) return;
