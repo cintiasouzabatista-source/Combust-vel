@@ -471,10 +471,15 @@ function atualizarPainel() {
     if(document.getElementById('viewGraficos').classList.contains('active')) renderizarGraficos();
 }
 
-function renderizarGraficos() {
+
+   function renderizarGraficos() {
     const v = getVeiculoAtivo(); if(!v) return;
     
     const abastOrdenados = [...v.abast].sort((a,b) => b.data.localeCompare(a.data));
+    
+    // Insira aqui a lógica limpa para desenhar seus gráficos horizontais ou atualizar os containers
+    // Certifique-se de não deixar nenhum trecho de código cortado no final do arquivo.
+}
     
     // --- TRECHO AJUSTADO DENTRO DE atualizarPainel() ---
 if(abastOrdenadosParaCalculo.length >= 2 && media > 0) {
