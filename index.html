@@ -67,12 +67,21 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 .view-section { display: none; }
 .view-section.active { display: block; }
 
-/* Estilização dos Documentos PDF */
-.doc-card { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 8px; }
-.doc-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-.doc-info i { font-size: 22px; color: var(--danger); flex-shrink: 0; }
+/* Estilização dos Documentos & Fotos */
+.doc-card { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 8px; gap: 8px; }
+.doc-info { display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1; }
+.doc-info i { font-size: 22px; flex-shrink: 0; }
+.doc-info i.fa-file-pdf { color: var(--danger); }
+.doc-info i.fa-file-image { color: #10b981; }
 .doc-info div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
 .doc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* Zona de Captura (Drop Zone / Câmera / Colar) */
+.drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; background: var(--bg); margin-top: 8px; transition: 0.2s; position: relative; }
+.drop-zone.dragover { border-color: var(--primary); background: rgba(37, 99, 235, 0.1); }
+.drop-zone p { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.drop-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.file-status { margin-top: 10px; font-size: 12px; color: var(--primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
 /* Estilo para Gráficos em Barras Horizontais Customizadas */
 .chart-horiz-row { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; height: 38px; position: relative; }
@@ -151,7 +160,7 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
     <button class="nav-btn active" onclick="mudarAba('Inicio', this)" id="btnNavInicio"><i class="fas fa-home"></i> Início</button>
     <button class="nav-btn" onclick="mudarAba('Graficos', this)" id="btnNavGraficos"><i class="fas fa-chart-pie"></i> Gráficos</button>
     <button class="nav-btn" onclick="abrirModalHistorico()"><i class="fas fa-list"></i> Hist.</button>
-    <button class="nav-btn" onclick="abrirModalDocumentos()"><i class="fas fa-file-pdf"></i> Docs</button>
+    <button class="nav-btn" onclick="abrirModalDocumentos()"><i class="fas fa-folder-open"></i> Docs</button>
     <button class="nav-btn" onclick="abrirModalVeiculo()"><i class="fas fa-motorcycle"></i> Veículos</button>
 </nav>
 
@@ -231,18 +240,37 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
     </div>
 </div>
 
-<!-- MODAL EXCLUSIVO DE DOCUMENTOS & NFS -->
+<!-- MODAL DE DOCUMENTOS & NFS -->
 <div id="modalDocumentos" class="modal">
     <div class="modal-content">
-        <h3 style="margin-bottom: 12px;"><i class="fas fa-file-pdf"></i> Documentos & NFS (PDF)</h3>
-        <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">Importe notas fiscais, recibos e documentos do veículo ativo. Ficam sempre em ordem alfabética.</p>
+        <h3 style="margin-bottom: 12px;"><i class="fas fa-folder-open"></i> Documentos & Fotos</h3>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">Importe PDFs, tire fotos ou cole imagens/documentos do veículo ativo.</p>
+        
         <div style="margin-bottom: 12px;">
-            <label>Nome do Documento</label>
+            <label>Nome do Documento / Anexo</label>
             <input id="docNomeInput" type="text" placeholder="Ex: NFS Posto Ipiranga">
-            <label style="margin-top:6px;">Selecionar Arquivo PDF</label>
-            <input id="docFileInput" type="file" accept="application/pdf" style="padding: 4px;">
-            <button class="btn-icon" style="background:var(--primary); color:#fff; width:100%; margin-top:8px;" onclick="adicionarPdf()"><i class="fas fa-upload"></i> Importar PDF</button>
+            
+            <div class="drop-zone" id="dropZoneDocs">
+                <p><i class="fas fa-cloud-upload-alt fa-2x" style="margin-bottom: 6px; display:block; color:var(--primary);"></i> Arraste um arquivo aqui ou <b>cole com Ctrl+V</b></p>
+                
+                <div class="drop-actions">
+                    <label class="btn-icon small" style="background:var(--card); border:1px solid var(--border); cursor:pointer;">
+                        <i class="fas fa-camera"></i> Câmera
+                        <input id="docCameraInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="arquivoSelecionado(this.files[0])">
+                    </label>
+
+                    <label class="btn-icon small" style="background:var(--card); border:1px solid var(--border); cursor:pointer;">
+                        <i class="fas fa-paperclip"></i> Arquivo
+                        <input id="docFileInput" type="file" accept="application/pdf,image/*" style="display:none;" onchange="arquivoSelecionado(this.files[0])">
+                    </label>
+                </div>
+
+                <div id="statusArquivoSelecionado" class="file-status" style="display:none;"></div>
+            </div>
+
+            <button class="btn-icon" style="background:var(--primary); color:#fff; width:100%; margin-top:10px;" onclick="adicionarDocumento()"><i class="fas fa-upload"></i> Salvar Documento</button>
         </div>
+
         <hr style="border-color:var(--border); margin:10px 0;">
         <h4 style="font-size: 13px; margin-bottom: 6px;">Arquivos Salvos</h4>
         <div id="listaDocumentos"></div>
@@ -321,6 +349,7 @@ let veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
 let temas = ['dark', 'estrada', 'white'];
 let tema = localStorage.getItem('tema_frota') || 'dark';
 let itemEditando = null;
+let arquivoPendente = null;
 
 function aplicarTema() { document.body.className = tema; const icon = document.getElementById('iconTema'); if(tema === 'dark') icon.className = 'fas fa-moon'; if(tema === 'estrada') icon.className = 'fas fa-road'; if(tema === 'white') icon.className = 'fas fa-sun'; }
 function trocarTema() { let index = temas.indexOf(tema); tema = temas[(index + 1) % 3]; localStorage.setItem('tema_frota', tema); aplicarTema(); }
@@ -506,7 +535,6 @@ function renderizarGraficos() {
     });
     document.getElementById('containerGraficoGastos').innerHTML = htmlGastos;
 
-    // GERAÇÃO DA ANÁLISE INTELIGENTE
     let analiseHtml = '';
     if (consumosValidos.length > 0) {
         const mediaGeral = consumosValidos.reduce((a, b) => a + b, 0) / consumosValidos.length;
@@ -532,29 +560,46 @@ function renderizarGraficos() {
     document.getElementById('containerAnaliseConsumo').innerHTML = analiseHtml;
 }
 
-function adicionarPdf() {
+/* LÓGICA DE GERENCIAMENTO DE ARQUIVOS */
+function arquivoSelecionado(file) {
+    if (!file) return;
+    arquivoPendente = file;
+    const status = document.getElementById('statusArquivoSelecionado');
+    status.style.display = 'flex';
+    status.innerHTML = `<i class="fas fa-check-circle"></i> ${file.name || 'Imagem capturada'} (${(file.size / 1024).toFixed(1)} KB)`;
+    
+    const inputNome = document.getElementById('docNomeInput');
+    if (!inputNome.value.trim() && file.name) {
+        inputNome.value = file.name.replace(/\.[^/.]+$/, "");
+    }
+}
+
+function adicionarDocumento() {
     const v = getVeiculoAtivo(); if(!v) return;
     const nomeInput = document.getElementById('docNomeInput').value.trim();
-    const fileInput = document.getElementById('docFileInput');
-    const file = fileInput.files[0];
 
     if(!nomeInput) return alert('Digite um nome para o documento.');
-    if(!file) return alert('Selecione um arquivo PDF.');
+    if(!arquivoPendente) return alert('Selecione, cole ou tire foto de um documento/imagem.');
 
     const reader = new FileReader();
     reader.onload = function(e) {
         if(!v.documentos) v.documentos = [];
+        const eImagem = arquivoPendente.type.startsWith('image/');
         v.documentos.push({
             id: 'doc_' + Date.now(),
             nome: nomeInput,
+            tipo: eImagem ? 'imagem' : 'pdf',
             dados: e.target.result
         });
         salvarTudo();
         document.getElementById('docNomeInput').value = '';
-        fileInput.value = '';
+        document.getElementById('docFileInput').value = '';
+        document.getElementById('docCameraInput').value = '';
+        document.getElementById('statusArquivoSelecionado').style.display = 'none';
+        arquivoPendente = null;
         renderizarDocumentos();
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(arquivoPendente);
 }
 
 function renderizarDocumentos() {
@@ -566,30 +611,54 @@ function renderizarDocumentos() {
     const container = document.getElementById('listaDocumentos');
     if(!container) return;
     if(v.documentos.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted); text-align:center; font-size:12px;">Nenhum documento PDF importado.</p>';
+        container.innerHTML = '<p style="color:var(--muted); text-align:center; font-size:12px;">Nenhum documento salvo.</p>';
         return;
     }
 
-    container.innerHTML = v.documentos.map(doc => `
-        <div class="doc-card">
-            <div class="doc-info">
-                <i class="fas fa-file-pdf"></i>
-                <div title="${doc.nome}">${doc.nome}</div>
+    container.innerHTML = v.documentos.map(doc => {
+        const isPdf = doc.tipo === 'pdf' || (doc.dados && doc.dados.startsWith('data:application/pdf'));
+        const icone = isPdf ? 'fa-file-pdf' : 'fa-file-image';
+        return `
+            <div class="doc-card">
+                <div class="doc-info">
+                    <i class="fas ${icone}"></i>
+                    <div title="${doc.nome}">${doc.nome}</div>
+                </div>
+                <div class="doc-actions">
+                    <button class="btn-icon small" style="background:var(--primary); color:#fff; border:none;" onclick="abrirDocumento('${doc.id}')" title="Visualizar"><i class="fas fa-eye"></i></button>
+                    <button class="btn-icon small" style="background:var(--card); color:var(--text); border:1px solid var(--border);" onclick="renomearDocumento('${doc.id}')" title="Renomear"><i class="fas fa-pen"></i></button>
+                    <button class="btn-icon small btn-danger" onclick="deletarPdf('${doc.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                </div>
             </div>
-            <div class="doc-actions">
-                <button class="btn-icon small" style="background:var(--primary); color:#fff; border:none;" onclick="abrirPdf('${doc.id}')"><i class="fas fa-eye"></i></button>
-                <button class="btn-icon small btn-danger" onclick="deletarPdf('${doc.id}')"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-function abrirPdf(id) {
+function renomearDocumento(id) {
+    const v = getVeiculoAtivo();
+    if(!v || !v.documentos) return;
+    const doc = v.documentos.find(d => d.id === id);
+    if(!doc) return;
+
+    const novoNome = prompt('Digite o novo nome do documento:', doc.nome);
+    if(novoNome !== null && novoNome.trim() !== '') {
+        doc.nome = novoNome.trim();
+        salvarTudo();
+        renderizarDocumentos();
+    }
+}
+
+function abrirDocumento(id) {
     const v = getVeiculoAtivo();
     const doc = v.documentos.find(d => d.id === id);
     if(!doc) return;
     const win = window.open();
-    win.document.write(`<iframe src="${doc.dados}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+    const isPdf = doc.tipo === 'pdf' || (doc.dados && doc.dados.startsWith('data:application/pdf'));
+    if (isPdf) {
+        win.document.write(`<iframe src="${doc.dados}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+    } else {
+        win.document.write(`<body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; min-height:100vh;"><img src="${doc.dados}" style="max-width:100%; max-height:100vh; object-fit:contain;"/></body>`);
+    }
 }
 
 function deletarPdf(id) {
@@ -653,7 +722,12 @@ function abrirModalVeiculo(){
 }
 function fecharModalVeiculo(){ document.getElementById('modalVeiculo').style.display='none'; }
 
-function abrirModalDocumentos() { document.getElementById('modalDocumentos').style.display = 'flex'; renderizarDocumentos(); }
+function abrirModalDocumentos() { 
+    document.getElementById('modalDocumentos').style.display = 'flex'; 
+    arquivoPendente = null;
+    document.getElementById('statusArquivoSelecionado').style.display = 'none';
+    renderizarDocumentos(); 
+}
 function fecharModalDocumentos() { document.getElementById('modalDocumentos').style.display = 'none'; }
 
 function abrirModalConfig() { document.getElementById('modalConfig').style.display = 'flex'; }
@@ -793,6 +867,33 @@ document.addEventListener('DOMContentLoaded', () => {
         veiculoAtivoId=veiculos[0].id; salvarTudo();
     }
     aplicarTema(); atualizarPainel();
+
+    const dropZone = document.getElementById('dropZoneDocs');
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    });
+    dropZone.addEventListener('drop', (e) => {
+        if(e.dataTransfer.files && e.dataTransfer.files[0]) {
+            arquivoSelecionado(e.dataTransfer.files[0]);
+        }
+    });
+
+    document.addEventListener('paste', (e) => {
+        const modalDoc = document.getElementById('modalDocumentos');
+        if (modalDoc.style.display === 'flex') {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.kind === 'file') {
+                    const blob = item.getAsFile();
+                    arquivoSelecionado(blob);
+                    break;
+                }
+            }
+        }
+    });
 });
 
 window.addEventListener('storage', (event) => {
