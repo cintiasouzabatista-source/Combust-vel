@@ -476,12 +476,26 @@ function renderizarGraficos() {
     
     const abastOrdenados = [...v.abast].sort((a,b) => b.data.localeCompare(a.data));
     
-    if(abastOrdenados.length === 0) {
-        document.getElementById('containerGraficoConsumo').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
-        document.getElementById('containerGraficoGastos').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
-        document.getElementById('containerAnaliseConsumo').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado para análise.</p>';
-        return;
+    // --- TRECHO AJUSTADO DENTRO DE atualizarPainel() ---
+if(abastOrdenadosParaCalculo.length >= 2 && media > 0) {
+    // Agora o cálculo usa os LITROS inseridos no último abastecimento
+    const litrosAbastecidos = ultimoAbast.litros || 0;
+    const autonomiaLitrosColocados = litrosAbastecidos * media;
+    
+    // KM estimado onde deve ocorrer o próximo abastecimento
+    const proxAbastEstimado = ultimoAbast.km + autonomiaLitrosColocados;
+    const kmRestantes = proxAbastEstimado - kmAtual;
+
+    if (kmRestantes > 0) {
+        document.getElementById('proxAbastKm').textContent = proxAbastEstimado.toLocaleString('pt-BR', {maximumFractionDigits: 0}) + ' km';
+        document.getElementById('proxAbastTexto').textContent = `Est. Abast.: ~${kmRestantes.toFixed(0)}km restantes`;
+    } else {
+        document.getElementById('cardProxAbast').classList.add('alerta-amarelo');
+        document.getElementById('proxAbastKm').textContent = 'ATENÇÃO!';
+        document.getElementById('proxAbastTexto').textContent = `Atingiu a km estimada do combustível`;
     }
+}
+
 
     const abastParaCalculo = [...v.abast].sort((a,b) => a.data.localeCompare(b.data));
     let consumosMap = {};
