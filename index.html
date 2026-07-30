@@ -311,7 +311,37 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
     </div>
 </div>
 
-<div id="modalHistorico" class="modal"><div class="modal-content"><h3>Histórico</h3><div id="listaHistorico" style="margin-top:10px;"></div><button onclick="fecharModalHistorico()" class="btn-icon" style="width:100%; margin-top:12px">Fechar</button></div></div>
+<div id="modalHistorico" class="modal">
+    <div class="modal-content">
+        <h3>Histórico</h3>
+        
+        <!-- Filtros do Histórico -->
+        <div style="margin: 10px 0;">
+            <div class="grid-2">
+                <div>
+                    <label><i class="fas fa-filter"></i> Período</label>
+                    <select id="filtroHistoricoPeriodo" onchange="renderizarHistorico()">
+                        <option value="todos">Todo o Histórico</option>
+                        <option value="30">Últimos 30 Dias</option>
+                        <option value="90">Últimos 90 Dias</option>
+                    </select>
+                </div>
+                <div>
+                    <label><i class="fas fa-gas-pump"></i> Combustível</label>
+                    <select id="filtroHistoricoCombustivel" onchange="renderizarHistorico()">
+                        <option value="todos">Todos</option>
+                        <option value="Gasolina">Gasolina</option>
+                        <option value="Etanol">Etanol</option>
+                        <option value="Diesel">Diesel</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="listaHistorico" style="margin-top:10px;"></div>
+        <button onclick="fecharModalHistorico()" class="btn-icon" style="width:100%; margin-top:12px">Fechar</button>
+    </div>
+</div>
 
 <div id="modalEditarItem" class="modal"><div class="modal-content"><h3 id="tituloEditarItem">Editar</h3><div id="formEditarItem"></div><div class="modal-actions"><button onclick="deletarItem(itemEditando.tipo, itemEditando.id)" class="btn-icon btn-danger">Excluir</button><button onclick="fecharModalEditarItem()" class="btn-icon">Cancelar</button><button onclick="salvarEdicaoItem()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
 
