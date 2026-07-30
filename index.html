@@ -320,16 +320,11 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
             <div class="grid-2">
                 <div>
                     <label><i class="fas fa-filter"></i> Período</label>
-                   <select id="filtroHistoricoPeriodo" onchange="renderizarHistorico()">
-    <option value="todos">Todo o Histórico</option>
-    <option value="15">Últimos 15 Dias</option>
-    <option value="30">Mensal (Últimos 30 Dias)</option>
-    <option value="45">Últimos 45 Dias</option>
-    <option value="60">Últimos 60 Dias</option>
-    <option value="90">Últimos 90 Dias</option>
-    <option value="180">Semestral (Últimos 6 Meses)</option>
-    <option value="365">Anual (Último Ano)</option>
-</select>
+                    <select id="filtroHistoricoPeriodo" onchange="renderizarHistorico()">
+                        <option value="todos">Todo o Histórico</option>
+                        <option value="30">Últimos 30 Dias</option>
+                        <option value="90">Últimos 90 Dias</option>
+                    </select>
                 </div>
                 <div>
                     <label><i class="fas fa-gas-pump"></i> Combustível</label>
@@ -750,35 +745,32 @@ function deletarPdf(id) {
 function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
 function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
 
-funfunction abrirModalHistorico(){ 
-    document.getElementById('modalHistorico').style.display = 'flex'; 
-    renderizarHistorico(); 
-}
-
-function fecharModalHistorico(){ 
-    document.getElementById('modalHistorico').style.display = 'none'; 
-}
-
-function renderizarHistorico(){ 
+function renderHistorico(){ 
     const v = getVeiculoAtivo(); 
     if (!v) return;
 
-    const filtroPeriodoEl = document.getElementById('filtroHistoricoPeriodo'); 
-    const filtroCombustivelEl = document.getElementById('filtroHistoricoCombustivel'); 
+    // 1. Capturar os valores dos selects da tela (ajuste os IDs se necessário)
+    const filtroPeriodoEl = document.getElementById('filtroPeriodoHistorico'); 
+    const filtroCombustivelEl = document.getElementById('filtroCombustivelHistorico'); 
 
     const periodo = filtroPeriodoEl ? filtroPeriodoEl.value : 'todos';
-    const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'todos';
+    const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'Todos';
 
     let abast = v.abast || [];
     let manut = v.manut || [];
 
-    if (combustivelFiltro && combustivelFiltro !== 'todos') {
+    // 2. Aplicar filtro de Combustível
+    if (combustivelFiltro && combustivelFiltro !== 'Todos') {
         abast = abast.filter(a => (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase());
     }
 
+    // 3. Aplicar filtro de Período (30, 60 ou 90 dias)
     if (periodo && periodo !== 'todos') {
         const hoje = new Date();
-        let diasLimite = parseInt(periodo) || 30;
+        let diasLimite = 30; // padrão
+        
+        if (periodo === '60') diasLimite = 60;
+        if (periodo === '90') diasLimite = 90;
 
         const dataLimite = new Date();
         dataLimite.setDate(hoje.getDate() - diasLimite);
@@ -787,6 +779,7 @@ function renderizarHistorico(){
         manut = manut.filter(m => new Date(m.data) >= dataLimite);
     }
 
+    // 4. Unir, ordenar e renderizar
     const hist = [
         ...abast.map(a => ({...a, tipo:'abast'})),
         ...manut.map(m => ({...m, tipo:'manut'}))
@@ -812,8 +805,7 @@ function renderizarHistorico(){
         </div>
     `).join('') : '<p style="color:var(--muted); text-align:center;">Nenhum registro encontrado para este período.</p>'; 
 }
-    
-    function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
+function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
 function alternarAccordion(id) {
     const el = document.getElementById(id);
     const estaAberto = el.classList.contains('aberto');
@@ -943,10 +935,7 @@ function abrirModalManut(){ document.getElementById('modalManut').style.display=
 function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
 function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
 
-function abrirModalHistorico(){ 
-    document.getElementById('modalHistorico').style.display='flex'; 
-    renderizarHistorico(); // <-- Garante que carrega os dados ao abrir
-}
+function abrirModalHistorico(){ document.getElementById('modalHistorico').style.display='flex'; }
 function fecharModalHistorico(){ document.getElementById('modalHistorico').style.display='none'; }
 
 function deletarItemDireto(tipo, id) {
