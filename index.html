@@ -495,8 +495,29 @@ function atualizarPainel() {
 
 function renderizarGraficos() {
     const v = getVeiculoAtivo(); if(!v) return;
+
+    // 1. Capturar valores dos filtros selecionados na interface
+    const periodoFiltro = document.getElementById('filtroPeriodo')?.value || 'todos';
+    const combustivelFiltro = document.getElementById('filtroCombustivel')?.value || 'todos';
+
+    // 2. Aplicar os filtros na cópia dos abastecimentos
+    let abastFiltrados = [...v.abast];
+
+    if (combustivelFiltro !== 'todos') {
+        abastFiltrados = abastFiltrados.filter(a => (a.combustivel || 'Gasolina') === combustivelFiltro);
+    }
+
+    if (periodoFiltro !== 'todos') {
+        const diasLimite = parseInt(periodoFiltro);
+        const dataAtual = new Date();
+        abastFiltrados = abastFiltrados.filter(a => {
+            const dataAbast = new Date(a.data);
+            const diferencaDias = (dataAtual - dataAbast) / (1000 * 60 * 60 * 24);
+            return diferencaDias <= diasLimite;
+        });
+    }
     
-    const abastOrdenados = [...v.abast].sort((a,b) => b.data.localeCompare(a.data));
+    const abastOrdenados = abastFiltrados.sort((a,b) => b.data.localeCompare(a.data));
     
     if(abastOrdenados.length === 0) {
         document.getElementById('containerGraficoConsumo').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
@@ -505,7 +526,7 @@ function renderizarGraficos() {
         return;
     }
 
-    const abastParaCalculo = [...v.abast].sort((a,b) => a.data.localeCompare(b.data));
+    const abastParaCalculo = [...abastFiltrados].sort((a,b) => a.data.localeCompare(b.data));
     let consumosMap = {};
     let consumosValidos = [];
     
