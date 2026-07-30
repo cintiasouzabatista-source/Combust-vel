@@ -750,6 +750,14 @@ function deletarPdf(id) {
 function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
 function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
 
+    function abrirModalHistorico(){ 
+    document.getElementById('modalHistorico').style.display = 'flex'; 
+    renderizarHistorico(); 
+}
+
+function fecharModalHistorico(){ 
+    document.getElementById('modalHistorico').style.display = 'none'; 
+}
 function renderHistorico(){ 
     const v = getVeiculoAtivo(); 
     if (!v) return;
