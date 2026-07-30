@@ -747,9 +747,48 @@ function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(
 
 function renderHistorico(){ 
     const v = getVeiculoAtivo(); 
-    const hist = [...v.abast.map(a => ({...a, tipo:'abast'})),...v.manut.map(m => ({...m, tipo:'manut'}))].sort((a,b) => b.data.localeCompare(a.data)); 
+    if (!v) return;
+
+    // 1. Capturar os valores dos selects de filtro da tela
+    const filtroPeriodoEl = document.getElementById('filtroPeriodoHistorico'); // Ajuste o ID se o seu select tiver outro nome
+    const filtroCombustivelEl = document.getElementById('filtroCombustivelHistorico'); // Ajuste o ID se necessário
+
+    const periodo = filtroPeriodoEl ? filtroPeriodoEl.value : 'todos';
+    const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'Todos';
+
+    let abast = v.abast || [];
+    let manut = v.manut || [];
+
+    // 2. Aplicar filtro de Combustível (afeta abastecimentos)
+    if (combustivelFiltro && combustivelFiltro !== 'Todos') {
+        abast = abast.filter(a => (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase());
+    }
+
+    // 3. Aplicar filtro de Período (baseado na data do item)
+    if (periodo && periodo !== 'todos') {
+        const hoje = new Date();
+        let diasLimite = 30;
+        if (periodo === '90dias') diasLimite = 90;
+        if (periodo === '1ano') diasLimite = 365;
+
+        const dataLimite = new Date();
+        dataLimite.setDate(hoje.getDate() - diasLimite);
+
+        abast = abast.filter(a => new Date(a.data) >= dataLimite);
+        manut = manut.filter(m => new Date(m.data) >= dataLimite);
+    }
+
+    // 4. Unir e ordenar os dados filtrados
+    const hist = [
+        ...abast.map(a => ({...a, tipo:'abast'})),
+        ...manut.map(m => ({...m, tipo:'manut'}))
+    ].sort((a,b) => b.data.localeCompare(a.data)); 
     
-    document.getElementById('listaHistorico').innerHTML = hist.length ? hist.map(h => `
+    // 5. Renderizar na tela
+    const container = document.getElementById('listaHistorico');
+    if (!container) return;
+
+    container.innerHTML = hist.length ? hist.map(h => `
         <div class="historico-item" onclick="toggleExpandirHistorico(this)">
             <div class="historico-resumo">
                 <span>${h.tipo==='abast'?'⛽ Abastecimento':'🔧 Manutenção'} (${formatarDataCurta(h.data)})</span>
@@ -764,9 +803,8 @@ function renderHistorico(){
                 </div>
             </div>
         </div>
-    `).join('') : '<p style="color:var(--muted); text-align:center;">Nenhum registro encontrado.</p>'; 
+    `).join('') : '<p style="color:var(--muted); text-align:center;">Nenhum registro encontrado para este filtro.</p>'; 
 }
-
 function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
 function alternarAccordion(id) {
     const el = document.getElementById(id);
