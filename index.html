@@ -749,28 +749,25 @@ function renderHistorico(){
     const v = getVeiculoAtivo(); 
     if (!v) return;
 
-    // 1. Capturar os valores dos selects da tela (ajuste os IDs se necessário)
-    const filtroPeriodoEl = document.getElementById('filtroPeriodoHistorico'); 
-    const filtroCombustivelEl = document.getElementById('filtroCombustivelHistorico'); 
+    // 1. Capturar os valores usando os IDs reais do seu HTML
+    const filtroPeriodoEl = document.getElementById('filtroHistoricoPeriodo'); 
+    const filtroCombustivelEl = document.getElementById('filtroHistoricoCombustivel'); 
 
     const periodo = filtroPeriodoEl ? filtroPeriodoEl.value : 'todos';
-    const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'Todos';
+    const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'todos';
 
     let abast = v.abast || [];
     let manut = v.manut || [];
 
     // 2. Aplicar filtro de Combustível
-    if (combustivelFiltro && combustivelFiltro !== 'Todos') {
+    if (combustivelFiltro && combustivelFiltro !== 'todos') {
         abast = abast.filter(a => (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase());
     }
 
-    // 3. Aplicar filtro de Período (30, 60 ou 90 dias)
+    // 3. Aplicar filtro de Período (30 ou 90 dias)
     if (periodo && periodo !== 'todos') {
         const hoje = new Date();
-        let diasLimite = 30; // padrão
-        
-        if (periodo === '60') diasLimite = 60;
-        if (periodo === '90') diasLimite = 90;
+        let diasLimite = parseInt(periodo) || 30;
 
         const dataLimite = new Date();
         dataLimite.setDate(hoje.getDate() - diasLimite);
@@ -805,7 +802,8 @@ function renderHistorico(){
         </div>
     `).join('') : '<p style="color:var(--muted); text-align:center;">Nenhum registro encontrado para este período.</p>'; 
 }
-function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
+    
+    function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
 function alternarAccordion(id) {
     const el = document.getElementById(id);
     const estaAberto = el.classList.contains('aberto');
