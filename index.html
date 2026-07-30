@@ -745,11 +745,10 @@ function deletarPdf(id) {
 function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
 function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
 
-function renderHistorico(){ 
+function renderizarHistorico(){ 
     const v = getVeiculoAtivo(); 
     if (!v) return;
 
-    // 1. Capturar os valores usando os IDs reais do seu HTML
     const filtroPeriodoEl = document.getElementById('filtroHistoricoPeriodo'); 
     const filtroCombustivelEl = document.getElementById('filtroHistoricoCombustivel'); 
 
@@ -759,12 +758,10 @@ function renderHistorico(){
     let abast = v.abast || [];
     let manut = v.manut || [];
 
-    // 2. Aplicar filtro de Combustível
     if (combustivelFiltro && combustivelFiltro !== 'todos') {
         abast = abast.filter(a => (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase());
     }
 
-    // 3. Aplicar filtro de Período (30 ou 90 dias)
     if (periodo && periodo !== 'todos') {
         const hoje = new Date();
         let diasLimite = parseInt(periodo) || 30;
@@ -776,7 +773,6 @@ function renderHistorico(){
         manut = manut.filter(m => new Date(m.data) >= dataLimite);
     }
 
-    // 4. Unir, ordenar e renderizar
     const hist = [
         ...abast.map(a => ({...a, tipo:'abast'})),
         ...manut.map(m => ({...m, tipo:'manut'}))
@@ -933,7 +929,10 @@ function abrirModalManut(){ document.getElementById('modalManut').style.display=
 function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
 function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
 
-function abrirModalHistorico(){ document.getElementById('modalHistorico').style.display='flex'; }
+function abrirModalHistorico(){ 
+    document.getElementById('modalHistorico').style.display='flex'; 
+    renderizarHistorico(); // <-- Garante que carrega os dados ao abrir
+}
 function fecharModalHistorico(){ document.getElementById('modalHistorico').style.display='none'; }
 
 function deletarItemDireto(tipo, id) {
