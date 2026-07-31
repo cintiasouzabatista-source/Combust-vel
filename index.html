@@ -321,15 +321,15 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
                 <div>
                     <label><i class="fas fa-filter"></i> Período</label>
                     <select id="filtroHistoricoPeriodo" onchange="renderizarHistorico()">
-                       <option value="todos">Todo o Histórico</option>
-    <option value="15">Últimos 15 Dias</option>
-    <option value="30">Mensal (Últimos 30 Dias)</option>
-    <option value="45">Últimos 45 Dias</option>
-    <option value="60">Últimos 60 Dias</option>
-    <option value="90">Últimos 90 Dias</option>
-    <option value="180">Semestral (Últimos 6 Meses)</option>
-    <option value="365">Anual (Último Ano)</option>
-                    </select>
+    <option value="todos">Todo o histórico</option>
+    <option value="15">15 dias</option>
+    <option value="30">1 mês</option>
+    <option value="45">45 dias</option>
+    <option value="60">2 meses</option>
+    <option value="90">3 meses</option>
+    <option value="180">6 meses</option>
+    <option value="365">12 meses</option>
+</select>
                 </div>
                 <div>
                     <label><i class="fas fa-gas-pump"></i> Combustível</label>
@@ -750,73 +750,133 @@ function deletarPdf(id) {
 function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
 function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
 
-    function abrirModalHistorico(){ 
-    document.getElementById('modalHistorico').style.display = 'flex'; 
-    renderizarHistorico(); 
-}
-
-function fecharModalHistorico(){ 
-    document.getElementById('modalHistorico').style.display = 'none'; 
-}
-function renderHistorico(){ 
-    const v = getVeiculoAtivo(); 
+  function renderizarHistorico() {
+    const v = getVeiculoAtivo();
     if (!v) return;
 
-    // 1. Capturar os valores dos selects da tela (ajuste os IDs se necessário)
-    const filtroPeriodoEl = document.getElementById('filtroPeriodoHistorico'); 
-    const filtroCombustivelEl = document.getElementById('filtroCombustivelHistorico'); 
+    // Captura os filtros
+    const filtroPeriodoEl = document.getElementById('filtroHistoricoPeriodo');
+    const filtroCombustivelEl = document.getElementById('filtroCombustivelHistorico');
 
     const periodo = filtroPeriodoEl ? filtroPeriodoEl.value : 'todos';
     const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'Todos';
 
-    let abast = v.abast || [];
-    let manut = v.manut || [];
+    let abast = [...(v.abast || [])];
+    let manut = [...(v.manut || [])];
 
-    // 2. Aplicar filtro de Combustível
+    // ==========================
+    // FILTRO DE COMBUSTÍVEL
+    // ==========================
     if (combustivelFiltro && combustivelFiltro !== 'Todos') {
-        abast = abast.filter(a => (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase());
+        abast = abast.filter(a =>
+            (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase()
+        );
     }
 
-    // 3. Aplicar filtro de Período (30, 60 ou 90 dias)
-    if (periodo && periodo !== 'todos') {
-        const hoje = new Date();
-        let diasLimite = 30; // padrão
-        
-        if (periodo === '60') diasLimite = 60;
-        if (periodo === '90') diasLimite = 90;
+    // ==========================
+    // FILTRO DE PERÍODO
+    // ==========================
+    if (periodo !== 'todos') {
+
+        const diasLimite = parseInt(periodo, 10);
 
         const dataLimite = new Date();
-        dataLimite.setDate(hoje.getDate() - diasLimite);
+        dataLimite.setHours(0, 0, 0, 0);
+        dataLimite.setDate(dataLimite.getDate() - diasLimite);
 
-        abast = abast.filter(a => new Date(a.data) >= dataLimite);
-        manut = manut.filter(m => new Date(m.data) >= dataLimite);
+        abast = abast.filter(a => {
+            if (!a.data) return false;
+            return new Date(a.data) >= dataLimite;
+        });
+
+        manut = manut.filter(m => {
+            if (!m.data) return false;
+            return new Date(m.data) >= dataLimite;
+        });
     }
 
-    // 4. Unir, ordenar e renderizar
-    const hist = [
-        ...abast.map(a => ({...a, tipo:'abast'})),
-        ...manut.map(m => ({...m, tipo:'manut'}))
-    ].sort((a,b) => b.data.localeCompare(a.data)); 
-    
+    // ==========================
+    // JUNTA O HISTÓRICO
+    // ==========================
+    const historico = [
+        ...abast.map(a => ({ ...a, categoria: 'abast' })),
+        ...manut.map(m => ({ ...m, categoria: 'manut' }))
+    ].sort((a, b) => new Date(b.data) - new Date(a.data));
+
     const container = document.getElementById('listaHistorico');
     if (!container) return;
 
-    container.innerHTML = hist.length ? hist.map(h => `
+    if (!historico.length) {
+        container.innerHTML = `
+            <p style="color:var(--muted); text-align:center;">
+                Nenhum registro encontrado para este período.
+            </p>`;
+        return;
+    }
+
+    container.innerHTML = historico.map(h => `
         <div class="historico-item" onclick="toggleExpandirHistorico(this)">
             <div class="historico-resumo">
-                <span>${h.tipo==='abast'?'⛽ Abastecimento':'🔧 Manutenção'} (${formatarDataCurta(h.data)})</span>
-                <span style="color:var(--primary)">R$ ${(h.tipo==='abast'? h.total : h.valor).toFixed(2)} <i class="fas fa-chevron-down" style="font-size:11px; margin-left:4px;"></i></span>
+                <span>
+                    ${h.categoria === 'abast'
+                        ? '⛽ Abastecimento'
+                        : '🔧 Manutenção'}
+                    (${formatarDataCurta(h.data)})
+                </span>
+
+                <span style="color:var(--primary)">
+                    R$ ${(h.categoria === 'abast'
+                        ? h.total
+                        : h.valor).toFixed(2)}
+                    <i class="fas fa-chevron-down"
+                       style="font-size:11px;margin-left:4px;"></i>
+                </span>
             </div>
+
             <div class="historico-detalhes">
-                <p><b>KM:</b> ${h.km.toLocaleString('pt-BR')}</p>
-                ${h.tipo==='abast'? `<p><b>Litros:</b> ${h.litros}L | <b>Valor/L:</b> R$ ${h.valorL.toFixed(2)} | <b>Combustível:</b> ${h.combustivel||'Gasolina'}</p>` : `<p><b>Tipo:</b> ${h.tipoTexto || h.tipo} | <b>Próx KM:</b> ${h.proxKm||'--'}</p>`}
-                <div style="margin-top:8px; display:flex; gap:6px;">
-                    <button class="btn-icon small" style="background:var(--primary); color:#fff; border:none;" onclick="event.stopPropagation(); abrirModalEditarItem('${h.tipo}','${h.id}')"><i class="fas fa-edit"></i> Editar</button>
-                    <button class="btn-icon small btn-danger" onclick="event.stopPropagation(); deletarItemDireto('${h.tipo}','${h.id}')"><i class="fas fa-trash"></i> Excluir</button>
+
+                <p>
+                    <b>KM:</b>
+                    ${Number(h.km).toLocaleString('pt-BR')}
+                </p>
+
+                ${
+                    h.categoria === 'abast'
+                    ? `
+                        <p>
+                            <b>Litros:</b> ${h.litros} L |
+                            <b>Valor/L:</b> R$ ${Number(h.valorL).toFixed(2)} |
+                            <b>Combustível:</b> ${h.combustivel || 'Gasolina'}
+                        </p>
+                    `
+                    : `
+                        <p>
+                            <b>Tipo:</b> ${h.tipoTexto || h.tipo} |
+                            <b>Próx. KM:</b> ${h.proxKm || '--'}
+                        </p>
+                    `
+                }
+
+                <div style="margin-top:8px;display:flex;gap:6px;">
+                    <button
+                        class="btn-icon small"
+                        style="background:var(--primary);color:#fff;border:none;"
+                        onclick="event.stopPropagation();abrirModalEditarItem('${h.categoria}','${h.id}')">
+
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+
+                    <button
+                        class="btn-icon small btn-danger"
+                        onclick="event.stopPropagation();deletarItemDireto('${h.categoria}','${h.id}')">
+
+                        <i class="fas fa-trash"></i> Excluir
+                    </button>
                 </div>
+
             </div>
         </div>
-    `).join('') : '<p style="color:var(--muted); text-align:center;">Nenhum registro encontrado para este período.</p>'; 
+    `).join('');
 }
 function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
 function alternarAccordion(id) {
