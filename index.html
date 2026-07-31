@@ -19,7 +19,6 @@ body { font-family: system-ui; background: var(--bg); color: var(--text); paddin
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .btn-icon { background: var(--card); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; cursor: pointer; color: var(--text); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; text-decoration: none; }
 .btn-icon.small { padding: 6px 8px; font-size: 13px; width: auto; }
-.btn-danger { background: var(--danger); color: #fff; border: none; }
 input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); margin-top: 4px; font-size: 14px; }
 label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; margin-top: 6px; }
 .kpi p { color: var(--muted); font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
@@ -30,19 +29,6 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 .odometro h3 { font-size: 20px; }
 .odometro small { color: rgba(255,255,255,0.8); font-size: 11px; }
 
-/* Alertas Dinâmicos nos Cards */
-.card.alerta-amarelo { border-color: var(--warning); background: rgba(250, 204, 21, 0.05); }
-.card.alerta-vermelho { border-color: var(--danger); background: rgba(239, 68, 68, 0.08); }
-
-/* Notificação Flutuante no Topo */
-#containerNotificacoes { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; z-index: 999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.toast-alerta { pointer-events: auto; background: var(--card); border-left: 6px solid var(--warning); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between; animation: slideDown 0.3s ease; }
-.toast-alerta.vermelho { border-left-color: var(--danger); }
-.toast-conteudo h4 { font-size: 14px; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
-.toast-conteudo p { font-size: 12px; color: var(--muted); }
-.toast-fechar { background: none; border: none; color: var(--text); cursor: pointer; font-size: 16px; padding: 4px; }
-@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
 .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 50; }
 .nav-btn { background: none; border: none; color: var(--muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 20%; }
 .nav-btn.active { color: var(--primary); }
@@ -50,13 +36,10 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 .modal-content { background:var(--card); padding:16px; border-radius:16px; width:92%; max-width:480px; max-height:90vh; overflow-y:auto }
 .modal-actions { display:flex; gap:8px; margin-top:12px }
 
-/* Estilização das Sanfonas */
 .accordion-grupo { margin-bottom: 8px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg); }
 .accordion-header { padding: 10px 14px; background: var(--card); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; color: var(--text); user-select: none; }
-.accordion-header:hover { color: var(--primary); }
 .accordion-body { padding: 12px; display: none; border-top: 1px solid var(--border); }
 .accordion-grupo.aberto .accordion-body { display: block; }
-.accordion-grupo.aberto .accordion-header { background: var(--primary); color: #fff; }
 
 .historico-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor:pointer; transition: 0.2s; }
 .historico-item:hover { border-color: var(--primary); }
@@ -67,42 +50,18 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 .view-section { display: none; }
 .view-section.active { display: block; }
 
-/* Estilização dos Documentos & Fotos */
-.doc-card { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 8px; gap: 8px; }
-.doc-info { display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1; }
-.doc-info i { font-size: 22px; flex-shrink: 0; }
-.doc-info i.fa-file-pdf { color: var(--danger); }
-.doc-info i.fa-file-image { color: #10b981; }
-.doc-info div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
-.doc-actions { display: flex; gap: 6px; flex-shrink: 0; }
-
-/* Zona de Captura (Drop Zone / Câmera / Colar) */
-.drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; background: var(--bg); margin-top: 8px; transition: 0.2s; position: relative; }
-.drop-zone.dragover { border-color: var(--primary); background: rgba(37, 99, 235, 0.1); }
-.drop-zone p { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
-.drop-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.file-status { margin-top: 10px; font-size: 12px; color: var(--primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
-
-/* Estilo para Gráficos em Barras Horizontais Customizadas */
 .chart-horiz-row { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; height: 38px; position: relative; }
-.chart-horiz-bar { background: var(--primary); height: 100%; display: flex; align-items: center; padding: 0 10px; color: #fff; font-weight: 700; font-size: 12px; transition: width 0.4s ease; white-space: nowrap; gap: 6px; }
+.chart-horiz-bar { background: var(--primary); height: 100%; display: flex; align-items: center; padding: 0 10px; color: #fff; font-weight: 700; font-size: 12px; white-space: nowrap; gap: 6px; }
 .chart-horiz-info { position: absolute; right: 12px; font-size: 12px; color: var(--muted); font-weight: 600; z-index: 2; pointer-events: none; }
-
-/* Caixa de Resumo de Análise */
 .analise-box { font-size: 13px; line-height: 1.5; color: var(--text); }
-.analise-box p { margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
-.analise-box i { color: var(--primary); margin-top: 3px; flex-shrink: 0; }
 </style>
 </head>
 <body class="dark">
-
-<div id="containerNotificacoes"></div>
 
 <div class="container">
     <div class="header">
         <h1>Controle Frota</h1>
         <div class="header-actions">
-            <button class="btn-icon" style="width: auto;" onclick="abrirModalConfig()"><i class="fas fa-cog"></i></button>
             <button class="btn-icon" style="width: auto;" onclick="trocarTema()"><i id="iconTema" class="fas fa-palette"></i></button>
         </div>
     </div>
@@ -128,18 +87,13 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
         </div>
 
         <div class="grid-2">
-            <div class="card kpi" id="cardAbast"><p><i class="fas fa-gas-pump"></i> ABASTECIMENTO</p><h3 id="ultimoAbastData">--/--</h3><small id="ultimoAbastValor">R$ 0</small></div>
-            <div class="card kpi" id="cardProxAbast"><p><i class="fas fa-calculator"></i> PRÓX. ABAST.</p><h3 id="proxAbastKm">-- km</h3><small id="proxAbastTexto">Calculando...</small></div>
-        </div>
-        <div class="grid-2">
+            <div class="card kpi"><p><i class="fas fa-gas-pump"></i> ABASTECIMENTO</p><h3 id="ultimoAbastData">--/--</h3><small id="ultimoAbastValor">R$ 0</small></div>
             <div class="card kpi"><p><i class="fas fa-oil-can"></i> TROCA ÓLEO</p><h3 id="ultimaTrocaData">--/--</h3><small id="ultimaTrocaKm">KM: -----</small></div>
-            <div class="card kpi" id="cardProxTroca"><p><i class="fas fa-bell"></i> PRÓX. TROCA</p><h3 id="proxTrocaKm">-- km</h3><small id="proxTrocaFaltam">Faltam -- km</small></div>
         </div>
     </div>
 
     <!-- ABA GRÁFICOS -->
     <div id="viewGraficos" class="view-section">
-        <!-- Filtros Padronizados para os Gráficos -->
         <div class="card" style="margin-bottom: 12px; padding: 12px;">
             <div class="grid-2">
                 <div>
@@ -164,27 +118,20 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
             </div>
         </div>
         <div class="card">
-            <h3 style="margin-bottom: 12px; font-size: 15px;"><i class="fas fa-chart-line"></i> Eficiência de Consumo (km/L por Abastecimento)</h3>
+            <h3 style="margin-bottom: 12px; font-size: 15px;"><i class="fas fa-chart-line"></i> Eficiência de Consumo</h3>
             <div id="containerGraficoConsumo"></div>
         </div>
         <div class="card">
             <h3 style="margin-bottom: 12px; font-size: 15px;"><i class="fas fa-chart-bar"></i> Gastos por Abastecimento (R$)</h3>
             <div id="containerGraficoGastos"></div>
         </div>
-        <div class="card">
-            <h3 style="margin-bottom: 10px; font-size: 15px;"><i class="fas fa-brain"></i> Análise Inteligente de Consumo</h3>
-            <div id="containerAnaliseConsumo" class="analise-box">
-                <p style="color:var(--muted); text-align:center;">Sem dados suficientes para análise.</p>
-            </div>
-        </div>
     </div>
 </div>
 
 <nav class="nav-bottom">
-    <button class="nav-btn active" onclick="mudarAba('Inicio', this)" id="btnNavInicio"><i class="fas fa-home"></i> Início</button>
-    <button class="nav-btn" onclick="mudarAba('Graficos', this)" id="btnNavGraficos"><i class="fas fa-chart-pie"></i> Gráficos</button>
+    <button class="nav-btn active" onclick="mudarAba('Inicio', this)"><i class="fas fa-home"></i> Início</button>
+    <button class="nav-btn" onclick="mudarAba('Graficos', this)"><i class="fas fa-chart-pie"></i> Gráficos</button>
     <button class="nav-btn" onclick="abrirModalHistorico()"><i class="fas fa-list"></i> Hist.</button>
-    <button class="nav-btn" onclick="abrirModalDocumentos()"><i class="fas fa-folder-open"></i> Docs</button>
     <button class="nav-btn" onclick="abrirModalVeiculo()"><i class="fas fa-motorcycle"></i> Veículos</button>
 </nav>
 
@@ -197,26 +144,15 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
         <div class="accordion-grupo aberto" id="accNovo">
             <div class="accordion-header" onclick="alternarAccordion('accNovo')">
                 <span><i class="fas fa-plus-circle"></i> Cadastrar Novo Veículo</span>
-                <i class="fas fa-chevron-down"></i>
             </div>
-            <div class="accordion-body">
+            <div class="accordion-body" style="display:block;">
                 <div class="grid-2">
                     <div><label>Tipo</label><select id="vTipo"><option value="moto">Moto</option><option value="carro">Carro</option></select></div>
                     <div><label>Nome</label><input id="vNome" placeholder="Ex: Honda Lead"></div>
                 </div>
                 <div class="grid-2">
-                    <div><label>Modelo</label><input id="vModelo" placeholder="Ex: 110"></div>
-                    <div><label>Ano</label><input id="vAno" type="number" placeholder="2023"></div>
+                    <div><label>KM Atual / Aquisição</label><input id="vKmAquisicao" type="number" placeholder="Ex: 15230"></div>
                 </div>
-                <div class="grid-2">
-                    <div><label>Aquisição</label><input id="vDataAquisicao" type="date"></div>
-                    <div><label>KM na Aquisição</label><input id="vKmAquisicao" type="number" placeholder="Ex: 15230"></div>
-                </div>
-                <div class="grid-2">
-                    <div><label>Tanque Total (L)</label><input id="vTanque" type="number" step="0.1" value="6.5"></div>
-                    <div><label>Reserva (L)</label><input id="vReserva" type="number" step="0.1" value="1.8"></div>
-                </div>
-                <div><label>Média KM/Dia</label><input id="vKmDia" type="number" value="50"></div>
                 <div class="modal-actions"><button onclick="salvarVeiculo()" class="btn-icon" style="background:var(--primary); color:#fff; width:100%;">Salvar Novo Veículo</button></div>
             </div>
         </div>
@@ -227,8 +163,6 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 <div id="modalHistorico" class="modal">
     <div class="modal-content">
         <h3>Histórico</h3>
-        
-        <!-- Filtros Padronizados para o Histórico -->
         <div style="margin: 10px 0;">
             <div class="grid-2">
                 <div>
@@ -252,7 +186,6 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
                 </div>
             </div>
         </div>
-
         <div id="listaHistorico" style="margin-top:10px;"></div>
         <button onclick="fecharModalHistorico()" class="btn-icon" style="width:100%; margin-top:12px">Fechar</button>
     </div>
@@ -280,7 +213,7 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
     </div>
 </div>
 
-<div id="modalManut" class="modal"><div class="modal-content"><h3>Nova Manutenção</h3><label>Data</label><input id="mData" type="date"><label>KM</label><input id="mKm" type="number"><label>Tipo</label><input id="mTipo" placeholder="Ex: Troca de Óleo"><label>Valor</label><input id="mValor" type="number"><label>Próx. em KM</label><input id="mProxKm" type="number" value="5000"><div class="modal-actions"><button onclick="fecharModalManut()" class="btn-icon">Cancelar</button><button onclick="salvarManut()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
+<div id="modalManut" class="modal"><div class="modal-content"><h3>Nova Manutenção</h3><label>Data</label><input id="mData" type="date"><label>KM</label><input id="mKm" type="number"><label>Tipo</label><input id="mTipo" placeholder="Ex: Troca de Óleo"><label>Valor</label><input id="mValor" type="number"><div class="modal-actions"><button onclick="fecharModalManut()" class="btn-icon">Cancelar</button><button onclick="salvarManut()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
 
 <script>
 const CHAVE_STORAGE = 'veiculos_frota_v15_2';
@@ -288,14 +221,157 @@ const CHAVE_ATIVO = 'veiculoAtivoId_frota_v15_2';
 
 let veiculos = JSON.parse(localStorage.getItem(CHAVE_STORAGE) || '[]');
 let veiculoAtivoId = localStorage.getItem(CHAVE_ATIVO) || null;
-let temas = ['dark', 'estrada', 'white'];
 let tema = localStorage.getItem('tema_frota') || 'dark';
 
-function aplicarTema() { document.body.className = tema; const icon = document.getElementById('iconTema'); if(icon) { icon.className = tema === 'dark' ? 'fas fa-moon' : tema === 'estrada' ? 'fas fa-road' : 'fas fa-sun'; } }
-function trocarTema() { let index = temas.indexOf(tema); tema = temas[(index + 1) % 3]; localStorage.setItem('tema_frota', tema); aplicarTema(); }
-function getVeiculoAtivo() { if(!veiculoAtivoId && veiculos.length) { veiculoAtivoId = veiculos[0].id; } return veiculos.find(v => v.id === veiculoAtivoId) || null; }
+function aplicarTema() { document.body.className = tema; }
+function trocarTema() { 
+    tema = tema === 'dark' ? 'white' : 'dark'; 
+    localStorage.setItem('tema_frota', tema); 
+    aplicarTema(); 
+}
 
-// Função auxiliar unificada de filtro de período e combustível
+function getVeiculoAtivo() { 
+    if(!veiculoAtivoId && veiculos.length) { 
+        veiculoAtivoId = veiculos[0].id; 
+    } 
+    return veiculos.find(v => v.id === veiculoAtivoId) || null; 
+}
+
+function atualizarSelectVeiculos() {
+    const select = document.getElementById('selectVeiculo');
+    if (!select) return;
+    
+    if (veiculos.length === 0) {
+        select.innerHTML = '<option value="">Nenhum veículo cadastrado (Clique em Veículos)</option>';
+        return;
+    }
+
+    select.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id === veiculoAtivoId ? 'selected' : ''}>${v.nome} (${v.tipo})</option>`).join('');
+}
+
+function trocarVeiculo(id) {
+    veiculoAtivoId = id;
+    localStorage.setItem(CHAVE_ATIVO, id);
+    atualizarDashboard();
+}
+
+function atualizarDashboard() {
+    atualizarSelectVeiculos();
+    const v = getVeiculoAtivo();
+    if (!v) return;
+
+    document.getElementById('kmRodados').innerText = (v.kmAtual || 0).toLocaleString() + ' km';
+    
+    if (v.abast && v.abast.length > 0) {
+        const ultimo = v.abast[v.abast.length - 1];
+        document.getElementById('ultimoAbastData').innerText = ultimo.data.split('-').reverse().join('/');
+        document.getElementById('ultimoAbastValor').innerText = `R$ ${ultimo.total.toFixed(2)}`;
+    } else {
+        document.getElementById('ultimoAbastData').innerText = '--/--';
+        document.getElementById('ultimoAbastValor').innerText = 'R$ 0';
+    }
+
+    if (v.manut && v.manut.length > 0) {
+        const ultimaM = v.manut[v.manut.length - 1];
+        document.getElementById('ultimaTrocaData').innerText = ultimaM.data.split('-').reverse().join('/');
+        document.getElementById('ultimaTrocaKm').innerText = `KM: ${ultimaM.km.toLocaleString()}`;
+    } else {
+        document.getElementById('ultimaTrocaData').innerText = '--/--';
+        document.getElementById('ultimaTrocaKm').innerText = 'KM: -----';
+    }
+}
+
+// Funções de salvamento e modais
+function abrirModalVeiculo() { document.getElementById('modalVeiculo').style.display = 'flex'; }
+function fecharModalVeiculo() { document.getElementById('modalVeiculo').style.display = 'none'; }
+function abrirModalAbast() { document.getElementById('modalAbast').style.display = 'flex'; document.getElementById('aData').valueAsDate = new Date(); }
+function fecharModalAbast() { document.getElementById('modalAbast').style.display = 'none'; }
+function abrirModalManut() { document.getElementById('modalManut').style.display = 'flex'; document.getElementById('mData').valueAsDate = new Date(); }
+function fecharModalManut() { document.getElementById('modalManut').style.display = 'none'; }
+function abrirModalKm() { document.getElementById('modalKm').style.display = 'flex'; }
+function fecharModalKm() { document.getElementById('modalKm').style.display = 'none'; }
+function abrirModalHistorico() { document.getElementById('modalHistorico').style.display = 'flex'; renderizarHistorico(); }
+function fecharModalHistorico() { document.getElementById('modalHistorico').style.display = 'none'; }
+
+function salvarVeiculo() {
+    const nome = document.getElementById('vNome').value;
+    if (!nome) return alert('Digite o nome do veículo');
+    
+    const novo = {
+        id: 'v_' + Date.now(),
+        tipo: document.getElementById('vTipo').value,
+        nome: nome,
+        kmAtual: Number(document.getElementById('vKmAquisicao').value) || 0,
+        abast: [],
+        manut: []
+    };
+
+    veiculos.push(novo);
+    veiculoAtivoId = novo.id;
+    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(veiculos));
+    localStorage.setItem(CHAVE_ATIVO, veiculoAtivoId);
+    
+    fecharModalVeiculo();
+    atualizarDashboard();
+}
+
+function calcularTotal() {
+    const litros = Number(document.getElementById('aLitros').value) || 0;
+    const valor = Number(document.getElementById('aValor').value) || 0;
+    document.getElementById('aTotal').innerText = `R$ ${(litros * valor).toFixed(2)}`;
+}
+
+function salvarAbast() {
+    const v = getVeiculoAtivo();
+    if (!v) return alert('Selecione um veículo primeiro!');
+
+    const data = document.getElementById('aData').value;
+    const km = Number(document.getElementById('aKm').value);
+    const combustivel = document.getElementById('aCombustivel').value;
+    const litros = Number(document.getElementById('aLitros').value);
+    const valor = Number(document.getElementById('aValor').value);
+
+    if (!data || !km || !litros || !valor) return alert('Preencha todos os campos!');
+
+    v.abast.push({ data, km, combustivel, litros, valor, total: litros * valor });
+    if (km > v.kmAtual) v.kmAtual = km;
+
+    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(veiculos));
+    fecharModalAbast();
+    atualizarDashboard();
+}
+
+function salvarManut() {
+    const v = getVeiculoAtivo();
+    if (!v) return alert('Selecione um veículo primeiro!');
+
+    const data = document.getElementById('mData').value;
+    const km = Number(document.getElementById('mKm').value);
+    const tipo = document.getElementById('mTipo').value;
+    const valor = Number(document.getElementById('mValor').value);
+
+    if (!data || !km || !tipo || !valor) return alert('Preencha todos os campos!');
+
+    v.manut.push({ data, km, tipo, valor });
+    if (km > v.kmAtual) v.kmAtual = km;
+
+    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(veiculos));
+    fecharModalManut();
+    atualizarDashboard();
+}
+
+function salvarKm() {
+    const v = getVeiculoAtivo();
+    if (!v) return;
+    const novoKm = Number(document.getElementById('kmInput').value);
+    if (novoKm) {
+        v.kmAtual = novoKm;
+        localStorage.setItem(CHAVE_STORAGE, JSON.stringify(veiculos));
+        fecharModalKm();
+        atualizarDashboard();
+    }
+}
+
 function filtrarPorPeriodoECombustivel(dados, periodoId, combustivelId) {
     const agora = new Date();
     return dados.filter(item => {
@@ -317,15 +393,6 @@ function filtrarPorPeriodoECombustivel(dados, periodoId, combustivelId) {
     });
 }
 
-function abrirModalHistorico() {
-    document.getElementById('modalHistorico').style.display = 'flex';
-    renderizarHistorico();
-}
-
-function fecharModalHistorico() {
-    document.getElementById('modalHistorico').style.display = 'none';
-}
-
 function renderizarHistorico() {
     const v = getVeiculoAtivo();
     const container = document.getElementById('listaHistorico');
@@ -338,53 +405,67 @@ function renderizarHistorico() {
     const combustivel = document.getElementById('filtroHistoricoCombustivel').value;
 
     const abastFiltrados = filtrarPorPeriodoECombustivel(v.abast || [], periodo, combustivel);
-    const manutFiltradas = filtrarPorPeriodoECombustivel(v.manut || [], periodo, 'todos'); // Manutenções não têm tipo de combustível
+    const manutFiltradas = filtrarPorPeriodoECombustivel(v.manut || [], periodo, 'todos');
 
-    let html = '';
+    const todos = [
+        ...abastFiltrados.map(a => ({ ...a, tipoReg: 'abast' })),
+        ...manutFiltradas.map(m => ({ ...m, tipoReg: 'manut' }))
+    ].sort((a,b) => b.data.localeCompare(a.data));
 
-    if (abastFiltrados.length === 0 && manutFiltradas.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--muted); padding: 12px;">Nenhum registro encontrado no período.</p>';
+    let totalGeral = 0;
+    abastFiltrados.forEach(a => totalGeral += (a.total || 0));
+    manutFiltradas.forEach(m => totalGeral += (m.valor || 0));
+
+    let htmlResumo = '';
+    if (todos.length > 0) {
+        htmlResumo = `
+            <div style="background: var(--bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-size: 11px; color: var(--muted); display: block;">TOTAL DO FILTRO</span>
+                    <strong style="font-size: 16px; color: var(--primary);">R$ ${totalGeral.toFixed(2)}</strong>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 11px; color: var(--muted); display: block;">REGISTROS</span>
+                    <strong style="font-size: 14px;">${todos.length} itens</strong>
+                </div>
+            </div>
+        `;
+    }
+
+    if (todos.length === 0) {
+        container.innerHTML = htmlResumo + '<p style="text-align:center; color:var(--muted); padding:10px;">Nenhum registro encontrado.</p>';
         return;
     }
 
-    // Ordena do mais recente para o mais antigo
-    const todosRegistros = [
-        ...abastFiltrados.map(a => ({ ...a, tipoRegistro: 'abast' })),
-        ...manutFiltradas.map(m => ({ ...m, tipoRegistro: 'manut' }))
-    ].sort((a, b) => b.data.localeCompare(a.data));
-
-    todosRegistros.forEach(item => {
+    let htmlItens = todos.map(item => {
         const dataFmt = item.data.split('-').reverse().join('/');
-        if (item.tipoRegistro === 'abast') {
-            html += `
+        if (item.tipoReg === 'abast') {
+            return `
                 <div class="historico-item" onclick="this.classList.toggle('expandido')">
                     <div class="historico-resumo">
-                        <span><i class="fas fa-gas-pump" style="color:var(--primary);"></i> ${dataFmt} - ${item.combustivel || 'Gasolina'}</span>
+                        <span><i class="fas fa-gas-pump" style="color:var(--primary);"></i> Abastecimento (${dataFmt})</span>
                         <span>R$ ${item.total.toFixed(2)}</span>
                     </div>
                     <div class="historico-detalhes">
-                        <p>KM: ${item.km.toLocaleString()} | Litros: ${item.litros}L</p>
-                        <p>Valor do Litro: R$ ${item.valor.toFixed(2)}</p>
+                        <p>KM: ${item.km} | Litros: ${item.litros}L</p>
+                        <p>Preço do Litro: R$ ${item.valor.toFixed(2)}</p>
                     </div>
-                </div>
-            `;
+                </div>`;
         } else {
-            html += `
+            return `
                 <div class="historico-item" onclick="this.classList.toggle('expandido')">
                     <div class="historico-resumo">
-                        <span><i class="fas fa-wrench" style="color:var(--warning);"></i> ${dataFmt} - ${item.tipo}</span>
+                        <span><i class="fas fa-wrench" style="color:var(--warning);"></i> ${item.tipo} (${dataFmt})</span>
                         <span>R$ ${item.valor.toFixed(2)}</span>
                     </div>
                     <div class="historico-detalhes">
-                        <p>KM: ${item.km.toLocaleString()}</p>
-                        <p>Próxima Manutenção: ${item.proxKm ? item.proxKm.toLocaleString() + ' km' : 'Não definida'}</p>
+                        <p>KM: ${item.km}</p>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-    });
+    }).join('');
 
-    container.innerHTML = html;
+    container.innerHTML = htmlResumo + htmlItens;
 }
 
 function renderizarGraficos() {
@@ -409,12 +490,11 @@ function renderizarGraficos() {
     let htmlConsumo = '';
     let htmlGastos = '';
 
-    // Exemplo visual de barras horizontais baseadas nos dados filtrados
     abastFiltrados.forEach((item, index, arr) => {
         if (index > 0) {
             const kmRodados = item.km - arr[index - 1].km;
             const consumo = item.litros > 0 ? (kmRodados / item.litros).toFixed(2) : 0;
-            const larguraBarra = Math.min(Math.max((consumo / 35) * 100, 10), 100); // assume max 35km/L escala
+            const larguraBarra = Math.min(Math.max((consumo / 35) * 100, 10), 100);
 
             htmlConsumo += `
                 <div class="chart-horiz-row">
@@ -446,6 +526,7 @@ function mudarAba(nomeAba, el) {
 }
 
 aplicarTema();
+atualizarDashboard();
 </script>
 </body>
 </html>
