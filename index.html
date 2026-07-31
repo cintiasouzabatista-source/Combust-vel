@@ -145,10 +145,15 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
         <div>
             <label><i class="fas fa-filter"></i> Período de Análise</label>
             <select id="filtroPeriodo" onchange="renderizarGraficos()">
-                <option value="todos">Todo o Histórico</option>
-                <option value="30">Últimos 30 Dias</option>
-                <option value="90">Últimos 90 Dias</option>
-            </select>
+    <option value="todos">Todo o histórico</option>
+    <option value="15">15 dias</option>
+    <option value="30">1 mês</option>
+    <option value="45">45 dias</option>
+    <option value="60">2 meses</option>
+    <option value="90">3 meses</option>
+    <option value="180">6 meses</option>
+    <option value="365">12 meses</option>
+</select>
         </div>
         <div>
             <label><i class="fas fa-gas-pump"></i> Combustível</label>
@@ -523,7 +528,7 @@ function atualizarPainel() {
         document.getElementById('proxTrocaKm').textContent = '-- km';
         document.getElementById('proxTrocaFaltam').textContent = 'Cadastre uma troca';
     }
-    renderHistorico();
+    renderizarHistorico();
     renderizarDocumentos();
     if(document.getElementById('viewGraficos').classList.contains('active')) renderizarGraficos();
 }
@@ -767,12 +772,11 @@ function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(
     // ==========================
     // FILTRO DE COMBUSTÍVEL
     // ==========================
-    if (combustivelFiltro && combustivelFiltro !== 'Todos') {
-        abast = abast.filter(a =>
-            (a.combustivel || 'Gasolina').toLowerCase() === combustivelFiltro.toLowerCase()
-        );
-    }
-
+   if (combustivelFiltro !== 'todos') {
+    abast = abast.filter(a =>
+        (a.combustivel || 'Gasolina') === combustivelFiltro
+    );
+}
     // ==========================
     // FILTRO DE PERÍODO
     // ==========================
@@ -1008,7 +1012,10 @@ function abrirModalManut(){ document.getElementById('modalManut').style.display=
 function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
 function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
 
-function abrirModalHistorico(){ document.getElementById('modalHistorico').style.display='flex'; }
+function abrirModalHistorico(){
+    document.getElementById('modalHistorico').style.display='flex';
+    renderizarHistorico();
+}
 function fecharModalHistorico(){ document.getElementById('modalHistorico').style.display='none'; }
 
 function deletarItemDireto(tipo, id) {
