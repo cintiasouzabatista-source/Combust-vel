@@ -756,132 +756,78 @@ function deletarPdf(id) {
 function renderSelectVeiculo() { const sel = document.getElementById('selectVeiculo'); sel.innerHTML = veiculos.map(v => `<option value="${v.id}" ${v.id===veiculoAtivoId?'selected':''}>${v.tipo==='carro'?'🚗':'🏍️'} ${v.nome}</option>`).join(''); }
 function trocarVeiculo(id) { veiculoAtivoId = id; salvarTudo(); atualizarPainel(); }
 
-  function renderizarHistorico() {
+ function renderizarHistorico() {
     const v = getVeiculoAtivo();
-    if (!v) return;
+    const container = document.getElementById('listaHistorico');
+    const periodo = document.getElementById('filtroHistoricoPeriodo').value;
+    const combustivel = document.getElementById('filtroHistoricoCombustivel').value;
 
-    // Captura os filtros
-    const filtroPeriodoEl = document.getElementById('filtroHistoricoPeriodo');
-   const filtroCombustivelEl = document.getElementById('filtroHistoricoCombustivel');
+    const abastFiltrados = filtrarPorPeriodoECombustivel(v.abast, periodo, combustivel);
+    const manutFiltradas = filtrarPorPeriodoECombustivel(v.manut, periodo, 'todos');
 
-    const periodo = filtroPeriodoEl ? filtroPeriodoEl.value : 'todos';
-    const combustivelFiltro = filtroCombustivelEl ? filtroCombustivelEl.value : 'Todos';
+    const todos = [
+        ...abastFiltrados.map(a => ({ ...a, tipoReg: 'abast' })),
+        ...manutFiltradas.map(m => ({ ...m, tipoReg: 'manut' }))
+    ].sort((a,b) => b.data.localeCompare(a.data));
 
-    let abast = [...(v.abast || [])];
-    let manut = [...(v.manut || [])];
+    // Calcula os totais do filtro atual
+    let totalGeral = 0;
+    let totalLitros = 0;
+    
+    abastFiltrados.forEach(a => totalGeral += (a.total || 0));
+    abastFiltrados.forEach(a => totalLitros += (a.litros || 0));
+    manutFiltradas.forEach(m => totalGeral += (m.valor || 0));
 
-    // ==========================
-    // FILTRO DE COMBUSTÍVEL
-    // ==========================
-   if (combustivelFiltro !== 'todos') {
-    abast = abast.filter(a =>
-        (a.combustivel || 'Gasolina') === combustivelFiltro
-    );
-}
-    // ==========================
-    // FILTRO DE PERÍODO
-    // ==========================
-    if (periodo !== 'todos') {
-
-        const diasLimite = parseInt(periodo, 10);
-
-        const dataLimite = new Date();
-        dataLimite.setHours(0, 0, 0, 0);
-        dataLimite.setDate(dataLimite.getDate() - diasLimite);
-
-        abast = abast.filter(a => {
-            if (!a.data) return false;
-            return new Date(a.data) >= dataLimite;
-        });
-
-        manut = manut.filter(m => {
-            if (!m.data) return false;
-            return new Date(m.data) >= dataLimite;
-        });
+    let htmlResumo = '';
+    if (todos.length > 0) {
+        htmlResumo = `
+            <div style="background: var(--bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-size: 11px; color: var(--muted); display: block;">TOTAL DO FILTRO</span>
+                    <strong style="font-size: 16px; color: var(--primary);">R$ ${totalGeral.toFixed(2)}</strong>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 11px; color: var(--muted); display: block;">REGISTROS</span>
+                    <strong style="font-size: 14px;">${todos.length} itens</strong>
+                </div>
+            </div>
+        `;
     }
 
-    // ==========================
-    // JUNTA O HISTÓRICO
-    // ==========================
-    const historico = [
-        ...abast.map(a => ({ ...a, categoria: 'abast' })),
-        ...manut.map(m => ({ ...m, categoria: 'manut' }))
-    ].sort((a, b) => new Date(b.data) - new Date(a.data));
-
-    const container = document.getElementById('listaHistorico');
-    if (!container) return;
-
-    if (!historico.length) {
-        container.innerHTML = `
-            <p style="color:var(--muted); text-align:center;">
-                Nenhum registro encontrado para este período.
-            </p>`;
+    if (todos.length === 0) {
+        container.innerHTML = htmlResumo + '<p style="text-align:center; color:var(--muted); padding:10px;">Nenhum registro encontrado.</p>';
         return;
     }
 
-    container.innerHTML = historico.map(h => `
-        <div class="historico-item" onclick="toggleExpandirHistorico(this)">
-            <div class="historico-resumo">
-                <span>
-                    ${h.categoria === 'abast'
-                        ? '⛽ Abastecimento'
-                        : '🔧 Manutenção'}
-                    (${formatarDataCurta(h.data)})
-                </span>
+    let htmlItens = todos.map(item => {
+        const dataFmt = item.data.split('-').reverse().join('/');
+        if (item.tipoReg === 'abast') {
+            return `
+                <div class="historico-item" onclick="this.classList.toggle('expandido')">
+                    <div class="historico-resumo">
+                        <span><i class="fas fa-gas-pump" style="color:var(--primary);"></i> Abastecimento (${dataFmt})</span>
+                        <span>R$ ${item.total.toFixed(2)}</span>
+                    </div>
+                    <div class="historico-detalhes">
+                        <p>KM: ${item.km} | Litros: ${item.litros}L</p>
+                        <p>Preço do Litro: R$ ${item.valor.toFixed(2)}</p>
+                    </div>
+                </div>`;
+        } else {
+            return `
+                <div class="historico-item" onclick="this.classList.toggle('expandido')">
+                    <div class="historico-resumo">
+                        <span><i class="fas fa-wrench" style="color:var(--warning);"></i> ${item.tipo} (${dataFmt})</span>
+                        <span>R$ ${item.valor.toFixed(2)}</span>
+                    </div>
+                    <div class="historico-detalhes">
+                        <p>KM: ${item.km}</p>
+                    </div>
+                </div>`;
+        }
+    }).join('');
 
-                <span style="color:var(--primary)">
-                    R$ ${(h.categoria === 'abast'
-                        ? h.total
-                        : h.valor).toFixed(2)}
-                    <i class="fas fa-chevron-down"
-                       style="font-size:11px;margin-left:4px;"></i>
-                </span>
-            </div>
-
-            <div class="historico-detalhes">
-
-                <p>
-                    <b>KM:</b>
-                    ${Number(h.km).toLocaleString('pt-BR')}
-                </p>
-
-                ${
-                    h.categoria === 'abast'
-                    ? `
-                        <p>
-                            <b>Litros:</b> ${h.litros} L |
-                            <b>Valor/L:</b> R$ ${Number(h.valorL).toFixed(2)} |
-                            <b>Combustível:</b> ${h.combustivel || 'Gasolina'}
-                        </p>
-                    `
-                    : `
-                        <p>
-                            <b>Tipo:</b> ${h.tipoTexto || h.tipo} |
-                            <b>Próx. KM:</b> ${h.proxKm || '--'}
-                        </p>
-                    `
-                }
-
-                <div style="margin-top:8px;display:flex;gap:6px;">
-                    <button
-                        class="btn-icon small"
-                        style="background:var(--primary);color:#fff;border:none;"
-                        onclick="event.stopPropagation();abrirModalEditarItem('${h.categoria}','${h.id}')">
-
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-
-                    <button
-                        class="btn-icon small btn-danger"
-                        onclick="event.stopPropagation();deletarItemDireto('${h.categoria}','${h.id}')">
-
-                        <i class="fas fa-trash"></i> Excluir
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    `).join('');
+    container.innerHTML = htmlResumo + htmlItens;
 }
 function toggleExpandirHistorico(el) { el.classList.toggle('expandido'); }
 function alternarAccordion(id) {
