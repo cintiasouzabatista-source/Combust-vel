@@ -214,7 +214,8 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
                 </div>
                 <div class="grid-2">
                     <div><label>Aquisição</label><input id="vDataAquisicao" type="date"></div>
-                    <div><label>KM Atual</label><input id="vKm" type="number" placeholder="0"></div>
+                    <label>KM na Aquisição</label>
+<input id="vKmAquisicao" type="number" placeholder="Ex: 15230">
                 </div>
                 <div class="grid-2">
                     <div><label>Tanque Total (L)</label><input id="vTanque" type="number" step="0.1" value="6.5"></div>
@@ -922,7 +923,13 @@ function abrirModalConfig() { document.getElementById('modalConfig').style.displ
 function fecharModalConfig() { document.getElementById('modalConfig').style.display = 'none'; }
 
 function salvarVeiculo(){ 
-    const nome = document.getElementById('vNome').value; 
+    const km = Number(document.getElementById("vKmAquisicao").value);
+
+veiculo = {
+    ...
+    kmAquisicao: km,
+    odometro: km
+};
     if(!nome) return alert('Digite um nome'); 
     const id = 'v'+Date.now(); 
     veiculos.push({
@@ -987,7 +994,8 @@ function resetarApp() {
 
 function abrirModalKm(){ const v = getVeiculoAtivo(); document.getElementById('kmInput').value = v.config.kmBase; document.getElementById('modalKm').style.display='flex'; }
 function fecharModalKm(){ document.getElementById('modalKm').style.display='none'; }
-function salvarKm(){ const v = getVeiculoAtivo(); v.config.kmBase = parseInt(document.getElementById('kmInput').value); salvarTudo(); fecharModalKm(); atualizarPainel(); }
+function salvarKm(){ const v = getVeiculoAtivo(); v.config.kmBase = parseInt(document.getElementById('kmInput').value);
+                    salvarTudo(); fecharModalKm(); atualizarPainel(); }
 
 function calcularTotal(){ const litros = parseFloat(document.getElementById('aLitros').value) || 0; const valorL = parseFloat(document.getElementById('aValor').value) || 0; const total = litros * valorL; document.getElementById('aTotal').innerText = `R$ ${total.toFixed(2)}`; }
 
