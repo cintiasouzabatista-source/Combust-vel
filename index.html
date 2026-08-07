@@ -212,10 +212,10 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
                     <div><label>Modelo</label><input id="vModelo" placeholder="Ex: 110"></div>
                     <div><label>Ano</label><input id="vAno" type="number" placeholder="2023"></div>
                 </div>
-                <div class="grid-2">
-                    <div><label>Aquisição</label><input id="vDataAquisicao" type="date"></div>
-                    <div><label>KM Atual</label><input id="vKm" type="number" placeholder="0"></div>
-                </div>
+               <div class="grid-2">
+    <div><label>Aquisição</label><input id="vDataAquisicao" type="date"></div>
+    <div><label>KM Cadastro (Blindagem - Fixo)</label><input id="vKmInicial" type="number" placeholder="0"></div>
+</div>
                 <div class="grid-2">
                     <div><label>Tanque Total (L)</label><input id="vTanque" type="number" step="0.1" value="6.5"></div>
                     <div><label>Reserva (L)</label><input id="vReserva" type="number" step="0.1" value="1.8"></div>
@@ -240,9 +240,9 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
                     <div><label>Ano</label><input id="vAnoEdit" type="number"></div>
                 </div>
                 <div class="grid-2">
-                    <div><label>Aquisição</label><input id="vDataAquisicaoEdit" type="date"></div>
-                    <div><label>KM Atual</label><input id="vKmEdit" type="number"></div>
-                </div>
+    <div><label>Aquisição</label><input id="vDataAquisicaoEdit" type="date"></div>
+    <div><label>KM Cadastro (Blindagem - Fixo)</label><input id="vKmInicialEdit" type="number"></div>
+</div>
                 <div class="grid-2">
                     <div><label>Tanque Total (L)</label><input id="vTanqueEdit" type="number" step="0.1"></div>
                     <div><label>Reserva (L)</label><input id="vReservaEdit" type="number" step="0.1"></div>
@@ -446,9 +446,14 @@ function mudarAba(nomeAba, el) {
 function atualizarPainel() {
     const v = getVeiculoAtivo(); if(!v) return; renderSelectVeiculo();
     if(!v.documentos) v.documentos = []; 
-    if(v.reservaL === undefined) v.reservaL = 1.8; 
+    if(v.reservaL === undefined) v.reservaL = 8; 
     
+    // LINHA ADICIONADA: Garante que o KM Inicial/Blindagem não se perca
+    if(!v.config.kmInicial) v.config.kmInicial = v.config.kmBase || 0; 
+
     const kmAtual = v.config.kmBase || 0;
+    const kmInicial = v.config.kmInicial || 0; // KM Fixo da Blindagem
+
     document.getElementById('kmRodados').textContent = kmAtual.toLocaleString('pt-BR') + ' km';
 
     let media = 0;
@@ -870,7 +875,9 @@ function salvarVeiculo(){
         reservaL: parseFloat(document.getElementById('vReserva').value) || 1.8,
         abast:[], manut:[], documentos:[], 
         config:{ kmBase: parseInt(document.getElementById('vKm').value) || 0, dataBase: new Date().toISOString(), kmValor: parseInt(document.getElementById('vKmDia').value) || 50, diasSemana:[1,2,3,4,5,6,0] }
+    
     }); 
+    
     veiculoAtivoId = id; salvarTudo(); fecharModalVeiculo(); atualizarPainel(); 
 }
 
@@ -921,8 +928,18 @@ function resetarApp() {
 
 function abrirModalKm(){ const v = getVeiculoAtivo(); document.getElementById('kmInput').value = v.config.kmBase; document.getElementById('modalKm').style.display='flex'; }
 function fecharModalKm(){ document.getElementById('modalKm').style.display='none'; }
-function salvarKm(){ const v = getVeiculoAtivo(); v.config.kmBase = parseInt(document.getElementById('kmInput').value); salvarTudo(); fecharModalKm(); atualizarPainel(); }
-
+function salvarKm() {
+    const v = getVeiculoAtivo();
+    if(!v) return;
+    const novoKm = Number(document.getElementById('kmInput').value);
+    if(isNaN(novoKm)) return;
+    
+    // Altera APENAS o odômetro digital corrente. O v.config.kmInicial NÃO é mexido.
+    v.config.kmBase = novoKm;
+    salvarTudo();
+    fecharModalKm();
+    atualizarPainel();
+}
 function calcularTotal(){ const litros = parseFloat(document.getElementById('aLitros').value) || 0; const valorL = parseFloat(document.getElementById('aValor').value) || 0; const total = litros * valorL; document.getElementById('aTotal').innerText = `R$ ${total.toFixed(2)}`; }
 
 function abrirModalAbast(){ document.getElementById('modalAbast').style.display='flex'; document.getElementById('aData').value=new Date().toISOString().slice(0,10); document.getElementById('aTotal').innerText = 'R$ 0,00'; }
