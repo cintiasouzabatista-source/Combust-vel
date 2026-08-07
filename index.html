@@ -829,24 +829,51 @@ function alternarAccordion(id) {
     if(!estaAberto) el.classList.add('aberto');
 }
 
-function abrirModalVeiculo(){ 
+function abrirModalVeiculo() {
     const v = getVeiculoAtivo();
-    if(v){
-        if(v.reservaL === undefined) v.reservaL = 1.8;
-        document.getElementById('nomeEditandoTitulo').innerText = v.nome;
-        document.getElementById('nomeExcluir').innerText = v.nome;
-        document.getElementById('vTipoEdit').value = v.tipo || 'moto'; 
-        document.getElementById('vNomeEdit').value = v.nome; 
-        document.getElementById('vModeloEdit').value = v.modelo || ''; 
-        document.getElementById('vAnoEdit').value = v.ano || ''; 
-        document.getElementById('vDataAquisicaoEdit').value = v.dataAquisicao || ''; 
-        document.getElementById('vKmEdit').value = v.config.kmBase; 
-        document.getElementById('vTanqueEdit').value = v.tanqueL || 6.5; 
-        document.getElementById('vReservaEdit').value = v.reservaL;
-        document.getElementById('vKmDiaEdit').value = v.config.kmValor;
+    
+    // Atualiza os campos de edição apenas se o veículo existir e os elementos existirem na tela
+    if (v) {
+        const elNomeEdit = document.getElementById('vNomeEdit');
+        if (elNomeEdit) elNomeEdit.value = v.nome || '';
+
+        const elTipoEdit = document.getElementById('vTipoEdit');
+        if (elTipoEdit) elTipoEdit.value = v.tipo || 'carro';
+
+        const elModeloEdit = document.getElementById('vModeloEdit');
+        if (elModeloEdit) elModeloEdit.value = v.modelo || '';
+
+        const elAnoEdit = document.getElementById('vAnoEdit');
+        if (elAnoEdit) elAnoEdit.value = v.ano || '';
+
+        const elAquisicaoEdit = document.getElementById('vDataAquisicaoEdit');
+        if (elAquisicaoEdit) elAquisicaoEdit.value = v.dataAquisicao || '';
+
+        // KM de Cadastro (Blindagem) - Fixo
+        const elKmInicialEdit = document.getElementById('vKmInicialEdit');
+        if (elKmInicialEdit) elKmInicialEdit.value = v.config?.kmInicial || 0;
+
+        const elTanqueEdit = document.getElementById('vTanqueEdit');
+        if (elTanqueEdit) elTanqueEdit.value = v.tanqueL || '';
+
+        const elReservaEdit = document.getElementById('vReservaEdit');
+        if (elReservaEdit) elReservaEdit.value = v.reservaL || '';
+
+        const elKmDiaEdit = document.getElementById('vKmDiaEdit');
+        if (elKmDiaEdit) elKmDiaEdit.value = v.kmDia || '';
+
+        const nomeEditando = document.getElementById('nomeEditandoTitulo');
+        if (nomeEditando) nomeEditando.textContent = v.nome || '';
+
+        const nomeExcluir = document.getElementById('nomeExcluir');
+        if (nomeExcluir) nomeExcluir.textContent = v.nome || '';
     }
-    document.getElementById('modalVeiculo').style.display='flex'; 
+
+    // Exibe o modal
+    const modal = document.getElementById('modalVeiculo');
+    if (modal) modal.style.display = 'flex';
 }
+    
 function fecharModalVeiculo(){ document.getElementById('modalVeiculo').style.display='none'; }
 
 function abrirModalDocumentos() { 
