@@ -370,6 +370,7 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
             <div><label>Valor/L (R$)</label><input id="aValor" type="number" step="0.01" oninput="calcularTotal()"></div>
             <div><label>Total (R$)</label><div class="total-display" id="aTotal" style="margin-top:4px; font-size:16px;">R$ 0,00</div></div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="aTanqueCheio" type="checkbox" style="width:auto;"> Tanque cheio (usar 100% da capacidade para estimar autonomia)</label>
         <div class="modal-actions">
             <button onclick="fecharModalAbast()" class="btn-icon">Cancelar</button>
             <button onclick="salvarAbast()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button>
@@ -475,13 +476,20 @@ function atualizarPainel() {
         document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L (${ultimoAbast.combustivel || 'Gasolina'})`;
 
         if(abastOrdenadosParaCalculo.length >= 2){
+            const combustivelReferencia = ultimoAbast.combustivel || 'Gasolina';
+            const abastMesmoCombustivel = abastOrdenadosParaCalculo.filter(a => (a.combustivel || 'Gasolina') === combustivelReferencia);
             let totalKm = 0, totalL = 0;
-            for(let i = 1; i < abastOrdenadosParaCalculo.length; i++) { 
-                totalKm += abastOrdenadosParaCalculo[i].km - abastOrdenadosParaCalculo[i-1].km; 
-                totalL += abastOrdenadosParaCalculo[i].litros; 
+            for(let i = 1; i < abastMesmoCombustivel.length; i++) {
+                const kmIntervalo = abastMesmoCombustivel[i].km - abastMesmoCombustivel[i-1].km;
+                if(kmIntervalo > 0 && abastMesmoCombustivel[i].litros > 0) {
+                    totalKm += kmIntervalo;
+                    totalL += abastMesmoCombustivel[i].litros;
+                }
             }
-            media = totalL > 0? (totalKm / totalL) : 0;
-            document.getElementById('consumoMedia').textContent = `Consumo: ${media.toFixed(2)} km/L`;
+            media = totalL > 0 ? (totalKm / totalL) : 0;
+            document.getElementById('consumoMedia').textContent = media > 0
+                ? `Consumo: ${media.toFixed(2)} km/L`
+                : `Consumo: calculando...`;
         } else {
             document.getElementById('consumoMedia').textContent = `Cadastre 2+ abastecimentos`;
         }
@@ -490,20 +498,26 @@ function atualizarPainel() {
         cardProxAbast.classList.remove('alerta-amarelo', 'alerta-vermelho');
 
         if(abastOrdenadosParaCalculo.length >= 2 && media > 0) {
-            const kmRodadosAposAbast = kmAtual - ultimoAbast.km;
-            const tanqueTotal = v.tanqueL || 6.5;
-            const reserva = v.reservaL || 1.8;
-            const volumeUtilPrincipal = tanqueTotal - reserva;
-            
-            const autonomiaPrincipal = volumeUtilPrincipal * media;
+            const kmRodadosAposAbast = Math.max(0, kmAtual - ultimoAbast.km);
+            const tanqueTotal = Math.max(0, Number(v.tanqueL) || 6.5);
+            const reserva = Math.min(tanqueTotal, Math.max(0, Number(v.reservaL) || 1.8));
+            const volumeUtilPrincipal = Math.max(0, tanqueTotal - reserva);
+
+            // Segurança: abastecimento parcial usa os litros efetivamente colocados.
+            // Se "Tanque cheio" estiver marcado, usa todo o volume útil (tanque - reserva).
+            const litrosBaseAutonomia = ultimoAbast.tanqueCheio
+                ? volumeUtilPrincipal
+                : Math.min(volumeUtilPrincipal, Math.max(0, Number(ultimoAbast.litros) || 0));
+
+            const autonomiaPrincipal = litrosBaseAutonomia * media;
             const autonomiaTotalTanque = tanqueTotal * media;
-            
+
             const kmRestantesPrincipal = autonomiaPrincipal - kmRodadosAposAbast;
             const proxAbastPrincipal = ultimoAbast.km + autonomiaPrincipal;
             
             if(kmRestantesPrincipal > 0) {
                 document.getElementById('proxAbastKm').textContent = proxAbastPrincipal.toLocaleString('pt-BR', {maximumFractionDigits: 0}) + ' km';
-                document.getElementById('proxAbastTexto').textContent = `Principal: ~${kmRestantesPrincipal.toFixed(0)}km restantes`;
+                document.getElementById('proxAbastTexto').textContent = `Seguro: ~${kmRestantesPrincipal.toFixed(0)}km até a reserva`;
             } else {
                 cardProxAbast.classList.add('alerta-vermelho');
                 const kmRestantesReserva = autonomiaTotalTanque - kmRodadosAposAbast;
@@ -999,7 +1013,8 @@ function salvarAbast(){
         combustivel: document.getElementById('aCombustivel').value,
         litros: +document.getElementById('aLitros').value,
         valorL: +document.getElementById('aValor').value,
-        total: (+document.getElementById('aLitros').value) * (+document.getElementById('aValor').value)
+        total: (+document.getElementById('aLitros').value) * (+document.getElementById('aValor').value),
+         tanqueCheio: document.getElementById('aTanqueCheio').checked
     });
     v.config.kmBase = +document.getElementById('aKm').value;
     salvarTudo(); fecharModalAbast(); atualizarPainel();
@@ -1030,14 +1045,14 @@ function abrirModalEditarItem(tipo,id){
     const item = tipo==='abast'? v.abast.find(x=>String(x.id)===String(id)) : v.manut.find(x=>String(x.id)===String(id)); 
     document.getElementById('tituloEditarItem').innerText = tipo==='abast'? 'Editar Abastecimento' : 'Editar Manutenção'; 
     if(tipo==='abast'){ 
-        document.getElementById('formEditarItem').innerHTML = `<div class="grid-2"><div><label>Data</label><input id="eData" type="date" value="${item.data}"></div><div><label>KM</label><input id="eKm" type="number" value="${item.km}"></div></div><div class="grid-2"><div><label>Combustível</label><select id="eCombustivel"><option value="Gasolina" ${item.combustivel === 'Gasolina' || !item.combustivel ? 'selected' : ''}>Gasolina</option><option value="Etanol" ${item.combustivel === 'Etanol' ? 'selected' : ''}>Etanol</option><option value="Diesel" ${item.combustivel === 'Diesel' ? 'selected' : ''}>Diesel</option></select></div><div><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+this.value || 0) * (+document.getElementById('eValor').value || 0)).toFixed(2)"></div></div><div class="grid-2"><div><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+document.getElementById('eLitros').value || 0) * (+this.value || 0)).toFixed(2)"></div><div><label>Total</label><div class="total-display" id="eTotal" style="font-size:16px;">R$ ${(item.litros*item.valorL).toFixed(2)}</div></div></div>`; 
+        document.getElementById('formEditarItem').innerHTML = `<div class="grid-2"><div><label>Data</label><input id="eData" type="date" value="${item.data}"></div><div><label>KM</label><input id="eKm" type="number" value="${item.km}"></div></div><div class="grid-2"><div><label>Combustível</label><select id="eCombustivel"><option value="Gasolina" ${item.combustivel === 'Gasolina' || !item.combustivel ? 'selected' : ''}>Gasolina</option><option value="Etanol" ${item.combustivel === 'Etanol' ? 'selected' : ''}>Etanol</option><option value="Diesel" ${item.combustivel === 'Diesel' ? 'selected' : ''}>Diesel</option></select></div><div><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+this.value || 0) * (+document.getElementById('eValor').value || 0)).toFixed(2)"></div></div><div class="grid-2"><div><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+document.getElementById('eLitros').value || 0) * (+this.value || 0)).toFixed(2)"></div><div><label>Total</label><div class="total-display" id="eTotal" style="font-size:16px;">R$ ${(item.litros*item.valorL).toFixed(2)}</div></div></div><label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="eTanqueCheio" type="checkbox" style="width:auto;" ${item.tanqueCheio ? 'checked' : ''}> Tanque cheio (usar 100% da capacidade para estimar autonomia)</label>`; 
     } else { 
         document.getElementById('formEditarItem').innerHTML = `<label>Data</label><input id="eData" type="date" value="${item.data}"><label>KM</label><input id="eKm" type="number" value="${item.km}"><label>Tipo</label><input id="eTipo" value="${item.tipo}"><label>Valor</label><input id="eValor" type="number" value="${item.valor}"><label>Próx. em KM</label><input id="eProxKm" type="number" value="${item.proxKm}">`; 
     } 
     document.getElementById('modalEditarItem').style.display='flex'; 
 }
 function fecharModalEditarItem(){ document.getElementById('modalEditarItem').style.display='none'; }
-function salvarEdicaoItem(){ const v = getVeiculoAtivo(); if(itemEditando.tipo==='abast'){ const item = v.abast.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.combustivel = document.getElementById('eCombustivel').value; item.litros = +document.getElementById('eLitros').value; item.valorL = +document.getElementById('eValor').value; item.total = item.litros * item.valorL; } else { const item = v.manut.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.tipo = document.getElementById('eTipo').value; item.valor = +document.getElementById('eValor').value; item.proxKm = +document.getElementById('eProxKm').value; } salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
+function salvarEdicaoItem(){ const v = getVeiculoAtivo(); if(itemEditando.tipo==='abast'){ const item = v.abast.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.combustivel = document.getElementById('eCombustivel').value; item.litros = +document.getElementById('eLitros').value; item.valorL = +document.getElementById('eValor').value; item.tanqueCheio = document.getElementById('eTanqueCheio').checked; item.total = item.litros * item.valorL; } else { const item = v.manut.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.tipo = document.getElementById('eTipo').value; item.valor = +document.getElementById('eValor').value; item.proxKm = +document.getElementById('eProxKm').value; } salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
 
 document.addEventListener('DOMContentLoaded', () => {
     recuperarDadosAntigos();
