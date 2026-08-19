@@ -413,6 +413,16 @@ let tema = localStorage.getItem('tema_frota') || 'dark';
 let itemEditando = null;
 let arquivoPendente = null;
 
+// Migração/compatibilidade dos veículos já cadastrados.
+// Mantém o KM atual (kmBase) e cria kmInicial apenas quando necessário.
+veiculos.forEach(v => {
+    if (!v.config) v.config = {};
+    if (typeof v.config.kmBase !== 'number') v.config.kmBase = parseInt(v.config.kmBase) || 0;
+    if (typeof v.config.kmInicial !== 'number') v.config.kmInicial = v.config.kmBase || 0;
+    if (typeof v.config.kmValor !== 'number') v.config.kmValor = 50;
+    if (!Array.isArray(v.config.diasSemana)) v.config.diasSemana = [1,2,3,4,5,6,0];
+});
+
 function aplicarTema() { document.body.className = tema; const icon = document.getElementById('iconTema'); if(tema === 'dark') icon.className = 'fas fa-moon'; if(tema === 'estrada') icon.className = 'fas fa-road'; if(tema === 'white') icon.className = 'fas fa-sun'; }
 function trocarTema() { let index = temas.indexOf(tema); tema = temas[(index + 1) % 3]; localStorage.setItem('tema_frota', tema); aplicarTema(); }
 
@@ -901,7 +911,13 @@ function salvarVeiculo(){
         tanqueL: parseFloat(document.getElementById('vTanque').value) || 6.5, 
         reservaL: parseFloat(document.getElementById('vReserva').value) || 1.8,
         abast:[], manut:[], documentos:[], 
-        config:{ kmBase: parseInt(document.getElementById('vKm').value) || 0, dataBase: new Date().toISOString(), kmValor: parseInt(document.getElementById('vKmDia').value) || 50, diasSemana:[1,2,3,4,5,6,0] }
+        config:{
+            kmBase: parseInt(document.getElementById('vKmInicial').value) || 0,
+            kmInicial: parseInt(document.getElementById('vKmInicial').value) || 0,
+            dataBase: new Date().toISOString(),
+            kmValor: parseInt(document.getElementById('vKmDia').value) || 50,
+            diasSemana:[1,2,3,4,5,6,0]
+        }
     
     }); 
     
@@ -917,7 +933,10 @@ function atualizarVeiculo(){
     v.dataAquisicao = document.getElementById('vDataAquisicaoEdit').value; 
     v.tanqueL = parseFloat(document.getElementById('vTanqueEdit').value) || 6.5; 
     v.reservaL = parseFloat(document.getElementById('vReservaEdit').value) || 1.8;
-    v.config.kmBase = parseInt(document.getElementById('vKmEdit').value) || 0; 
+    // O KM de cadastro/blindagem é um valor fixo e não deve alterar o odômetro atual.
+    // O odômetro corrente (kmBase) continua sendo alterado somente pelo módulo de KM/abastecimento.
+    v.config.kmInicial = parseInt(document.getElementById('vKmInicialEdit').value) || 0;
+    if (typeof v.config.kmBase !== 'number') v.config.kmBase = v.config.kmInicial;
     v.config.kmValor = parseInt(document.getElementById('vKmDiaEdit').value) || 50; 
     salvarTudo(); fecharModalVeiculo(); atualizarPainel(); 
 }
@@ -1011,14 +1030,14 @@ function abrirModalEditarItem(tipo,id){
     const item = tipo==='abast'? v.abast.find(x=>String(x.id)===String(id)) : v.manut.find(x=>String(x.id)===String(id)); 
     document.getElementById('tituloEditarItem').innerText = tipo==='abast'? 'Editar Abastecimento' : 'Editar Manutenção'; 
     if(tipo==='abast'){ 
-        document.getElementById('formEditarItem').innerHTML = `<div class="grid-2"><div><label>Data</label><input id="eData" type="date" value="${item.data}"></div><div><label>KM</label><input id="eKm" type="number" value="${item.km}"></div></div><div class="grid-2"><div><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}"></div><div><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}"></div></div><div style="margin-top:6px;"><label>Total</label><div class="total-display" id="eTotal" style="font-size:16px;">R$ ${(item.litros*item.valorL).toFixed(2)}</div></div>`; 
+        document.getElementById('formEditarItem').innerHTML = `<div class="grid-2"><div><label>Data</label><input id="eData" type="date" value="${item.data}"></div><div><label>KM</label><input id="eKm" type="number" value="${item.km}"></div></div><div class="grid-2"><div><label>Combustível</label><select id="eCombustivel"><option value="Gasolina" ${item.combustivel === 'Gasolina' || !item.combustivel ? 'selected' : ''}>Gasolina</option><option value="Etanol" ${item.combustivel === 'Etanol' ? 'selected' : ''}>Etanol</option><option value="Diesel" ${item.combustivel === 'Diesel' ? 'selected' : ''}>Diesel</option></select></div><div><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+this.value || 0) * (+document.getElementById('eValor').value || 0)).toFixed(2)"></div></div><div class="grid-2"><div><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+document.getElementById('eLitros').value || 0) * (+this.value || 0)).toFixed(2)"></div><div><label>Total</label><div class="total-display" id="eTotal" style="font-size:16px;">R$ ${(item.litros*item.valorL).toFixed(2)}</div></div></div>`; 
     } else { 
         document.getElementById('formEditarItem').innerHTML = `<label>Data</label><input id="eData" type="date" value="${item.data}"><label>KM</label><input id="eKm" type="number" value="${item.km}"><label>Tipo</label><input id="eTipo" value="${item.tipo}"><label>Valor</label><input id="eValor" type="number" value="${item.valor}"><label>Próx. em KM</label><input id="eProxKm" type="number" value="${item.proxKm}">`; 
     } 
     document.getElementById('modalEditarItem').style.display='flex'; 
 }
 function fecharModalEditarItem(){ document.getElementById('modalEditarItem').style.display='none'; }
-function salvarEdicaoItem(){ const v = getVeiculoAtivo(); if(itemEditando.tipo==='abast'){ const item = v.abast.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.litros = +document.getElementById('eLitros').value; item.valorL = +document.getElementById('eValor').value; item.total = item.litros * item.valorL; } else { const item = v.manut.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.tipo = document.getElementById('eTipo').value; item.valor = +document.getElementById('eValor').value; item.proxKm = +document.getElementById('eProxKm').value; } salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
+function salvarEdicaoItem(){ const v = getVeiculoAtivo(); if(itemEditando.tipo==='abast'){ const item = v.abast.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.combustivel = document.getElementById('eCombustivel').value; item.litros = +document.getElementById('eLitros').value; item.valorL = +document.getElementById('eValor').value; item.total = item.litros * item.valorL; } else { const item = v.manut.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.tipo = document.getElementById('eTipo').value; item.valor = +document.getElementById('eValor').value; item.proxKm = +document.getElementById('eProxKm').value; } salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
 
 document.addEventListener('DOMContentLoaded', () => {
     recuperarDadosAntigos();
