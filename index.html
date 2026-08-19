@@ -198,7 +198,7 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
     <div class="modal-content">
         <h3 style="margin-bottom: 10px; font-size:16px;"><i class="fas fa-motorcycle"></i> Gerenciar Veículos</h3>
         
-        <div class="accordion-grupo aberto" id="accNovo">
+        <div class="accordion-grupo" id="accNovo">
             <div class="accordion-header" onclick="alternarAccordion('accNovo')">
                 <span><i class="fas fa-plus-circle"></i> Cadastrar Novo Veículo</span>
                 <i class="fas fa-chevron-down"></i>
@@ -892,6 +892,10 @@ function abrirModalVeiculo() {
         const nomeExcluir = document.getElementById('nomeExcluir');
         if (nomeExcluir) nomeExcluir.textContent = v.nome || '';
     }
+
+    // Ao abrir o gerenciamento, todos os blocos começam minimizados.
+    // O usuário abre somente o bloco que deseja consultar/editar.
+    document.querySelectorAll('#modalVeiculo .accordion-grupo').forEach(grupo => grupo.classList.remove('aberto'));
 
     // Exibe o modal
     const modal = document.getElementById('modalVeiculo');
