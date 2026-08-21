@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Frota</title>
@@ -374,6 +378,30 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 
 <div id="modalManut" class="modal"><div class="modal-content"><h3>Nova Manutenção</h3><label>Data</label><input id="mData" type="date"><label>KM</label><input id="mKm" type="number"><label>Tipo</label><input id="mTipo" placeholder="Ex: Troca de Óleo"><label>Valor</label><input id="mValor" type="number"><label>Próx. em KM</label><input id="mProxKm" type="number" value="5000"><div class="modal-actions"><button onclick="fecharModalManut()" class="btn-icon">Cancelar</button><button onclick="salvarManut()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button></div></div></div>
 
+<script>
+(function(){
+  const UPDATE_FLAG = 'saldo_sw_cleanup_v2';
+  async function atualizarCache(){
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      // Unregister older workers once so an old cache cannot keep serving an old index.
+      if (!localStorage.getItem(UPDATE_FLAG)) {
+        await Promise.all(regs.map(r => r.unregister()));
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        localStorage.setItem(UPDATE_FLAG, '1');
+        if (regs.length) { location.reload(); return; }
+      }
+      const reg = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+      await reg.update();
+    } catch (e) { console.warn('Atualização automática indisponível:', e); }
+  }
+  window.addEventListener('load', atualizarCache);
+})();
+</script>
 <script>
 const CHAVE_STORAGE = 'veiculos_frota_v15_2';
 const CHAVE_ATIVO = 'veiculoAtivoId_frota_v15_2';
