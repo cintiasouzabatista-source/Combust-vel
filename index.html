@@ -111,8 +111,16 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
 
 /* Caixa de Resumo de Análise */
 .analise-box { font-size: 13px; line-height: 1.5; color: var(--text); }
-.analise-box p { margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+.analise-box p { margin-bottom: 7px; display: flex; align-items: flex-start; gap: 8px; }
 .analise-box i { color: var(--primary); margin-top: 3px; flex-shrink: 0; }
+.analise-kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; }
+.analise-kpi { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; }
+.analise-kpi small { display:block; color:var(--muted); font-size:10px; margin-bottom:3px; }
+.analise-kpi b { font-size:16px; }
+.analise-status { padding:10px; border-radius:10px; margin:8px 0; border:1px solid var(--border); }
+.analise-status.ok { border-color:#22c55e; background:rgba(34,197,94,.07); }
+.analise-status.warn { border-color:var(--warning); background:rgba(250,204,21,.07); }
+.analise-status.bad { border-color:var(--danger); background:rgba(239,68,68,.08); }
 </style>
 </head>
 <body>
@@ -278,6 +286,7 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
             <button onclick="atualizarVeiculo()" class="btn-icon" style="background:var(--primary);color:#fff">Salvar</button>
         </div>
         <button onclick="arquivarVeiculoAtual()" class="btn-icon" style="width:100%;margin-top:8px;">Arquivar veículo</button>
+        <button onclick="excluirVeiculoAtual()" class="btn-icon btn-danger" style="width:100%;margin-top:8px;">🗑️ Excluir definitivamente</button>
     </div>
 </div>
 
@@ -368,7 +377,7 @@ label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; 
             <div><label>Valor/L (R$)</label><input id="aValor" type="number" step="0.01" oninput="calcularTotal()"></div>
             <div><label>Total (R$)</label><div class="total-display" id="aTotal" style="margin-top:4px; font-size:16px;">R$ 0,00</div></div>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="aTanqueCheio" type="checkbox" style="width:auto;"> Tanque cheio (usar 100% da capacidade para estimar autonomia)</label>
+        <label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="aTanqueCheio" type="checkbox" style="width:auto;"> Tanque cheio (fecha o ciclo de consumo e permite calcular autonomia)</label>
         <div class="modal-actions">
             <button onclick="fecharModalAbast()" class="btn-icon">Cancelar</button>
             <button onclick="salvarAbast()" class="btn-icon" style="background:var(--primary); color:#fff">Salvar</button>
@@ -513,85 +522,313 @@ function mudarAba(nomeAba, el) {
     if(nomeAba === 'Graficos') renderizarGraficos();
 }
 
+function obterAbastecimentosOrdenados(v) {
+    return [...(v.abast || [])]
+        .filter(a => Number.isFinite(Number(a.km)) && Number(a.km) >= 0 && Number(a.litros) > 0)
+        .sort((a,b) => {
+            const d = String(a.data || '').localeCompare(String(b.data || ''));
+            return d !== 0 ? d : Number(a.km) - Number(b.km);
+        });
+}
+
+/*
+ * Calcula consumo de forma segura usando ciclos de TANQUE CHEIO.
+ * Ex.: cheio -> parcial -> parcial -> cheio
+ * Consumo = km percorridos desde o cheio anterior / soma de todos os litros colocados no ciclo.
+ * Assim, abastecimentos parciais não distorcem o km/L.
+ * O histórico original nunca é alterado; estes valores são apenas calculados em memória.
+ */
+function calcularCiclosConsumo(v) {
+    const abast = obterAbastecimentosOrdenados(v);
+    const ciclos = [];
+    let indiceCheioAnterior = -1;
+
+    for (let i = 0; i < abast.length; i++) {
+        if (!abast[i].tanqueCheio) continue;
+
+        if (indiceCheioAnterior >= 0) {
+            const anterior = abast[indiceCheioAnterior];
+            const atual = abast[i];
+            const kmRodados = Number(atual.km) - Number(anterior.km);
+
+            // Só calcula se o odômetro avançou e todos os abastecimentos do ciclo
+            // usaram o mesmo combustível. Isso evita misturar gasolina/etanol.
+            const combustivelBase = anterior.combustivel || 'Gasolina';
+            const trecho = abast.slice(indiceCheioAnterior + 1, i + 1);
+            const mesmoCombustivel = trecho.every(a => (a.combustivel || 'Gasolina') === combustivelBase);
+            const litros = trecho.reduce((s, a) => s + Number(a.litros || 0), 0);
+
+            if (kmRodados > 0 && litros > 0 && mesmoCombustivel) {
+                ciclos.push({
+                    inicio: anterior,
+                    fim: atual,
+                    kmRodados,
+                    litros,
+                    consumo: kmRodados / litros,
+                    combustivel: combustivelBase
+                });
+            }
+        }
+
+        indiceCheioAnterior = i;
+    }
+
+    return { abast, ciclos };
+}
+
+function obterConsumoInfo(v) {
+    const { ciclos } = calcularCiclosConsumo(v);
+
+    // Regra nova: ciclos completos de tanque cheio são a medição oficial.
+    if (ciclos.length) {
+        const km = ciclos.reduce((s, c) => s + c.kmRodados, 0);
+        const litros = ciclos.reduce((s, c) => s + c.litros, 0);
+        return {
+            media: litros > 0 ? km / litros : 0,
+            tipo: 'real',
+            ciclos: ciclos.length
+        };
+    }
+
+    // Compatibilidade com históricos antigos:
+    // muitos abastecimentos antigos não possuem a flag tanqueCheio.
+    // Calculamos uma estimativa somente em memória, sem alterar nenhum registro.
+    const abast = obterAbastecimentosOrdenados(v);
+    if (abast.length >= 2) {
+        const primeiro = abast[0];
+        const ultimo = abast[abast.length - 1];
+        const kmRodados = Number(ultimo.km) - Number(primeiro.km);
+
+        // O primeiro abastecimento estabelece a referência do tanque.
+        // Os abastecimentos seguintes representam o combustível consumido
+        // entre os pontos conhecidos.
+        const litros = abast.slice(1).reduce((s, a) => s + Number(a.litros || 0), 0);
+
+        if (kmRodados > 0 && litros > 0) {
+            return {
+                media: kmRodados / litros,
+                tipo: 'historico',
+                ciclos: 0
+            };
+        }
+    }
+
+    return {
+        media: 0,
+        tipo: 'insuficiente',
+        ciclos: 0
+    };
+}
+
+function obterConsumoMedio(v) {
+    return obterConsumoInfo(v).media;
+}
+
+
+function chaveAlerta(v, tipo, nivel) {
+    return `frota_alerta_${v.id}_${tipo}_${nivel}`;
+}
+
+function alertaJaMostrado(v, tipo, nivel, intervaloHoras = 72) {
+    const chave = chaveAlerta(v, tipo, nivel);
+    const ultimo = Number(localStorage.getItem(chave) || 0);
+    const agora = Date.now();
+    if (ultimo && (agora - ultimo) < intervaloHoras * 60 * 60 * 1000) return true;
+    localStorage.setItem(chave, String(agora));
+    return false;
+}
+
+function gerarAlertasInteligentes(v, contexto = {}) {
+    if (!v) return;
+
+    const { media, tipo } = obterConsumoInfo(v);
+    const ciclos = calcularCiclosConsumo(v).ciclos.slice().sort((a,b) => Number(a.fim.km) - Number(b.fim.km));
+    const kmAtual = Number(v.config?.kmBase || 0);
+
+    // 1) Combustível: alerta baseado na estimativa de autonomia.
+    const proxKm = Number(contexto.proxAbastKm);
+    const kmRestantes = Number(contexto.kmRestantesAbast);
+
+    if (Number.isFinite(kmRestantes)) {
+        if (kmRestantes <= 25 && kmRestantes >= 0 && !alertaJaMostrado(v, 'abastecimento', 'vermelho', 24)) {
+            dispararNotificacao('Abasteça em breve', `Estimativa de apenas ~${Math.round(kmRestantes)} km até a reserva.`, 'vermelho');
+        } else if (kmRestantes <= 80 && kmRestantes > 25 && !alertaJaMostrado(v, 'abastecimento', 'amarelo', 48)) {
+            dispararNotificacao('Próximo abastecimento', `Estimativa de ~${Math.round(kmRestantes)} km até a reserva.`, 'amarelo');
+        }
+    }
+
+    // 2) Consumo anormal: só alerta quando temos pelo menos 2 ciclos recentes
+    // e a queda se repete, reduzindo falsos positivos.
+    if (ciclos.length >= 3) {
+        const ultimos = ciclos.slice(-2);
+        const anteriores = ciclos.slice(-3, -1);
+        const mediaUltimos = ultimos.reduce((s,c) => s + Number(c.consumo || 0), 0) / ultimos.length;
+        const mediaAnteriores = anteriores.reduce((s,c) => s + Number(c.consumo || 0), 0) / anteriores.length;
+
+        if (mediaAnteriores > 0 && mediaUltimos < mediaAnteriores * 0.94 && !alertaJaMostrado(v, 'consumo', 'vermelho', 168)) {
+            const queda = ((mediaUltimos / mediaAnteriores) - 1) * 100;
+            dispararNotificacao(
+                'Seu consumo piorou',
+                `Os últimos ciclos estão ${Math.abs(queda).toFixed(1)}% abaixo do padrão recente. Vale verificar pneus, uso, combustível e manutenção.`,
+                'vermelho'
+            );
+        } else if (mediaAnteriores > 0 && mediaUltimos > mediaAnteriores * 1.06 && !alertaJaMostrado(v, 'consumo', 'verde', 168)) {
+            const melhora = ((mediaUltimos / mediaAnteriores) - 1) * 100;
+            dispararNotificacao(
+                'Seu consumo melhorou',
+                `Os últimos ciclos estão ${melhora.toFixed(1)}% acima do padrão recente. Boa economia!`,
+                'amarelo'
+            );
+        }
+    }
+
+    // 3) Troca de óleo: KM + tempo, usando a última manutenção registrada.
+    const manut = (v.manut || []).slice().sort((a,b) => String(b.data||'').localeCompare(String(a.data||'')));
+    const oleo = manut.find(m => /óleo|oleo|troca/i.test(String(m.tipo || '')));
+    if (oleo) {
+        const intervaloKm = Number(oleo.proxKm || 5000);
+        const proximoKm = Number(oleo.km || 0) + intervaloKm;
+        const faltamKm = proximoKm - kmAtual;
+
+        const dataOleo = oleo.data ? new Date(oleo.data + 'T00:00:00') : null;
+        const diasIntervalo = Number(oleo.proxDias || 0);
+        const diasPassados = dataOleo ? Math.floor((Date.now() - dataOleo.getTime()) / 86400000) : 0;
+        const faltamDias = diasIntervalo > 0 ? diasIntervalo - diasPassados : Infinity;
+
+        const vencido = faltamKm < 0 || faltamDias < 0;
+        const proximo = faltamKm <= 500 || faltamDias <= 30;
+
+        if (vencido && !alertaJaMostrado(v, 'oleo', 'vermelho', 72)) {
+            const partes = [];
+            if (faltamKm < 0) partes.push(`${Math.abs(faltamKm).toLocaleString('pt-BR')} km acima`);
+            if (faltamDias < 0) partes.push(`${Math.abs(faltamDias)} dias acima`);
+            dispararNotificacao('Troca de óleo vencida', partes.join(' e ') || 'Faça a troca de óleo.', 'vermelho');
+        } else if (proximo && !alertaJaMostrado(v, 'oleo', 'amarelo', 168)) {
+            const partes = [];
+            if (faltamKm >= 0 && faltamKm <= 500) partes.push(`faltam ${faltamKm.toLocaleString('pt-BR')} km`);
+            if (faltamDias >= 0 && faltamDias <= 30) partes.push(`faltam ${faltamDias} dias`);
+            dispararNotificacao('Troca de óleo próxima', partes.join(' ou ') || 'A manutenção está próxima.', 'amarelo');
+        }
+    }
+}
+
 function atualizarPainel() {
     renderSelectVeiculo();
-    const v = getVeiculoAtivo(); if(!v) { document.getElementById('kmRodados').textContent='-- km'; return; }
-    if(!v.documentos) v.documentos = []; 
-    if(v.reservaL === undefined) v.reservaL = 8; 
-    
-    // LINHA ADICIONADA: Garante que o KM Inicial/Blindagem não se perca
-    if(!v.config.kmInicial) v.config.kmInicial = v.config.kmBase || 0; 
+    const v = getVeiculoAtivo();
+    if(!v) { document.getElementById('kmRodados').textContent='-- km'; return; }
+    if(!v.documentos) v.documentos = [];
+    if(v.reservaL === undefined) v.reservaL = 8;
+    if(!v.config) v.config = {};
 
-    const kmAtual = v.config.kmBase || 0;
-    const kmInicial = v.config.kmInicial || 0; // KM Fixo da Blindagem
+    // KM inicial é histórico e nunca é alterado pelo odômetro atual.
+    if(typeof v.config.kmInicial !== 'number') v.config.kmInicial = v.config.kmBase || 0;
 
+    const kmAtual = Number(v.config.kmBase) || 0;
     document.getElementById('kmRodados').textContent = kmAtual.toLocaleString('pt-BR') + ' km';
 
-    let media = 0;
-    if(v.abast.length >= 1){
-        const abastOrdenadosParaCalculo = [...v.abast].sort((a,b) => a.data.localeCompare(b.data));
-        const ultimoAbast = abastOrdenadosParaCalculo[abastOrdenadosParaCalculo.length - 1];
-        
-        document.getElementById('ultimoAbastData').textContent = formatarDataCurta(ultimoAbast.data);
-        document.getElementById('ultimoAbastValor').textContent = `R$ ${ultimoAbast.total.toFixed(2)} - ${ultimoAbast.litros}L (${ultimoAbast.combustivel || 'Gasolina'})`;
+    const { abast: abastOrdenados, ciclos } = calcularCiclosConsumo(v);
+    const ultimoAbast = abastOrdenados.length ? abastOrdenados[abastOrdenados.length - 1] : null;
+    const consumoInfo = obterConsumoInfo(v);
+    const media = consumoInfo.media;
 
-        if(abastOrdenadosParaCalculo.length >= 2){
-            const combustivelReferencia = ultimoAbast.combustivel || 'Gasolina';
-            const abastMesmoCombustivel = abastOrdenadosParaCalculo.filter(a => (a.combustivel || 'Gasolina') === combustivelReferencia);
-            let totalKm = 0, totalL = 0;
-            for(let i = 1; i < abastMesmoCombustivel.length; i++) {
-                const kmIntervalo = abastMesmoCombustivel[i].km - abastMesmoCombustivel[i-1].km;
-                if(kmIntervalo > 0 && abastMesmoCombustivel[i].litros > 0) {
-                    totalKm += kmIntervalo;
-                    totalL += abastMesmoCombustivel[i].litros;
-                }
-            }
-            media = totalL > 0 ? (totalKm / totalL) : 0;
-            document.getElementById('consumoMedia').textContent = media > 0
+    if(ultimoAbast){
+        document.getElementById('ultimoAbastData').textContent = formatarDataCurta(ultimoAbast.data);
+        document.getElementById('ultimoAbastValor').textContent =
+            `R$ ${Number(ultimoAbast.total || 0).toFixed(2)} - ${Number(ultimoAbast.litros || 0).toFixed(3)}L (${ultimoAbast.combustivel || 'Gasolina'})`;
+
+        if(media > 0){
+            const rotulo = consumoInfo.tipo === 'real'
                 ? `Consumo: ${media.toFixed(2)} km/L`
-                : `Consumo: calculando...`;
+                : `Consumo: ${media.toFixed(2)} km/L (estimativa histórica)`;
+            document.getElementById('consumoMedia').textContent = rotulo;
         } else {
-            document.getElementById('consumoMedia').textContent = `Cadastre 2+ abastecimentos`;
+            document.getElementById('consumoMedia').textContent =
+                `Consumo: aguardando histórico de abastecimentos`;
         }
 
         const cardProxAbast = document.getElementById('cardProxAbast');
+        let alertaContexto = { proxAbastKm: NaN, kmRestantesAbast: NaN };
         cardProxAbast.classList.remove('alerta-amarelo', 'alerta-vermelho');
 
-        if(abastOrdenadosParaCalculo.length >= 2 && media > 0) {
-            const kmRodadosAposAbast = Math.max(0, kmAtual - ultimoAbast.km);
-            const tanqueTotal = Math.max(0, Number(v.tanqueL) || 6.5);
-            const reserva = Math.min(tanqueTotal, Math.max(0, Number(v.reservaL) || 1.8));
-            const volumeUtilPrincipal = Math.max(0, tanqueTotal - reserva);
+        if(media > 0){
+            const tanqueTotal = Math.max(0, Number(v.tanqueL) || 0);
+            const reserva = Math.min(tanqueTotal, Math.max(0, Number(v.reservaL) || 0));
+            const volumeAteReserva = Math.max(0, tanqueTotal - reserva);
 
-            // Segurança: abastecimento parcial usa os litros efetivamente colocados.
-            // Se "Tanque cheio" estiver marcado, usa todo o volume útil (tanque - reserva).
-            const litrosBaseAutonomia = ultimoAbast.tanqueCheio
-                ? volumeUtilPrincipal
-                : Math.min(volumeUtilPrincipal, Math.max(0, Number(ultimoAbast.litros) || 0));
+            // 1) Se houver ciclo oficial de tanque cheio, usa a regra nova.
+            const indiceUltimoCheio = (() => {
+                for(let i = abastOrdenados.length - 1; i >= 0; i--) {
+                    if(abastOrdenados[i].tanqueCheio) return i;
+                }
+                return -1;
+            })();
 
-            const autonomiaPrincipal = litrosBaseAutonomia * media;
-            const autonomiaTotalTanque = tanqueTotal * media;
+            if(indiceUltimoCheio >= 0 && tanqueTotal > 0){
+                const ultimoCheio = abastOrdenados[indiceUltimoCheio];
+                const trechoDesdeCheio = abastOrdenados.slice(indiceUltimoCheio + 1);
+                const combustivelBase = ultimoCheio.combustivel || 'Gasolina';
+                const misturaCombustivel = trechoDesdeCheio.some(
+                    a => (a.combustivel || 'Gasolina') !== combustivelBase
+                );
+                const litrosExtras = misturaCombustivel
+                    ? 0
+                    : trechoDesdeCheio.reduce((s,a) => s + Number(a.litros || 0), 0);
+                const kmDesdeUltimoCheio = Math.max(0, kmAtual - Number(ultimoCheio.km));
 
-            const kmRestantesPrincipal = autonomiaPrincipal - kmRodadosAposAbast;
-            const proxAbastPrincipal = ultimoAbast.km + autonomiaPrincipal;
-            
-            if(kmRestantesPrincipal > 0) {
-                document.getElementById('proxAbastKm').textContent = proxAbastPrincipal.toLocaleString('pt-BR', {maximumFractionDigits: 0}) + ' km';
-                document.getElementById('proxAbastTexto').textContent = `Seguro: ~${kmRestantesPrincipal.toFixed(0)}km até a reserva`;
-            } else {
-                cardProxAbast.classList.add('alerta-vermelho');
-                const kmRestantesReserva = autonomiaTotalTanque - kmRodadosAposAbast;
-                if(kmRestantesReserva > 0) {
-                    document.getElementById('proxAbastKm').textContent = 'RESERVA!';
-                    document.getElementById('proxAbastTexto').textContent = `Restam ~${kmRestantesReserva.toFixed(0)}km (${reserva}L)`;
+                const litrosDisponiveisAteReserva = volumeAteReserva + litrosExtras;
+                const kmAteReserva = litrosDisponiveisAteReserva * media;
+                const kmRestantes = kmAteReserva - kmDesdeUltimoCheio;
+                const proxAbastKm = Number(ultimoCheio.km) + kmAteReserva;
+
+                if(kmRestantes > 0 && !misturaCombustivel){
+                    document.getElementById('proxAbastKm').textContent =
+                        proxAbastKm.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' km';
+                    document.getElementById('proxAbastTexto').textContent =
+                        `Estimativa: ~${Math.round(kmRestantes)} km até a reserva`;
+                    alertaContexto = { proxAbastKm, kmRestantesAbast: kmRestantes };
+                } else if(misturaCombustivel){
+                    document.getElementById('proxAbastKm').textContent = '-- km';
+                    document.getElementById('proxAbastTexto').textContent =
+                        'Mistura de combustíveis: aguardando novo tanque cheio';
                 } else {
-                    document.getElementById('proxAbastKm').textContent = 'SECOU!';
-                    document.getElementById('proxAbastTexto').textContent = `Tanque esgotado!`;
+                    cardProxAbast.classList.add('alerta-vermelho');
+                    const autonomiaTotal = (tanqueTotal + litrosExtras) * media;
+                    const kmRestantesTanque = autonomiaTotal - kmDesdeUltimoCheio;
+                    if(kmRestantesTanque > 0){
+                        document.getElementById('proxAbastKm').textContent = 'RESERVA!';
+                        document.getElementById('proxAbastTexto').textContent =
+                            `Estimativa: ~${Math.round(kmRestantesTanque)} km restantes no tanque`;
+                    } else {
+                        document.getElementById('proxAbastKm').textContent = 'ABASTEÇA';
+                        document.getElementById('proxAbastTexto').textContent =
+                            'Estimativa de autonomia esgotada';
+                    }
+                }
+            } else {
+                // 2) Compatibilidade com histórico antigo:
+                // sem tanqueCheio, usamos o último abastecimento como referência.
+                // Isso recupera a estimativa que o app já apresentava antes da V2.
+                const litrosUltimo = Number(ultimoAbast.litros || 0);
+                const kmDesdeUltimo = Math.max(0, kmAtual - Number(ultimoAbast.km || kmAtual));
+
+                if(litrosUltimo > 0 && media > 0){
+                    const autonomiaComUltimoAbast = Math.max(0, (litrosUltimo * media) - kmDesdeUltimo);
+                    const proxAbastKm = kmAtual + autonomiaComUltimoAbast;
+
+                    document.getElementById('proxAbastKm').textContent =
+                        Math.round(proxAbastKm).toLocaleString('pt-BR') + ' km';
+                    document.getElementById('proxAbastTexto').textContent =
+                        `Estimativa histórica: ~${Math.round(autonomiaComUltimoAbast)} km restantes`;
+                    alertaContexto = { proxAbastKm, kmRestantesAbast: autonomiaComUltimoAbast };
+                } else {
+                    document.getElementById('proxAbastKm').textContent = '-- km';
+                    document.getElementById('proxAbastTexto').textContent =
+                        'Precisa de mais histórico';
                 }
             }
         } else {
             document.getElementById('proxAbastKm').textContent = '-- km';
-            document.getElementById('proxAbastTexto').textContent = `Precisa de histórico`;
+            document.getElementById('proxAbastTexto').textContent = 'Precisa de histórico';
         }
     } else {
         document.getElementById('ultimoAbastData').textContent = '--/--';
@@ -601,22 +838,26 @@ function atualizarPainel() {
         document.getElementById('proxAbastTexto').textContent = `Cadastre um abast.`;
     }
 
-    const ultimaTroca = v.manut.filter(m => m.tipo.toLowerCase().includes('troca') || m.tipo.toLowerCase().includes('oleo')).pop();
+    const ultimaTroca = (v.manut || []).slice().sort((a,b) => String(a.data||'').localeCompare(String(b.data||'')))
+        .filter(m => String(m.tipo || '').toLowerCase().includes('troca') || String(m.tipo || '').toLowerCase().includes('oleo')).pop();
     const cardProxTroca = document.getElementById('cardProxTroca');
     cardProxTroca.classList.remove('alerta-amarelo', 'alerta-vermelho');
     if(ultimaTroca){
         document.getElementById('ultimaTrocaData').textContent = formatarDataCurta(ultimaTroca.data);
-        document.getElementById('ultimaTrocaKm').textContent = `KM: ${ultimaTroca.km.toLocaleString('pt-BR')}`;
-        const proxTroca = ultimaTroca.km + (ultimaTroca.proxKm || 5000);
+        document.getElementById('ultimaTrocaKm').textContent = `KM: ${Number(ultimaTroca.km || 0).toLocaleString('pt-BR')}`;
+        const proxTroca = Number(ultimaTroca.km || 0) + (Number(ultimaTroca.proxKm) || 5000);
         const faltam = proxTroca - kmAtual;
         document.getElementById('proxTrocaKm').textContent = proxTroca.toLocaleString('pt-BR') + ' km';
-        document.getElementById('proxTrocaFaltam').textContent = `Faltam ${faltam.toLocaleString('pt-BR')} km`;
+        document.getElementById('proxTrocaFaltam').textContent = faltam >= 0 ? `Faltam ${faltam.toLocaleString('pt-BR')} km` : `ATRASADA ${Math.abs(faltam).toLocaleString('pt-BR')} km`;
+        if(faltam < 0) cardProxTroca.classList.add('alerta-vermelho');
+        else if(faltam <= 500) cardProxTroca.classList.add('alerta-amarelo');
     } else {
         document.getElementById('ultimaTrocaData').textContent = '--/--';
         document.getElementById('ultimaTrocaKm').textContent = 'KM: -----';
         document.getElementById('proxTrocaKm').textContent = '-- km';
         document.getElementById('proxTrocaFaltam').textContent = 'Cadastre uma troca';
     }
+    gerarAlertasInteligentes(v, typeof alertaContexto !== 'undefined' ? alertaContexto : {});
     renderHistorico();
     renderizarDocumentos();
     if(document.getElementById('viewGraficos').classList.contains('active')) renderizarGraficos();
@@ -628,12 +869,10 @@ function renderizarGraficos() {
     const periodoFiltro = document.getElementById('filtroPeriodo')?.value || 'todos';
     const combustivelFiltro = document.getElementById('filtroCombustivel')?.value || 'todos';
 
-    let abastFiltrados = [...v.abast];
-
+    let abastFiltrados = [...(v.abast || [])];
     if (combustivelFiltro !== 'todos') {
         abastFiltrados = abastFiltrados.filter(a => (a.combustivel || 'Gasolina') === combustivelFiltro);
     }
-
     if (periodoFiltro !== 'todos') {
         const diasLimite = parseInt(periodoFiltro);
         const dataAtual = new Date();
@@ -643,9 +882,12 @@ function renderizarGraficos() {
             return diferencaDias <= diasLimite;
         });
     }
-    
-    const abastOrdenados = abastFiltrados.sort((a,b) => b.data.localeCompare(a.data));
-    
+
+    const abastOrdenados = [...abastFiltrados].sort((a,b) => {
+        const d = String(b.data || '').localeCompare(String(a.data || ''));
+        return d !== 0 ? d : Number(b.km || 0) - Number(a.km || 0);
+    });
+
     if(abastOrdenados.length === 0) {
         document.getElementById('containerGraficoConsumo').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
         document.getElementById('containerGraficoGastos').innerHTML = '<p style="color:var(--muted); font-size:12px; text-align:center;">Nenhum dado cadastrado.</p>';
@@ -653,46 +895,39 @@ function renderizarGraficos() {
         return;
     }
 
-    const abastParaCalculo = [...abastFiltrados].sort((a,b) => a.data.localeCompare(b.data));
-    let consumosMap = {};
-    let consumosValidos = [];
-    
-    for(let i = 0; i < abastParaCalculo.length; i++) {
-        if(i === 0) {
-            consumosMap[abastParaCalculo[i].id] = 0;
-        } else {
-            let kmRodados = abastParaCalculo[i].km - abastParaCalculo[i-1].km;
-            let litros = abastParaCalculo[i].litros;
-            let val = litros > 0 ? parseFloat((kmRodados / litros).toFixed(2)) : 0;
-            consumosMap[abastParaCalculo[i].id] = val;
-            if(val > 0) consumosValidos.push(val);
-        }
-    }
+    // O gráfico usa exatamente a mesma regra do painel: somente ciclos fechados
+    // por dois abastecimentos marcados como "Tanque cheio".
+    const { ciclos } = calcularCiclosConsumo({ ...v, abast: abastFiltrados });
+    const consumosMap = {};
+    const consumosValidos = [];
+    ciclos.forEach(c => {
+        const val = Number(c.consumo.toFixed(2));
+        consumosMap[c.fim.id] = val;
+        consumosValidos.push(val);
+    });
 
-    let consumosArray = Object.values(consumosMap);
+    const consumosArray = Object.values(consumosMap);
     const maxConsumo = Math.max(...consumosArray, 10);
-    
     let htmlConsumo = '';
-    abastOrdenados.forEach((a) => {
+    abastOrdenados.forEach(a => {
         const val = consumosMap[a.id] || 0;
-        const pct = Math.min(Math.max((val / maxConsumo) * 100, 5), 100);
+        const pct = val > 0 ? Math.min(Math.max((val / maxConsumo) * 100, 5), 100) : 5;
         htmlConsumo += `
             <div class="chart-horiz-row">
                 <div class="chart-horiz-bar" style="width: ${pct}%">
                     <i class="fas fa-road"></i> ${formatarDataCurta(a.data)}
                 </div>
-                <div class="chart-horiz-info">${val > 0 ? val + ' km/L' : 'Inicial'}</div>
+                <div class="chart-horiz-info">${val > 0 ? val + ' km/L' : (a.tanqueCheio ? 'Aguardando ciclo' : 'Parcial')}</div>
             </div>
         `;
     });
     document.getElementById('containerGraficoConsumo').innerHTML = htmlConsumo;
 
-    const gastos = abastOrdenados.map(a => a.total);
+    const gastos = abastOrdenados.map(a => Number(a.total || 0));
     const maxGasto = Math.max(...gastos, 50);
-
     let htmlGastos = '';
-    abastOrdenados.forEach((a) => {
-        const val = a.total;
+    abastOrdenados.forEach(a => {
+        const val = Number(a.total || 0);
         const pct = Math.min(Math.max((val / maxGasto) * 100, 5), 100);
         htmlGastos += `
             <div class="chart-horiz-row">
@@ -706,26 +941,111 @@ function renderizarGraficos() {
     document.getElementById('containerGraficoGastos').innerHTML = htmlGastos;
 
     let analiseHtml = '';
-    if (consumosValidos.length > 0) {
-        const mediaGeral = consumosValidos.reduce((a, b) => a + b, 0) / consumosValidos.length;
-        const melhorConsumo = Math.max(...consumosValidos);
-        const piorConsumo = Math.min(...consumosValidos);
-        const ultimoConsumo = consumosValidos[consumosValidos.length - 1];
-        
-        let tendenciaTexto = "estável em relação à média.";
-        if (ultimoConsumo > mediaGeral * 1.05) {
-            tendenciaTexto = "acima da média (ótimo rendimento recente!).";
-        } else if (ultimoConsumo < mediaGeral * 0.95) {
-            tendenciaTexto = "abaixo da média (consumo um pouco elevado recentemente).";
+    const consumoInfoGeral = obterConsumoInfo(v);
+    const mediaHistorica = Number(consumoInfoGeral.media || 0);
+
+    // Ciclos oficiais, quando existirem.
+    const ciclosRecentes = ciclos.slice().sort((a,b) => Number(a.fim.km) - Number(b.fim.km));
+    const ultimos3 = ciclosRecentes.slice(-3);
+    const anteriores3 = ciclosRecentes.slice(-6, -3);
+
+    const mediaPonderada = (lista) => {
+        const km = lista.reduce((s,c) => s + Number(c.kmRodados || 0), 0);
+        const litros = lista.reduce((s,c) => s + Number(c.litros || 0), 0);
+        return litros > 0 ? km / litros : 0;
+    };
+
+    const mediaUltimos3 = mediaPonderada(ultimos3);
+    const mediaAnteriores3 = mediaPonderada(anteriores3);
+
+    // Custo por km com base nos ciclos oficiais.
+    let custoKm = 0;
+    if (ciclosRecentes.length) {
+        const kmCusto = ciclosRecentes.reduce((s,c) => s + Number(c.kmRodados || 0), 0);
+        const idsFins = new Set(ciclosRecentes.map(c => c.fim.id));
+        const gastosCiclo = ciclosRecentes.reduce((s,c) => s + Number(c.fim.total || 0), 0);
+        if (kmCusto > 0 && idsFins.size) custoKm = gastosCiclo / kmCusto;
+    }
+
+    if (mediaHistorica > 0) {
+        let tendencia = 'Sem mudança relevante detectada.';
+        let classe = '';
+        let icone = 'fa-minus';
+        let variacao = 0;
+
+        if (mediaAnteriores3 > 0 && mediaUltimos3 > 0) {
+            variacao = ((mediaUltimos3 - mediaAnteriores3) / mediaAnteriores3) * 100;
+            if (variacao >= 4) {
+                tendencia = `Seu consumo melhorou ${variacao.toFixed(1)}% nos últimos ciclos.`;
+                classe = 'ok';
+                icone = 'fa-arrow-trend-up';
+            } else if (variacao <= -4) {
+                tendencia = `Seu consumo piorou ${Math.abs(variacao).toFixed(1)}% nos últimos ciclos.`;
+                classe = 'bad';
+                icone = 'fa-arrow-trend-down';
+            } else {
+                tendencia = 'Seu consumo está estável nos últimos ciclos.';
+                classe = '';
+                icone = 'fa-minus';
+            }
+        } else if (ultimos3.length === 1 && mediaHistorica > 0) {
+            const ultimo = Number(ultimos3[0].consumo || 0);
+            if (ultimo > mediaHistorica * 1.04) {
+                tendencia = 'O último ciclo ficou acima da sua média histórica.';
+                classe = 'ok';
+                icone = 'fa-arrow-trend-up';
+            } else if (ultimo < mediaHistorica * 0.96) {
+                tendencia = 'O último ciclo ficou abaixo da sua média histórica.';
+                classe = 'warn';
+                icone = 'fa-arrow-trend-down';
+            } else {
+                tendencia = 'O último ciclo ficou próximo da sua média histórica.';
+            }
         }
 
-        analiseHtml = `
-            <p><i class="fas fa-chart-line"></i> <span>Média geral de eficiência em <b>${mediaGeral.toFixed(2)} km/L</b> considerando os abastecimentos com histórico completo.</span></p>
-            <p><i class="fas fa-trophy"></i> <span>Melhor marca registrada: <b>${melhorConsumo.toFixed(2)} km/L</b> | Pior marca: <b>${piorConsumo.toFixed(2)} km/L</b>.</span></p>
-            <p><i class="fas fa-info-circle"></i> <span>O último abastecimento registrou <b>${ultimoConsumo.toFixed(2)} km/L</b>, estando ${tendenciaTexto}</span></p>
+        const confianca = consumoInfoGeral.tipo === 'real'
+            ? (ciclosRecentes.length >= 5 ? 'Alta' : 'Boa')
+            : 'Estimativa';
+
+        analiseHtml += `
+            <div class="analise-kpis">
+                <div class="analise-kpi"><small>CONSUMO ATUAL</small><b>${mediaHistorica.toFixed(2)} km/L</b></div>
+                <div class="analise-kpi"><small>CONFIANÇA</small><b>${confianca}</b></div>
+                ${mediaUltimos3 > 0 ? `<div class="analise-kpi"><small>ÚLTIMOS ${ultimos3.length} CICLOS</small><b>${mediaUltimos3.toFixed(2)} km/L</b></div>` : ''}
+                ${custoKm > 0 ? `<div class="analise-kpi"><small>CUSTO MÉDIO</small><b>R$ ${custoKm.toFixed(2)}/km</b></div>` : ''}
+            </div>
+            <div class="analise-status ${classe}">
+                <p style="margin-bottom:0;"><i class="fas ${icone}"></i><span><b>${tendencia}</b></span></p>
+            </div>
         `;
+
+        if (ciclosRecentes.length) {
+            const melhor = Math.max(...ciclosRecentes.map(c => Number(c.consumo || 0)));
+            const pior = Math.min(...ciclosRecentes.map(c => Number(c.consumo || 0)));
+            analiseHtml += `
+                <p><i class="fas fa-trophy"></i><span><b>Melhor ciclo:</b> ${melhor.toFixed(2)} km/L &nbsp;|&nbsp; <b>Pior ciclo:</b> ${pior.toFixed(2)} km/L.</span></p>
+            `;
+        }
+
+        if (consumoInfoGeral.tipo === 'historico') {
+            analiseHtml += `
+                <p><i class="fas fa-info-circle"></i><span>Este valor é uma <b>estimativa baseada no histórico antigo</b>. Assim que houver ciclos de tanque cheio, o consumo oficial passa a ser calculado com maior precisão.</span></p>
+            `;
+        } else {
+            analiseHtml += `
+                <p><i class="fas fa-shield-alt"></i><span>Consumo oficial baseado em <b>${ciclosRecentes.length} ciclo(s) completo(s)</b> entre tanques cheios.</span></p>
+            `;
+        }
+
+        if (mediaAnteriores3 > 0 && mediaUltimos3 > 0 && variacao <= -6) {
+            analiseHtml += `
+                <div class="analise-status bad">
+                    <p style="margin-bottom:0;"><i class="fas fa-triangle-exclamation"></i><span><b>Atenção:</b> a queda de consumo já aparece em mais de um ciclo. Vale verificar pneus, condições de uso, combustível e manutenção.</span></p>
+                </div>
+            `;
+        }
     } else {
-        analiseHtml = `<p style="color:var(--muted); text-align:center;"><i class="fas fa-info-circle" style="margin-top:0;"></i> Cadastre pelo menos 2 abastecimentos preenchendo o KM corretamente para gerar a análise inteligente de consumo.</p>`;
+        analiseHtml = `<p style="color:var(--muted); text-align:center;"><i class="fas fa-info-circle" style="margin-top:0;"></i> Ainda precisamos de mais abastecimentos para gerar uma análise confiável.</p>`;
     }
     document.getElementById('containerAnaliseConsumo').innerHTML = analiseHtml;
 }
@@ -920,6 +1240,7 @@ function selecionarVeiculoGerenciamento(id){
         <div class="grid-2">
             <button onclick="abrirEdicaoVeiculo('${String(v.id).replace(/'/g,"\\'")}')" class="btn-icon"><i class="fas fa-edit"></i> Editar</button>
             <button onclick="arquivarVeiculo('${String(v.id).replace(/'/g,"\\'")}')" class="btn-icon"><i class="fas fa-archive"></i> Arquivar</button>
+            <button onclick="excluirVeiculo('${String(v.id).replace(/'/g,"\\'")}')" class="btn-icon btn-danger"><i class="fas fa-trash"></i> Excluir</button>
         </div>
     </div>`;
 }
@@ -981,7 +1302,48 @@ function arquivarVeiculo(id){
     salvarTudo(); atualizarPainel(); renderListaVeiculos(); document.getElementById('painelVeiculoDetalhes').style.display='none';
 }
 function arquivarVeiculoAtual(){ arquivarVeiculo(veiculoAtivoId); fecharModalEditarVeiculo(); }
-function excluirVeiculo(){ arquivarVeiculoAtual(); }
+function excluirVeiculo(id){
+    const v = veiculos.find(x => String(x.id) === String(id));
+    if(!v) return;
+
+    const nome = v.nome || 'este veículo';
+    const totalAbast = (v.abastecimentos || []).length;
+    const totalManut = (v.manut || []).length;
+    const totalDocs = (v.documentos || []).length;
+
+    const ok = confirm(
+        `EXCLUIR DEFINITIVAMENTE?\n\n` +
+        `${nome}\n\n` +
+        `Isso apagará o veículo e todo o histórico associado:\n` +
+        `• ${totalAbast} abastecimento(s)\n` +
+        `• ${totalManut} manutenção(ões)\n` +
+        `• ${totalDocs} documento(s)\n\n` +
+        `Esta ação não pode ser desfeita.\n\n` +
+        `Para preservar o histórico, use "Arquivar".`
+    );
+    if(!ok) return;
+
+    veiculos = veiculos.filter(x => String(x.id) !== String(id));
+
+    if(String(veiculoAtivoId) === String(id)){
+        const prox = veiculos.find(x => !x.arquivado);
+        veiculoAtivoId = prox?.id || null;
+    }
+
+    salvarTudo();
+    fecharModalEditarVeiculo();
+    atualizarPainel();
+    renderListaVeiculos();
+
+    const detalhes = document.getElementById('painelVeiculoDetalhes');
+    if(detalhes) detalhes.style.display = 'none';
+
+    alert(`"${nome}" foi excluído definitivamente.`);
+}
+
+function excluirVeiculoAtual(){
+    if(veiculoAtivoId) excluirVeiculo(veiculoAtivoId);
+}
 
 function exportarBackup() {
     const dados = { veiculos, veiculoAtivoId, tema };
@@ -1018,9 +1380,12 @@ function salvarKm() {
     const v = getVeiculoAtivo();
     if(!v) return;
     const novoKm = Number(document.getElementById('kmInput').value);
-    if(isNaN(novoKm)) return;
-    
-    // Altera APENAS o odômetro digital corrente. O v.config.kmInicial NÃO é mexido.
+    if(!Number.isFinite(novoKm) || novoKm < 0) return alert('Informe um KM válido.');
+
+    const kmAtual = Number(v.config?.kmBase || 0);
+    if(novoKm < kmAtual) return alert(`O KM atual não pode diminuir. Atual: ${kmAtual.toLocaleString('pt-BR')} km.`);
+
+    // Altera APENAS o odômetro corrente. O KM de aquisição permanece intacto.
     v.config.kmBase = novoKm;
     salvarTudo();
     fecharModalKm();
@@ -1032,20 +1397,40 @@ function abrirModalAbast(){ if(!getVeiculoAtivo()) return alert('Cadastre um ve�
 function fecharModalAbast(){ document.getElementById('modalAbast').style.display='none'; }
 function salvarAbast(){
     const v = getVeiculoAtivo();
-    v.abast.push({
-        id: Date.now(),
-        data: document.getElementById('aData').value,
-        km: +document.getElementById('aKm').value,
-        combustivel: document.getElementById('aCombustivel').value,
-        litros: +document.getElementById('aLitros').value,
-        valorL: +document.getElementById('aValor').value,
-        total: (+document.getElementById('aLitros').value) * (+document.getElementById('aValor').value),
-         tanqueCheio: document.getElementById('aTanqueCheio').checked
-    });
-    v.config.kmBase = +document.getElementById('aKm').value;
-    salvarTudo(); fecharModalAbast(); atualizarPainel();
-}
+    if(!v) return;
 
+    const data = document.getElementById('aData').value;
+    const km = Number(document.getElementById('aKm').value);
+    const combustivel = document.getElementById('aCombustivel').value;
+    const litros = Number(document.getElementById('aLitros').value);
+    const valorL = Number(document.getElementById('aValor').value);
+    const tanqueCheio = document.getElementById('aTanqueCheio').checked;
+
+    if(!data || !Number.isFinite(km) || km < 0) return alert('Informe uma data e um KM válidos.');
+    if(!Number.isFinite(litros) || litros <= 0) return alert('Informe uma quantidade de litros válida.');
+    if(!Number.isFinite(valorL) || valorL < 0) return alert('Informe um valor por litro válido.');
+
+    const kmAtual = Number(v.config?.kmBase || 0);
+    // Permite lançar abastecimento antigo sem destruir o odômetro atual.
+    // Só avança o KM atual quando o abastecimento informado for igual ou maior.
+    const obj = {
+        id: Date.now(),
+        data,
+        km,
+        combustivel,
+        litros,
+        valorL,
+        total: litros * valorL,
+        tanqueCheio
+    };
+
+    v.abast.push(obj);
+    if(km >= kmAtual) v.config.kmBase = km;
+
+    salvarTudo();
+    fecharModalAbast();
+    atualizarPainel();
+}
 function abrirModalManut(){ if(!getVeiculoAtivo()) return alert('Cadastre um veículo para lançar manutenção.'); document.getElementById('modalManut').style.display='flex'; document.getElementById('mData').value=new Date().toISOString().slice(0,10); }
 function fecharModalManut(){ document.getElementById('modalManut').style.display='none'; }
 function salvarManut(){ const v=getVeiculoAtivo(); const obj={id:'m'+Date.now(),data:document.getElementById('mData').value,km:+document.getElementById('mKm').value,tipo:document.getElementById('mTipo').value,valor:+document.getElementById('mValor').value,proxKm:+document.getElementById('mProxKm').value}; v.manut.push(obj); salvarTudo(); fecharModalManut(); atualizarPainel(); }
@@ -1071,14 +1456,56 @@ function abrirModalEditarItem(tipo,id){
     const item = tipo==='abast'? v.abast.find(x=>String(x.id)===String(id)) : v.manut.find(x=>String(x.id)===String(id)); 
     document.getElementById('tituloEditarItem').innerText = tipo==='abast'? 'Editar Abastecimento' : 'Editar Manutenção'; 
     if(tipo==='abast'){ 
-        document.getElementById('formEditarItem').innerHTML = `<div class="grid-2"><div><label>Data</label><input id="eData" type="date" value="${item.data}"></div><div><label>KM</label><input id="eKm" type="number" value="${item.km}"></div></div><div class="grid-2"><div><label>Combustível</label><select id="eCombustivel"><option value="Gasolina" ${item.combustivel === 'Gasolina' || !item.combustivel ? 'selected' : ''}>Gasolina</option><option value="Etanol" ${item.combustivel === 'Etanol' ? 'selected' : ''}>Etanol</option><option value="Diesel" ${item.combustivel === 'Diesel' ? 'selected' : ''}>Diesel</option></select></div><div><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+this.value || 0) * (+document.getElementById('eValor').value || 0)).toFixed(2)"></div></div><div class="grid-2"><div><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+document.getElementById('eLitros').value || 0) * (+this.value || 0)).toFixed(2)"></div><div><label>Total</label><div class="total-display" id="eTotal" style="font-size:16px;">R$ ${(item.litros*item.valorL).toFixed(2)}</div></div></div><label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="eTanqueCheio" type="checkbox" style="width:auto;" ${item.tanqueCheio ? 'checked' : ''}> Tanque cheio (usar 100% da capacidade para estimar autonomia)</label>`; 
+        document.getElementById('formEditarItem').innerHTML = `<div class="grid-2"><div><label>Data</label><input id="eData" type="date" value="${item.data}"></div><div><label>KM</label><input id="eKm" type="number" value="${item.km}"></div></div><div class="grid-2"><div><label>Combustível</label><select id="eCombustivel"><option value="Gasolina" ${item.combustivel === 'Gasolina' || !item.combustivel ? 'selected' : ''}>Gasolina</option><option value="Etanol" ${item.combustivel === 'Etanol' ? 'selected' : ''}>Etanol</option><option value="Diesel" ${item.combustivel === 'Diesel' ? 'selected' : ''}>Diesel</option></select></div><div><label>Litros</label><input id="eLitros" type="number" step="0.001" value="${item.litros}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+this.value || 0) * (+document.getElementById('eValor').value || 0)).toFixed(2)"></div></div><div class="grid-2"><div><label>Valor/L</label><input id="eValor" type="number" step="0.01" value="${item.valorL}" oninput="document.getElementById('eTotal').innerText = 'R$ ' + ((+document.getElementById('eLitros').value || 0) * (+this.value || 0)).toFixed(2)"></div><div><label>Total</label><div class="total-display" id="eTotal" style="font-size:16px;">R$ ${(item.litros*item.valorL).toFixed(2)}</div></div></div><label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="eTanqueCheio" type="checkbox" style="width:auto;" ${item.tanqueCheio ? 'checked' : ''}> Tanque cheio (fecha o ciclo de consumo e permite calcular autonomia)</label>`; 
     } else { 
         document.getElementById('formEditarItem').innerHTML = `<label>Data</label><input id="eData" type="date" value="${item.data}"><label>KM</label><input id="eKm" type="number" value="${item.km}"><label>Tipo</label><input id="eTipo" value="${item.tipo}"><label>Valor</label><input id="eValor" type="number" value="${item.valor}"><label>Próx. em KM</label><input id="eProxKm" type="number" value="${item.proxKm}">`; 
     } 
     document.getElementById('modalEditarItem').style.display='flex'; 
 }
 function fecharModalEditarItem(){ document.getElementById('modalEditarItem').style.display='none'; }
-function salvarEdicaoItem(){ const v = getVeiculoAtivo(); if(itemEditando.tipo==='abast'){ const item = v.abast.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.combustivel = document.getElementById('eCombustivel').value; item.litros = +document.getElementById('eLitros').value; item.valorL = +document.getElementById('eValor').value; item.tanqueCheio = document.getElementById('eTanqueCheio').checked; item.total = item.litros * item.valorL; } else { const item = v.manut.find(x=>String(x.id)===String(itemEditando.id)); item.data = document.getElementById('eData').value; item.km = +document.getElementById('eKm').value; item.tipo = document.getElementById('eTipo').value; item.valor = +document.getElementById('eValor').value; item.proxKm = +document.getElementById('eProxKm').value; } salvarTudo(); fecharModalEditarItem(); atualizarPainel(); }
+function salvarEdicaoItem(){
+    const v = getVeiculoAtivo();
+    if(!v || !itemEditando) return;
+
+    if(itemEditando.tipo === 'abast'){
+        const item = v.abast.find(x => String(x.id) === String(itemEditando.id));
+        if(!item) return;
+        const novoKm = Number(document.getElementById('eKm').value);
+        const litros = Number(document.getElementById('eLitros').value);
+        const valorL = Number(document.getElementById('eValor').value);
+        if(!Number.isFinite(novoKm) || novoKm < 0 || !Number.isFinite(litros) || litros <= 0 || !Number.isFinite(valorL) || valorL < 0){
+            return alert('Confira KM, litros e valor por litro.');
+        }
+        item.data = document.getElementById('eData').value;
+        item.km = novoKm;
+        item.combustivel = document.getElementById('eCombustivel').value;
+        item.litros = litros;
+        item.valorL = valorL;
+        item.tanqueCheio = document.getElementById('eTanqueCheio').checked;
+        item.total = litros * valorL;
+
+        const maiorKmAbast = Math.max(...v.abast.map(a => Number(a.km) || 0), 0);
+        if(Number(v.config?.kmBase || 0) < maiorKmAbast) v.config.kmBase = maiorKmAbast;
+    } else {
+        const item = v.manut.find(x => String(x.id) === String(itemEditando.id));
+        if(!item) return;
+        const novoKm = Number(document.getElementById('eKm').value);
+        const valor = Number(document.getElementById('eValor').value);
+        const proxKm = Number(document.getElementById('eProxKm').value);
+        if(!Number.isFinite(novoKm) || novoKm < 0 || !Number.isFinite(valor) || valor < 0 || !Number.isFinite(proxKm) || proxKm < 0){
+            return alert('Confira KM, valor e próxima revisão.');
+        }
+        item.data = document.getElementById('eData').value;
+        item.km = novoKm;
+        item.tipo = document.getElementById('eTipo').value;
+        item.valor = valor;
+        item.proxKm = proxKm;
+    }
+
+    salvarTudo();
+    fecharModalEditarItem();
+    atualizarPainel();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Backup automático antes de qualquer migração/normalização. Nunca apaga histórico.
